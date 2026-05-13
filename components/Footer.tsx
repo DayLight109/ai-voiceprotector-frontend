@@ -1,95 +1,101 @@
-import { ArrowRight } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-background">
-      <div className="border-t border-border">
-        <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-20">
-          <div className="grid grid-cols-12 gap-8">
-            <div className="col-span-12 lg:col-span-7">
-              <div className="font-display text-[clamp(72px,11vw,184px)] font-medium leading-[0.86] tracking-[-0.04em]">
-                L<span className="font-display-italic text-vermillion">'</span>Affaire
-                <span className="font-display-italic text-vermillion">.</span>
+    <footer className="bg-deep text-white relative overflow-hidden">
+      <div className="absolute -top-20 -right-20 w-[36rem] h-[36rem] rounded-full opacity-20 blob-indigo" />
+      <div className="absolute -bottom-32 -left-32 w-[28rem] h-[28rem] rounded-full opacity-10 blob-coral" />
+
+      <div className="relative max-w-[1400px] mx-auto px-5 md:px-8 py-16 md:py-20">
+        <div className="grid grid-cols-12 gap-8">
+          <div className="col-span-12 md:col-span-5">
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center font-display font-extrabold text-white shadow-md"
+                style={{ background: "linear-gradient(135deg, var(--indigo), var(--indigo-deep))" }}
+              >
+                S
               </div>
-              <div className="mt-6 max-w-xl font-display text-[16.5px] leading-[1.8] text-foreground/85">
-                让一通陌生电话，先经过算法。<br />
-                让一段熟悉声音，先经过验证。
-              </div>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Badge variant="olive"><span className="signal-dot text-olive" /> 系统正常</Badge>
-                <Badge variant="outline">EDGE · ON-DEVICE</Badge>
-                <Badge variant="outline">GDPR · GB/T 35273</Badge>
+              <div>
+                <div className="font-display text-[22px] font-extrabold">SENTINEL</div>
+                <div className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                  声纹捕手 · VOICE GUARDIAN
+                </div>
               </div>
             </div>
-
-            <div className="col-span-12 lg:col-span-5">
-              <div className="grid grid-cols-2 gap-8">
-                <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Product</div>
-                  <ul className="mt-3.5 space-y-2.5 text-[13.5px]">
-                    {["家用防护盒", "学生 / 家庭版", "机构 1U 部署", "企业接入 API"].map((t) => (
-                      <li key={t}><a className="transition-colors hover:text-vermillion" href="#">{t}</a></li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Resources</div>
-                  <ul className="mt-3.5 space-y-2.5 text-[13.5px]">
-                    {[["现状数据", "#crisis"], ["防护机制", "#defense"], ["实时演示", "#demo"], ["政策文件", "#policy"]].map(([t, h]) => (
-                      <li key={t}><a className="transition-colors hover:text-vermillion" href={h}>{t}</a></li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <Card className="mt-10 border-foreground/15 bg-paper-warm/60 p-6">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-vermillion">
-                  Early Access · 早鸟计划
-                </div>
-                <div className="mt-2.5 font-display text-[19px] font-semibold leading-snug">
-                  让你身边的老人，先用上。
-                </div>
-                <div className="mt-5 flex gap-2">
-                  <Input type="email" placeholder="留下邮箱 / 优先体验" className="flex-1 font-mono text-[12px]" />
-                  <Button>申请 <ArrowRight className="h-3.5 w-3.5" /></Button>
-                </div>
-              </Card>
-            </div>
+            <p className="max-w-[44ch] text-[14px] leading-[1.75] font-medium" style={{ color: "rgba(242, 243, 247, 0.65)" }}>
+              面向 AI 合成语音新威胁的毫秒级反诈平台。
+              来电溯源 × 声纹取证 × 话术语义三重引擎并联，
+              在通话接通的第一秒完成判决。
+            </p>
           </div>
 
-          <Separator className="my-12" />
-
-          <div className="grid grid-cols-12 gap-6 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
-            <div className="col-span-12 lg:col-span-5">
-              © 2026 L'AFFAIRE / Voice Guardian Initiative · 本页面为概念展示页
+          <div className="col-span-6 md:col-span-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+              产品
             </div>
-            <div className="col-span-12 lg:col-span-7 lg:text-right">
-              项目响应《反电信网络诈骗法》§ 25 · 涉诈信息实时识别与处置义务
-            </div>
+            <ul className="mt-4 space-y-2.5 text-[13px] font-medium">
+              {["功能概览", "三层防御", "API 文档", "指挥中心"].map((x) => (
+                <li key={x}>
+                  <a href="#" className="hover:opacity-100 transition-opacity" style={{ color: "rgba(242, 243, 247, 0.85)" }}>
+                    {x}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="mt-3 grid grid-cols-12 gap-6 font-mono text-[9.5px] uppercase tracking-[0.22em] text-muted-foreground/70">
-            <div className="col-span-12 lg:col-span-5">
-              No.2026/05 · v2.6 · BUILD-2026.05 · BACKEND go1.22
+
+          <div className="col-span-6 md:col-span-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+              生态
             </div>
-            <div className="col-span-12 lg:col-span-7 lg:text-right">
-              数据截止 2026 年 5 月 · 持续更新
+            <ul className="mt-4 space-y-2.5 text-[13px] font-medium">
+              {["运营商接入", "终端厂商", "金融风控", "公安协同"].map((x) => (
+                <li key={x}>
+                  <a href="#" className="hover:opacity-100 transition-opacity" style={{ color: "rgba(242, 243, 247, 0.85)" }}>
+                    {x}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="col-span-12 md:col-span-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+              联系
+            </div>
+            <Link
+              href="/warroom"
+              className="mt-4 inline-flex items-center gap-2 text-[18px] font-display font-extrabold transition-colors"
+              style={{ color: "var(--mint)" }}
+            >
+              进入指挥中心
+              <ArrowUpRight size={18} />
+            </Link>
+            <div className="mt-6 p-5 rounded-2xl border border-white/15">
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                紧急举报
+              </div>
+              <div className="mt-1 numplate text-[28px] text-white">96110</div>
+              <div className="mt-1 font-mono text-[11px] font-medium" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                全国反诈专线 · 24h
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="relative h-px overflow-hidden bg-border">
-        <div className="absolute inset-y-0 left-0 w-1/3"
-          style={{
-            background: "linear-gradient(to right, transparent, var(--vermillion), transparent)",
-            animation: "marquee 3s linear infinite",
-          }} />
+        <div className="mt-14 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+          <div className="font-mono text-[11px] font-medium" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            © 2026 SENTINEL · 本页面为公益科普与作品展示，不对外提供商业服务
+          </div>
+          <div className="flex items-center gap-4 font-mono text-[11px] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            <span className="flex items-center gap-2">
+              <span className="signal-dot" style={{ color: "var(--mint)" }} /> BEIJING · OPERATIONAL
+            </span>
+            <span>v1.0.0 / build 0513</span>
+          </div>
+        </div>
       </div>
     </footer>
   );

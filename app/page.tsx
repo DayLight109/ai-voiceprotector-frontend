@@ -13,9 +13,9 @@ import SocialValue from "@/components/SocialValue";
 import Sources from "@/components/Sources";
 import Footer from "@/components/Footer";
 
-export default function Page() {
+export default function Home() {
   return (
-    <main className="relative min-h-screen overflow-hidden">
+    <main className="min-h-screen bg-canvas text-ink">
       <Header />
       <StatusTicker />
       <Hero />

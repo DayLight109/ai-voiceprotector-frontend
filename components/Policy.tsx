@@ -1,87 +1,81 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Scale, FileText, Building2, Gavel } from "lucide-react";
+
+const CLAUSES = [
+  {
+    icon: Scale, code: "25", act: "反电信网络诈骗法",
+    title: "运营商实时监测义务",
+    body: "电信业务经营者应对异常通话 / 短信进行实时监测与处置，并向用户提示风险。",
+  },
+  {
+    icon: FileText, code: "23", act: "反电信网络诈骗法",
+    title: "数据协同与信息共享",
+    body: "公安、工信、金融、网信主管部门应依法共享涉诈线索，构建联合治理机制。",
+  },
+  {
+    icon: Building2, code: "38", act: "个人信息保护法",
+    title: "最小必要原则",
+    body: "自动化决策处理个人信息应采取必要措施保障安全、不得进行不合理的差别对待。",
+  },
+  {
+    icon: Gavel, code: "287", act: "刑法 · 修正案（十一）",
+    title: "帮信罪 / 电信诈骗罪",
+    body: "利用信息网络实施诈骗、为犯罪活动提供帮助的，依法追究刑事责任。",
+  },
+];
 
 export default function Policy() {
   return (
-    <section id="policy" className="relative border-b border-border bg-background">
-      <div className="mx-auto max-w-[1400px] px-6 py-24">
-        <div className="grid grid-cols-12 items-end gap-6 border-b border-border pb-6">
-          <div className="col-span-12 lg:col-span-7">
-            <div className="rubric">CHAPTER VIII · 法&nbsp;·&nbsp;政</div>
-            <h2 className="mt-4 font-display text-[clamp(40px,5vw,76px)] font-medium leading-[0.98] tracking-[-0.025em]">
-              法律已经
+    <section id="policy" className="relative py-24 md:py-32 bg-canvas overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to bottom, var(--canvas-2), transparent)" }} />
+      <div className="absolute top-20 right-10 w-[30vw] h-[30vw] rounded-full blob-indigo opacity-30" />
+
+      <div className="relative max-w-[1400px] mx-auto px-5 md:px-8">
+        <div className="grid grid-cols-12 gap-6 mb-16 items-end">
+          <div className="col-span-12 md:col-span-8">
+            <div className="section-idx mb-4"><b>08</b>政策与合规依据</div>
+            <h2 className="mega text-[clamp(2.4rem,5.5vw,5rem)]">
+              不是锦上添花，
               <br />
-              <span className="font-display-italic text-vermillion">把要求</span>写在那里。
+              <span className="mega-italic" style={{ color: "var(--indigo)" }}>是法定动作</span>。
             </h2>
           </div>
-          <div className="col-span-12 lg:col-span-5">
-            <p className="font-display text-[15.5px] leading-[1.85] text-foreground/85">
-              反电信诈骗已从专项整治上升为国家系统性法治部署。
-              本项目正是对《反电信网络诈骗法》法定要求与「十五五」政策导向的<span className="text-vermillion font-medium">直接技术落地</span>。
-            </p>
+          <div className="col-span-12 md:col-span-4 text-[14px] leading-[1.75] text-ink-2 font-medium">
+            2022 年 12 月 1 日起施行的《反电信网络诈骗法》对运营商、平台、金融机构提出了实时监测、协同共享的强制要求。
           </div>
         </div>
 
-        <div className="mt-14 grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-7">
-            <div className="relative border-l-2 border-vermillion pl-8">
-              <span className="absolute -left-[5px] top-0 h-2.5 w-2.5 rounded-full bg-vermillion" />
-              <span className="absolute -left-[5px] bottom-0 h-2.5 w-2.5 rounded-full bg-vermillion" />
-              <div className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-vermillion">
-                《反电信网络诈骗法》§ 25
-              </div>
-              <blockquote className="mt-4 font-display text-[clamp(24px,2.6vw,36px)] font-medium leading-[1.45] tracking-[-0.01em]">
-                <span className="font-display-italic text-vermillion text-[1.4em] leading-none mr-1">"</span>
-                基础电信企业和互联网企业应当
-                <span className="font-display-italic text-vermillion">建立涉诈信息实时监测与处置机制，</span>
-                对涉诈电话、短信及相关应用程序依法采取拦截、关停等措施。
-                <span className="font-display-italic text-vermillion text-[1.4em] leading-none ml-1">"</span>
-              </blockquote>
-              <div className="mt-5 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-                2022.12.01 起施行 · 国家层面首次将「实时识别与处置」写入法律
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {CLAUSES.map((c, i) => (
+            <div key={c.code} className="panel panel-lift p-7 md:p-9 relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full opacity-40 blob-indigo" />
 
-          <div className="col-span-12 lg:col-span-5">
-            <Card className="border-foreground/15 bg-paper-warm/40 p-7">
-              <Badge variant="destructive">十五五规划 · 2026 开局</Badge>
-              <div className="mt-3 font-display text-[20px] font-medium leading-snug">
-                《国民经济和社会发展第十五个五年规划纲要》明确要求：
-                <span className="text-vermillion">「加大预防和打击电信网络诈骗力度」</span>，
-                纳入数字安全与平安中国整体部署。
+              <div className="relative flex items-start justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md text-white"
+                    style={{ background: "linear-gradient(135deg, var(--indigo), var(--indigo-deep))" }}
+                  >
+                    <c.icon size={20} strokeWidth={2} />
+                  </div>
+                  <div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                      {c.act}
+                    </div>
+                    <div className="font-display text-[20px] font-extrabold mt-0.5">
+                      第 {c.code} 条
+                    </div>
+                  </div>
+                </div>
+                <div className="font-mono text-[11px] font-bold text-ink-soft">0{i + 1}</div>
               </div>
-              <Separator className="my-6" />
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                上海 · 2026.04.14 部署会议
-              </div>
-              <p className="mt-2 font-display text-[14.5px] leading-[1.85] text-foreground/85">
-                将「以科技赋能为核，推进 <span className="text-vermillion font-medium">AI 技术反制</span>
-                和反诈联合实验室建设」列为 2026 年核心任务。
+              <h3 className="relative font-display text-[22px] md:text-[26px] font-extrabold tracking-tight leading-[1.25]">
+                {c.title}
+              </h3>
+              <p className="relative mt-4 text-[14px] leading-[1.75] text-ink-2 font-medium">
+                {c.body}
               </p>
-            </Card>
-          </div>
-        </div>
-
-        <div className="mt-16">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Policy · Timeline
-          </div>
-          <div className="mt-5 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border bg-border md:grid-cols-4">
-            {[
-              { d: "2022 / 12", t: "《反电信网络诈骗法》施行", b: "首次以法律形式确立运营商与平台的实时监测义务。" },
-              { d: "2024 / 03", t: "最高检：电诈起诉同比 ↑ 53.9%", b: "AI 变声、深度伪造、跨境团伙成为主要攻击形态。" },
-              { d: "2026 / 01", t: "公安部 2025 数据公布", b: "全年拦截诈骗电话 36 亿次，紧急止付 2170.7 万元。" },
-              { d: "2026 / 04", t: "上海：AI 反制为核心任务", b: "推动从「单点处置」向「全域预警」升级。" },
-            ].map((m, i) => (
-              <div key={i} className="bg-card p-7">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-vermillion">{m.d}</div>
-                <div className="mt-3 font-display text-[17px] font-semibold leading-tight">{m.t}</div>
-                <div className="mt-2 text-[12.5px] leading-[1.75] text-muted-foreground">{m.b}</div>
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

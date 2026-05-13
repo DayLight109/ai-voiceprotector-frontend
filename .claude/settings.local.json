@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "mcp__plugin_context7_context7__query-docs",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx --no-install next build)",
+      "Bash(cat postcss.config.js)",
+      "Bash(cat postcss.config.mjs)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(mkdir -p public)",
+      "Bash(curl -fsSL -o public/world-map.svg \"https://raw.githubusercontent.com/djaiss/mapsicon/master/all/world/vector.svg\")",
+      "Bash(curl -fsSL -o \"C:\\\\Users\\\\Lilce\\\\Desktop\\\\声纹捕手\\\\public\\\\world-map.svg\" \"https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg\")",
+      "Bash(curl -fsSL --retry 2 -o \"C:\\\\Users\\\\Lilce\\\\Desktop\\\\声纹捕手\\\\public\\\\world.svg\" \"https://cdn.jsdelivr.net/npm/world-atlas@2/world/110m.json\")",
+      "Bash(curl -fsSL --retry 2 -o /c/Users/Lilce/Desktop/声纹捕手/public/world-topo.json \"https://cdn.jsdelivr.net/npm/world-atlas@2/world/110m.json\")",
+      "Bash(curl -fsSL --retry 2 -o /c/Users/Lilce/Desktop/声纹捕手/public/world-topo.json \"https://unpkg.com/world-atlas@2/countries-110m.json\")",
+      "Bash(npm install *)",
+      "Bash(node scripts/build-world-svg.mjs)"
     ]
   }
 }

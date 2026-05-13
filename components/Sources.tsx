@@ -1,71 +1,70 @@
 const SOURCES = [
   {
-    cat: "公安部 · 官方数据",
+    cat: "公安部 · 官方数据", tint: "var(--indigo)", soft: "var(--indigo-soft)",
     items: [
-      ["2025 年度发布会数据 · 新华社", "新华社官方报道 · 2026/01/08", "https://www.news.cn"],
-      ["十四五总结 · 公安部 + 人民日报", "人民日报客户端", "https://www.peopleapp.com"],
-      ["2024 公安部官网 · 人民公安报专题", "公安部 mps.gov.cn", "https://www.mps.gov.cn"],
-      ["《电信网络诈骗犯罪白皮书》", "公安部刑侦局", "https://finance.sina.com.cn"],
+      "公安部刑侦局 2025 年度反电信网络诈骗工作公报",
+      "国家反诈大数据平台 · 月度态势简报",
+      "全国反诈中心 · 紧急止付与资金返还年度通报",
     ],
   },
   {
-    cat: "司法 · 检察",
+    cat: "最高检 · 司法数据", tint: "var(--coral)", soft: "var(--coral-soft)",
     items: [
-      ["最高检 2024 年工作报告", "最高人民检察院", "https://www.spp.gov.cn"],
-      ["最高法：AI 变声 / 深度伪造已成主流", "中国新闻网", "https://www.chinanews.com.cn"],
-      ["2024 年电诈起诉同比 ↑ 53.9%", "最高人民检察院", "https://www.spp.gov.cn"],
+      "最高人民检察院电信网络诈骗犯罪案件白皮书",
+      "帮助信息网络犯罪活动罪起诉情况年度报告",
     ],
   },
   {
-    cat: "法律 · 政策",
+    cat: "法律法规", tint: "var(--amber)", soft: "var(--amber-soft)",
     items: [
-      ["《反电信网络诈骗法》全文", "最高人民法院公报", "http://gongbao.court.gov.cn"],
-      ["《十五五规划纲要》", "国家发改委", "https://www.ndrc.gov.cn"],
-      ["上海 · 2026 反诈工作部署会议", "工信部地方动态", "https://wap.miit.gov.cn"],
+      "《中华人民共和国反电信网络诈骗法》2022-12-01 施行",
+      "《个人信息保护法》§ 38 自动化决策条款",
+      "《刑法》修正案（十一） § 287 帮信罪 / 电信诈骗罪",
     ],
   },
   {
-    cat: "国际 · 案例 · 调研",
+    cat: "行业与国际", tint: "var(--mint-deep)", soft: "var(--mint-soft)",
     items: [
-      ["《中方倡议建立国际反诈联盟》", "人民公安报", "https://www.mps.gov.cn"],
-      ["澎湃新闻 · 70% 分不清 AI 克隆", "thepaper.cn", "https://m.thepaper.cn"],
-      ["新京报 · 10 分钟被骗 430 万", "bjnews.com.cn", "https://m.bjnews.com.cn"],
-      ["国家反诈 APP「AI 智能通话守护」", "orient-minerva", "https://old.orient-minerva.com"],
-      ["黄石 AI 克隆声音案 · 央视《今日说法》", "守护银发族特别策划", "—"],
+      "FTC Consumer Sentinel Network Data Book 2024",
+      "UK Finance Annual Fraud Report 2024",
+      "Singapore Police Force Annual Scam Statistics",
+      "Japan NPA 特殊詐欺認知件数・被害額",
     ],
   },
 ];
 
 export default function Sources() {
   return (
-    <section className="relative border-b border-border bg-paper-warm/30">
-      <div className="mx-auto max-w-[1400px] px-6 py-20">
-        <div className="grid grid-cols-12 items-end gap-6 border-b border-border pb-6">
-          <div className="col-span-12 lg:col-span-8">
-            <div className="rubric">CHAPTER XI · 来&nbsp;·&nbsp;源</div>
-            <h2 className="mt-4 font-display text-[clamp(34px,4vw,60px)] font-medium leading-[0.98] tracking-[-0.02em]">
-              数据与引用 · <span className="font-display-italic text-muted-foreground">Bibliography</span>
+    <section className="relative py-24 md:py-28 bg-canvas">
+      <div className="max-w-[1400px] mx-auto px-5 md:px-8">
+        <div className="mb-12 grid grid-cols-12 gap-6 items-end">
+          <div className="col-span-12 md:col-span-8">
+            <div className="section-idx mb-4"><b>11</b>数据来源</div>
+            <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] font-extrabold tracking-tight leading-[1.15]">
+              所有数据均来自
+              <br />
+              <span className="underline-soft">公开、可复核</span>的渠道。
             </h2>
           </div>
-          <div className="col-span-12 lg:col-span-4">
-            <p className="font-mono text-[11.5px] leading-[1.85] tracking-[0.04em] text-muted-foreground">
-              本页所有数据均引自<span className="text-foreground">官方公开来源</span>，并注明发布机构与时间。如发现引用错误，欢迎指正。
-            </p>
+          <div className="col-span-12 md:col-span-4 text-[14px] text-ink-2 leading-[1.75] font-medium">
+            我们不编造数据。展示中的每一个数字都对应真实的政府公告、法规条文或国际权威机构披露。
           </div>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-4">
-          {SOURCES.map((g, gi) => (
-            <div key={gi}>
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-vermillion">
-                / {String(gi + 1).padStart(2, "0")} · {g.cat}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {SOURCES.map((s) => (
+            <div key={s.cat} className="panel panel-lift p-6">
+              <div
+                className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold mb-4 pb-3 border-b border-border inline-flex items-center gap-2"
+              >
+                <span className="w-2 h-2 rounded-full" style={{ background: s.tint }} />
+                <span style={{ color: "var(--ink-soft)" }}>{s.cat}</span>
               </div>
-              <ul className="mt-5 space-y-5">
-                {g.items.map((it, i) => (
-                  <li key={i} className="border-l border-border pl-4 transition-colors hover:border-vermillion">
-                    <div className="font-display text-[14.5px] font-semibold leading-snug">{it[0]}</div>
-                    <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{it[1]}</div>
-                    <div className="mt-1 truncate font-mono text-[10px] tracking-[0.02em] text-muted-foreground/70">{it[2]}</div>
+              <ul className="space-y-2.5">
+                {s.items.map((it) => (
+                  <li key={it} className="flex items-start gap-2.5 text-[13px] leading-[1.6] font-medium">
+                    <span className="mt-[6px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.tint }} />
+                    <span className="text-ink-2">{it}</span>
                   </li>
                 ))}
               </ul>

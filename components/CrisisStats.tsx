@@ -1,237 +1,170 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { TrendingUp, Users, Clock, Brain } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-
-function useInView<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
-  const [seen, setSeen] = useState(false);
+function CountUp({ to, suffix = "", duration = 1400 }: { to: number; suffix?: string; duration?: number }) {
+  const [val, setVal] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
   useEffect(() => {
-    if (!ref.current || seen) return;
+    if (!ref.current) return;
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setSeen(true); },
-      { threshold: 0.25 }
+      (entries) => {
+        if (entries[0].isIntersecting && !started.current) {
+          started.current = true;
+          const start = performance.now();
+          const tick = (t: number) => {
+            const p = Math.min(1, (t - start) / duration);
+            const eased = 1 - Math.pow(1 - p, 3);
+            setVal(to * eased);
+            if (p < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.3 }
     );
     obs.observe(ref.current);
     return () => obs.disconnect();
-  }, [seen]);
-  return { ref, seen };
-}
-
-function CountUp({ to, duration = 1800, decimals = 0, start }: {
-  to: number; duration?: number; decimals?: number; start: boolean;
-}) {
-  const [v, setV] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    const t0 = performance.now();
-    let raf = 0;
-    const tick = (t: number) => {
-      const k = Math.min(1, (t - t0) / duration);
-      const eased = k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
-      setV(eased * to);
-      if (k < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [start, to, duration]);
+  }, [to, duration]);
   return (
-    <span className="numplate">
-      {v.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
+    <span ref={ref}>
+      {val >= 100 ? Math.round(val).toLocaleString() : val.toFixed(1)}
+      {suffix}
     </span>
   );
 }
 
-export default function CrisisStats() {
-  const { ref, seen } = useInView<HTMLDivElement>();
+const BIG = [
+  { n: 36, suffix: " 亿", unit: "次", label: "全年拦截诈骗电话", icon: Clock, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+  { n: 25.8, suffix: " 万", unit: "起", label: "侦破电信网络诈骗案件", icon: TrendingUp, tint: "var(--coral-deep)", soft: "var(--coral-soft)" },
+  { n: 2170.7, suffix: " 万", unit: "元", label: "紧急止付冻结资金", icon: Users, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+  { n: 674.7, suffix: " 万", unit: "人", label: "面对面劝阻避免损失", icon: Brain, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+];
 
+const AI_FACTS = [
+  { k: "3 秒", v: "克隆所需音频", c: "var(--coral-soft)", t: "var(--coral-deep)" },
+  { k: "85%", v: "声纹相似度", c: "var(--amber-soft)", t: "var(--amber-deep)" },
+  { k: "70%", v: "无法辨别 AI", c: "var(--indigo-soft)", t: "var(--indigo-deep)" },
+];
+
+export default function CrisisStats() {
   return (
-    <section id="crisis" ref={ref} className="relative border-b border-border bg-background">
-      <div className="mx-auto max-w-[1400px] px-6 pt-24">
-        <div className="flex items-end justify-between border-b border-border pb-6">
+    <section id="crisis" className="relative py-24 md:py-32 bg-canvas">
+      <div className="max-w-[1400px] mx-auto px-5 md:px-8">
+        <div className="flex items-baseline justify-between mb-14 flex-wrap gap-4">
           <div>
-            <div className="rubric">CHAPTER II · 危&nbsp;·&nbsp;局</div>
-            <h2 className="mt-4 font-display text-[clamp(40px,5vw,76px)] font-medium leading-[0.98] tracking-[-0.025em]">
-              当电话<span className="font-display-italic text-vermillion">每分钟</span>都在
-              <br className="hidden md:block" />
-              制造受害者。
+            <div className="section-idx mb-4"><b>02</b>正在发生的事</div>
+            <h2 className="mega text-[clamp(2.4rem,5.5vw,5rem)] max-w-[20ch]">
+              一年，<span className="mega-italic" style={{ color: "var(--coral)" }}>36 亿</span> 次
+              <br />
+              伪装的陌生来电。
             </h2>
           </div>
-          <div className="hidden text-right font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground md:block">
-            Updated · 2026/05
+          <div className="font-mono text-[11px] text-ink-soft max-w-sm font-medium">
+            数据来源：公安部刑侦局 · 国家反诈大数据平台 · 2025 年度
           </div>
         </div>
-      </div>
 
-      {/* HERO STAT — 36 亿 */}
-      <div className="mx-auto max-w-[1400px] px-6 pt-12">
-        <div className="grid grid-cols-12 gap-5">
-          <Card className="col-span-12 border-foreground/15 bg-paper-warm/40 p-8 lg:col-span-7">
-            <div className="flex items-baseline justify-between">
-              <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground">
-                Calls intercepted · 2025
-              </div>
-              <Badge variant="outline">Public · MPS</Badge>
-            </div>
-
-            <div className="mt-6 flex items-end gap-6">
-              <div className="font-display text-[clamp(120px,17vw,232px)] font-medium leading-[0.84] tracking-[-0.05em]">
-                <CountUp to={36} start={seen} />
-                <span className="font-display-italic text-vermillion">亿</span>
-              </div>
-              <div className="mb-6 max-w-[280px] text-[15px] leading-[1.75] text-foreground/85">
-                次诈骗电话被拦截。<br />
-                平均每秒，<span className="text-vermillion font-medium">114&nbsp;通</span>。
-                这个数字仍在增长。
-              </div>
-            </div>
-
-            {/* mini bar */}
-            <div className="mt-8 flex items-end gap-1 h-10">
-              {[18, 25, 22, 32, 28, 36, 41, 38, 47, 52, 58, 64].map((v, i) => (
-                <div key={i} className="flex-1 rounded-sm" style={{
-                  height: `${(v / 64) * 100}%`,
-                  background: i >= 9 ? "var(--vermillion)" : "color-mix(in oklab, var(--vermillion), transparent 65%)",
-                  transition: `height 0.6s ${i * 30}ms cubic-bezier(0.25, 1, 0.5, 1)`,
-                }} />
-              ))}
-            </div>
-            <div className="mt-2 flex justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              <span>2024-06</span>
-              <span>2025-12</span>
-            </div>
-          </Card>
-
-          <div className="col-span-12 grid grid-cols-2 gap-4 lg:col-span-5">
-            {[
-              { label: "诈骗短信拦截", v: 33, suffix: "亿条", note: "2025 全年", trend: "up" },
-              { label: "侦破电诈案件", v: 25.8, suffix: "万起", note: "同比 ↑ 持续高位", dec: 1, trend: "up" },
-              { label: "紧急止付资金", v: 2170.7, suffix: "万元", note: "2025 已止付", dec: 1, trend: "up" },
-              { label: "见面劝阻群众", v: 674.7, suffix: "万人次", note: "全年累计", dec: 1, trend: "up" },
-            ].map((s) => (
-              <Card key={s.label} className="border-border p-5">
-                <div className="flex items-center justify-between">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    {s.label}
-                  </div>
-                  {s.trend === "up" ? (
-                    <ArrowUpRight className="h-3 w-3 text-vermillion" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3 text-olive" />
-                  )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {BIG.map((s, i) => (
+            <div
+              key={s.label}
+              className="panel panel-lift p-6 md:p-7 relative overflow-hidden"
+            >
+              <div
+                className="absolute -top-8 -right-8 w-28 h-28 rounded-full opacity-60"
+                style={{ background: s.soft }}
+              />
+              <div className="relative flex items-start justify-between mb-6">
+                <div
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center"
+                  style={{ background: s.soft, color: s.tint }}
+                >
+                  <s.icon size={20} />
                 </div>
-                <div className="mt-4 flex items-baseline gap-1.5">
-                  <span className="numplate text-[40px] font-medium leading-none">
-                    <CountUp to={s.v} decimals={s.dec ?? 0} start={seen} />
-                  </span>
-                  <span className="font-mono text-[11px] tracking-[0.1em] text-muted-foreground">{s.suffix}</span>
-                </div>
-                <div className="mt-2.5 text-[11.5px] text-muted-foreground">{s.note}</div>
-              </Card>
-            ))}
-          </div>
+                <span className="font-mono text-[11px] font-bold text-ink-soft">0{i + 1}</span>
+              </div>
+              <div className="relative mt-5 numplate text-[clamp(2.2rem,4.5vw,3.4rem)] leading-none">
+                <CountUp to={s.n} suffix={s.suffix} />
+                <span className="text-[0.4em] ml-2 font-body font-bold text-ink-soft">{s.unit}</span>
+              </div>
+              <div className="relative mt-3 text-[13px] font-semibold text-ink-soft">
+                {s.label}
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* divider with section number */}
-      <div className="mx-auto my-20 flex max-w-[1400px] items-center gap-5 px-6">
-        <span className="folio">§ 02.2</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-
-      {/* AI shock */}
-      <div className="mx-auto max-w-[1400px] px-6">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-4">
-            <Badge variant="destructive">DATA · 声音克隆</Badge>
-            <h3 className="mt-5 font-display text-[clamp(28px,3vw,44px)] font-medium leading-[1.05] tracking-[-0.02em]">
-              耳朵已经
+        <div className="mt-20 grid grid-cols-12 gap-6 md:gap-10">
+          <div className="col-span-12 lg:col-span-5">
+            <span className="tag-chip" data-tone="coral">AI 冲击 · 新威胁</span>
+            <h3 className="mt-5 mega text-[clamp(1.75rem,3.5vw,2.5rem)]">
+              声音不再是
               <br />
-              <span className="font-display-italic text-vermillion">不够用</span>了。
+              <span className="underline-soft">身份的凭证</span>。
             </h3>
-            <p className="mt-5 font-display text-[16px] leading-[1.85] text-foreground/85">
-              克隆一个真人的声音，已经不需要专业设备、不需要长时间录音。
-              一段 3 秒钟的微信语音，足以合成相似度高达 85% 的克隆人声——
-              <em className="not-italic font-medium text-foreground">而 70% 的人，分辨不出真假</em>。
+            <p className="mt-6 text-[15px] leading-[1.75] text-ink-2 font-medium max-w-[44ch]">
+              深度伪造工具把&ldquo;我是你孙子&rdquo;变成可批量生产的流水线。
+              熟悉的声线、哽咽的语气、甚至具体的称谓——都可以由一段 3 秒的抖音片段生成。
             </p>
-            <div className="mt-7 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-              Source · 澎湃新闻 · 瑞莱智慧
-            </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-8">
-            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
-              {[
-                { big: "3",  unit: "秒", label: "克隆门槛",    note: "截取一段微信语音 / 抖音音频，足以训练。" },
-                { big: "85", unit: "%",  label: "声纹相似度",  note: "合成结果在常规通话场景下，足以骗过亲属。" },
-                { big: "70", unit: "%",  label: "无法人耳分辨", note: "在 7000+ 受访者样本中，超过七成无法识别。" },
-              ].map((g, i) => (
-                <div key={i} className="bg-card px-7 py-9">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                    Metric · 0{i + 1}
+          <div className="col-span-12 lg:col-span-7 space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              {AI_FACTS.map((f) => (
+                <div
+                  key={f.v}
+                  className="p-5 md:p-6 rounded-2xl relative overflow-hidden"
+                  style={{ background: f.c }}
+                >
+                  <div className="numplate text-[clamp(1.75rem,4vw,3rem)] leading-none" style={{ color: f.t }}>
+                    {f.k}
                   </div>
-                  <div className="mt-5 flex items-baseline">
-                    <span className="numplate text-[clamp(72px,7vw,116px)] font-medium leading-[0.85] text-vermillion">
-                      <CountUp to={parseInt(g.big)} start={seen} />
-                    </span>
-                    <span className="ml-2 font-display text-[28px] font-medium text-vermillion">{g.unit}</span>
-                  </div>
-                  <div className="mt-4 font-display text-[17px] font-semibold">{g.label}</div>
-                  <div className="mt-2 max-w-[240px] text-[12.5px] leading-[1.7] text-muted-foreground">
-                    {g.note}
+                  <div className="mt-3 font-body text-[12px] font-bold" style={{ color: f.t }}>
+                    {f.v}
                   </div>
                 </div>
               ))}
             </div>
+
+            <div className="panel p-5">
+              <div className="flex items-end justify-between mb-4">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                    AI 诈骗涉案金额
+                  </div>
+                  <div className="font-display text-[20px] font-extrabold mt-1">
+                    2020 → 2024 · CAGR <span style={{ color: "var(--coral-deep)" }}>+1928.8%</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                    2024 H1
+                  </div>
+                  <div className="font-display text-[20px] font-extrabold mt-1">1.85 亿</div>
+                </div>
+              </div>
+              <div className="h-24 flex items-end gap-2">
+                {[4, 8, 18, 45, 100].map((h, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                    <div
+                      className="w-full rounded-t-xl transition-all"
+                      style={{
+                        height: `${h}%`,
+                        background: `linear-gradient(to top, var(--indigo), var(--indigo-deep))`,
+                        opacity: 0.4 + (i * 0.15),
+                      }}
+                    />
+                    <div className="font-mono text-[10px] text-ink-soft font-bold">
+                      {2020 + i}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* growth chart */}
-      <div className="mx-auto mt-20 max-w-[1400px] px-6 pb-24">
-        <Card className="border-foreground/15 p-8">
-          <div className="flex items-baseline justify-between">
-            <div>
-              <div className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
-                AI 诈骗涉案金额 · 复合增长率
-              </div>
-              <div className="mt-2.5 font-display text-[30px] font-medium tracking-tight">
-                2020 → 2024，
-                <span className="font-display-italic text-vermillion">+1928.8%</span>
-              </div>
-            </div>
-            <div className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground md:block">
-              Source · 瑞莱智慧 · 新京报
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-5">
-            {[
-              { y: "2020",   v: 0.2,   max: 18500, label: "0.2 万元" },
-              { y: "2021",   v: 8,     max: 18500, label: "≈ 8 万元" },
-              { y: "2022",   v: 60,    max: 18500, label: "≈ 60 万元" },
-              { y: "2023",   v: 1670,  max: 18500, label: "1,670 万元" },
-              { y: "2024H1", v: 18500, max: 18500, label: "1.85 亿元 (H1)" },
-            ].map((b, i) => (
-              <div key={i} className="grid grid-cols-12 items-center gap-3">
-                <div className="col-span-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground md:col-span-1">
-                  {b.y}
-                </div>
-                <div className="col-span-7 h-2.5 overflow-hidden rounded-full bg-muted md:col-span-8">
-                  <div className="h-full rounded-full" style={{
-                    width: seen ? `${(b.v / b.max) * 100}%` : "0%",
-                    transition: `width 1.6s ${0.1 * i}s cubic-bezier(0.25, 1, 0.5, 1)`,
-                    background: "linear-gradient(to right, var(--olive), var(--caramel), var(--vermillion))",
-                  }} />
-                </div>
-                <div className="col-span-3 font-mono text-[12.5px]">{b.label}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
       </div>
     </section>
   );

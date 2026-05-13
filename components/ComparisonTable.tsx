@@ -1,132 +1,150 @@
-import { Check, Minus, Star } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-type Cell = "yes" | "partial" | "no" | "keyword";
-
-const HEADERS = [
-  "国家反诈中心",
-  "Truecaller",
-  "运营商防骚扰",
-  "手机厂商安全",
-  "手机管家类",
-  "L'Affaire",
+const ROWS = [
+  { f: "来电号码溯源", a: "full", b: "partial", c: "none", d: "partial" },
+  { f: "信令跳转检测", a: "full", b: "none", c: "none", d: "none" },
+  { f: "AI 声纹识别", a: "full", b: "none", c: "none", d: "none" },
+  { f: "话术语义模型", a: "full", b: "none", c: "partial", d: "none" },
+  { f: "实时打断", a: "full", b: "none", c: "none", d: "none" },
+  { f: "家属同步推送", a: "full", b: "none", c: "none", d: "partial" },
+  { f: "端侧推理", a: "full", b: "none", c: "none", d: "none" },
+  { f: "毫秒级延迟", a: "full", b: "partial", c: "none", d: "partial" },
 ];
 
-const ROWS: Array<{ feature: string; detail: string; cells: Cell[] }> = [
-  { feature: "已知号码黑名单拦截", detail: "针对已被标记号码的事前拦截", cells: ["yes", "yes", "yes", "yes", "yes", "yes"] },
-  { feature: "识破「号码显示正常」骗局", detail: "境外伪装、PBX 中转下的来电真伪判断", cells: ["partial", "partial", "partial", "partial", "partial", "yes"] },
-  { feature: "识别境外诈骗来源", detail: "信令路径与号码归属地一致性", cells: ["yes", "yes", "yes", "partial", "partial", "yes"] },
-  { feature: "识破 AI 伪造 / 克隆声音", detail: "实时声纹真伪判断 · 端侧推理", cells: ["partial", "no", "no", "partial", "partial", "yes"] },
-  { feature: "识别诈骗话术", detail: "通话进行中的语义级风险识别", cells: ["yes", "no", "partial", "partial", "keyword", "yes"] },
-  { feature: "全网联防联控", detail: "与国家反诈系统数据互通", cells: ["yes", "yes", "yes", "yes", "yes", "yes"] },
-  { feature: "自动取证 · 一键上报", detail: "高风险通话证据加密留存与上报", cells: ["no", "no", "no", "no", "partial", "yes"] },
-  { feature: "反诈知识学习", detail: "面向家庭场景的科普与提醒", cells: ["yes", "no", "no", "yes", "yes", "yes"] },
+const HEAD = [
+  { key: "a", name: "SENTINEL", tag: "本方案", highlight: true },
+  { key: "b", name: "运营商拦截", tag: "号段黑名单" },
+  { key: "c", name: "反诈中心", tag: "举报后置" },
+  { key: "d", name: "手机厂商", tag: "本机黑名单" },
 ];
 
-function CellMark({ v, last }: { v: Cell; last?: boolean }) {
-  if (v === "yes")
+function Cell({ v, highlight }: { v: string; highlight?: boolean }) {
+  if (v === "full")
     return (
-      <span className={`inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] ${last ? "text-vermillion font-medium" : "text-olive"}`}>
-        <Check className="h-3.5 w-3.5" /> 支持
-      </span>
+      <div className="flex items-center gap-2">
+        <div
+          className="w-7 h-7 rounded-xl flex items-center justify-center shadow-sm"
+          style={{
+            background: highlight ? "var(--mint)" : "var(--mint-soft)",
+            color: highlight ? "#FFFFFF" : "var(--mint-deep)",
+          }}
+        >
+          <Check size={14} strokeWidth={3} />
+        </div>
+        <span className="font-mono text-[11px] font-bold" style={{ color: highlight ? "var(--mint-deep)" : "var(--ink-soft)" }}>
+          全面
+        </span>
+      </div>
     );
   if (v === "partial")
     return (
-      <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-caramel">
-        <span className="h-1.5 w-1.5 rounded-full bg-caramel" /> 部分
-      </span>
-    );
-  if (v === "keyword")
-    return (
-      <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" /> 仅关键词
-      </span>
+      <div className="flex items-center gap-2">
+        <div
+          className="w-7 h-7 rounded-xl flex items-center justify-center"
+          style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}
+        >
+          <Minus size={14} strokeWidth={3} />
+        </div>
+        <span className="font-mono text-[11px] font-bold text-ink-soft">部分</span>
+      </div>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground/60">
-      <Minus className="h-3 w-3" /> 不支持
-    </span>
+    <div className="flex items-center gap-2">
+      <div
+        className="w-7 h-7 rounded-xl flex items-center justify-center"
+        style={{ background: "var(--canvas-2)", color: "var(--ink-ghost)" }}
+      >
+        <X size={14} strokeWidth={3} />
+      </div>
+      <span className="font-mono text-[11px] font-bold" style={{ color: "var(--ink-ghost)" }}>无</span>
+    </div>
   );
 }
 
 export default function ComparisonTable() {
   return (
-    <section id="compare" className="relative border-b border-border bg-background">
-      <div className="mx-auto max-w-[1400px] px-6 py-24">
-        <div className="grid grid-cols-12 items-end gap-6 border-b border-border pb-6">
-          <div className="col-span-12 lg:col-span-7">
-            <div className="rubric">CHAPTER VI · 对&nbsp;·&nbsp;比</div>
-            <h2 className="mt-4 font-display text-[clamp(40px,5vw,76px)] font-medium leading-[0.98] tracking-[-0.025em]">
-              市面上的反诈工具，
-              <br className="hidden md:block" />
-              <span className="font-display-italic text-vermillion">没有一个能听出</span>
-              「声音真伪」。
-            </h2>
-          </div>
-          <div className="col-span-12 lg:col-span-5">
-            <p className="font-display text-[15.5px] leading-[1.85] text-foreground/85">
-              下表横向对比六款主流反诈方案，在「AI 合成识别」这一核心维度上，已知所有产品仍是空白；
-              <span className="text-vermillion font-medium">L&apos;Affaire</span> 是面向终端的首选填补方案。
-            </p>
+    <section id="compare" className="relative py-24 md:py-32 bg-canvas">
+      <div className="max-w-[1400px] mx-auto px-5 md:px-8">
+        <div className="mb-14 max-w-3xl">
+          <div className="section-idx mb-4"><b>06</b>与现有方案对比</div>
+          <h2 className="mega text-[clamp(2.4rem,5.5vw,5rem)]">
+            并排摆开，
+            <br />
+            差距一目了然。
+          </h2>
+        </div>
+
+        <div className="overflow-x-auto -mx-5 md:mx-0">
+          <div className="min-w-[760px] px-5 md:px-0">
+            <div className="panel overflow-hidden" style={{ boxShadow: "var(--shadow-lg)" }}>
+              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+                <div className="p-5 md:p-6 border-b border-border bg-canvas-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                  能力 / 方案
+                </div>
+                {HEAD.map((h) => (
+                  <div
+                    key={h.key}
+                    className={`p-5 md:p-6 border-b border-border border-l border-border/50 ${
+                      h.highlight ? "" : "bg-canvas-2"
+                    }`}
+                    style={h.highlight ? { background: "linear-gradient(135deg, var(--indigo), var(--indigo-deep))" } : {}}
+                  >
+                    <div
+                      className={`font-display text-[18px] md:text-[20px] font-extrabold tracking-tight ${
+                        h.highlight ? "text-white" : "text-ink"
+                      }`}
+                    >
+                      {h.name}
+                    </div>
+                    <div
+                      className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] font-bold"
+                      style={{ color: h.highlight ? "rgba(255,255,255,0.75)" : "var(--ink-soft)" }}
+                    >
+                      {h.tag}
+                    </div>
+                  </div>
+                ))}
+
+                {ROWS.map((r, i) => (
+                  <div key={r.f} className="contents group">
+                    <div
+                      className={`p-5 border-b border-border/60 font-display text-[15px] font-bold group-hover:bg-canvas-2/60 transition-colors ${
+                        i === ROWS.length - 1 ? "border-b-0" : ""
+                      }`}
+                    >
+                      {r.f}
+                    </div>
+                    {(["a", "b", "c", "d"] as const).map((k) => (
+                      <div
+                        key={k}
+                        className={`p-5 border-b border-border/60 border-l border-border/30 group-hover:bg-canvas-2/60 transition-colors ${
+                          k === "a" ? "" : ""
+                        } ${i === ROWS.length - 1 ? "border-b-0" : ""}`}
+                        style={k === "a" ? { background: "color-mix(in srgb, var(--indigo-soft) 45%, transparent)" } : {}}
+                      >
+                        <Cell v={(r as any)[k]} highlight={k === "a"} />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        <Card className="mt-10 overflow-hidden border-foreground/15">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[28%]">能力维度</TableHead>
-                {HEADERS.map((h, i) => (
-                  <TableHead
-                    key={h}
-                    className={i === HEADERS.length - 1 ? "border-l border-vermillion/30 bg-vermillion/5 text-vermillion font-medium" : ""}
-                  >
-                    {h}
-                    {i === HEADERS.length - 1 && <Star className="ml-1.5 inline h-3 w-3" />}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ROWS.map((r) => (
-                <TableRow key={r.feature}>
-                  <TableCell className="align-top">
-                    <div className="font-display text-[15px] font-semibold leading-snug">{r.feature}</div>
-                    <div className="mt-1 text-[12px] text-muted-foreground">{r.detail}</div>
-                  </TableCell>
-                  {r.cells.map((c, i) => (
-                    <TableCell key={i} className={i === r.cells.length - 1 ? "border-l border-vermillion/30 bg-vermillion/5 align-top" : "align-top"}>
-                      <CellMark v={c} last={i === r.cells.length - 1} />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
-
-        <div className="mt-8 grid grid-cols-12 gap-6">
-          <div className="col-span-12 md:col-span-7">
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              Source · 公安部 / Truecaller / 中国电信 / 华为 / ColorOS / 腾讯手机管家
-            </div>
-          </div>
-          <div className="col-span-12 flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end">
-            <Badge variant="olive"><Check className="h-3 w-3" /> 支持</Badge>
-            <Badge variant="caramel">部分</Badge>
-            <Badge variant="muted">仅关键词</Badge>
-            <Badge variant="outline">不支持</Badge>
-          </div>
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] text-ink-soft font-bold">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full" style={{ background: "var(--mint)" }} />
+            全面 · 端到端实现
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full" style={{ background: "var(--amber)" }} />
+            部分 · 覆盖不完整或事后
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full" style={{ background: "var(--ink-ghost)" }} />
+            无 · 尚不具备
+          </span>
         </div>
       </div>
     </section>
