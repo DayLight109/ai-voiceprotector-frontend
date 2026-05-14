@@ -39,12 +39,10 @@ export default function SocialValue() {
         </div>
 
         <div className="grid grid-cols-12 gap-5">
-          {VALUES.map((v, i) => (
+          {VALUES.map((v) => (
             <article
               key={v.num}
-              className={`col-span-12 md:col-span-4 panel panel-lift p-7 md:p-8 relative overflow-hidden ${
-                i === 1 ? "md:translate-y-6" : ""
-              }`}
+              className="col-span-12 md:col-span-4 panel panel-lift p-7 md:p-8 relative overflow-hidden"
             >
               <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-40" style={{ background: v.soft }} />
               <div className="relative flex items-start justify-between mb-10">

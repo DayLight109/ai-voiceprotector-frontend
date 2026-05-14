@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 
 const NAV = [
@@ -14,6 +14,10 @@ const NAV = [
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -21,6 +25,41 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const sections = NAV
+      .map((n) => document.getElementById(n.href.slice(1)))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) {
+          setActive("#" + visible[0].target.id);
+        }
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!active || !navRef.current) {
+      setIndicator(null);
+      return;
+    }
+    const el = itemRefs.current[active];
+    if (!el) return;
+    const navRect = navRef.current.getBoundingClientRect();
+    const itemRect = el.getBoundingClientRect();
+    setIndicator({ left: itemRect.left - navRect.left, width: itemRect.width });
+  }, [active]);
 
   return (
     <header
@@ -46,16 +85,41 @@ export default function Header() {
           </div>
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-surface border border-border shadow-sm">
-          {NAV.map((n) => (
-            <a
-              key={n.href}
-              href={n.href}
-              className="px-4 py-1.5 rounded-full text-[13px] font-semibold text-ink-soft hover:text-ink hover:bg-canvas-2 transition-all"
-            >
-              {n.label}
-            </a>
-          ))}
+        <nav
+          ref={navRef}
+          className="hidden lg:flex relative items-center gap-1 p-1 rounded-full bg-surface border border-border shadow-sm"
+        >
+          {indicator && (
+            <span
+              aria-hidden
+              className="absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-out pointer-events-none"
+              style={{
+                left: indicator.left,
+                width: indicator.width,
+                backgroundColor: "#2E2EF4",
+              }}
+            />
+          )}
+          {NAV.map((n) => {
+            const isActive = active === n.href;
+            return (
+              <a
+                key={n.href}
+                href={n.href}
+                ref={(el) => {
+                  itemRefs.current[n.href] = el;
+                }}
+                onClick={() => setActive(n.href)}
+                className={`relative z-10 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors duration-300 ${
+                  isActive
+                    ? "text-white"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                {n.label}
+              </a>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-3">
