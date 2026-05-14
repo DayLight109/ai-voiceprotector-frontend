@@ -2,8 +2,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Search, ChevronRight } from "lucide-react";
+import { ToastProvider } from "./shared/Toast";
 
 type NavItem = { href: string; label: string; icon: any; badge?: string | number };
+export type AppRole = "family" | "admin" | "biz" | "family-admin" | "sysadmin";
+
+const ROLE_LABEL: Record<AppRole, string> = {
+  family: "家庭用户",
+  biz: "企业用户",
+  admin: "企业管理员",
+  "family-admin": "家庭管理员",
+  sysadmin: "系统管理员",
+};
 
 export default function AppShell({
   role,
@@ -12,17 +22,18 @@ export default function AppShell({
   children,
   breadcrumb,
 }: {
-  role: "family" | "admin";
+  role: AppRole;
   userName: string;
   nav: NavItem[];
   children: React.ReactNode;
   breadcrumb: string[];
 }) {
   const pathname = usePathname();
-  const roleLabel = role === "family" ? "家庭用户" : "管理员";
+  const roleLabel = ROLE_LABEL[role];
   const initials = userName.slice(0, 1);
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-canvas text-ink flex">
       {/* 侧栏 */}
       <aside className="hidden lg:flex w-[260px] shrink-0 border-r border-border bg-surface flex-col">
@@ -123,5 +134,6 @@ export default function AppShell({
         <main className="flex-1 p-6 md:p-8">{children}</main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

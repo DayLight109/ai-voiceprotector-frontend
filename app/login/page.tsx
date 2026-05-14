@@ -159,6 +159,30 @@ export default function LoginPage() {
           </Link>
         </div>
 
+        <div className="pt-3">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold text-center mb-2">
+            演示直达 · DEMO SHORTCUT
+          </div>
+          <div className="grid grid-cols-5 gap-1.5">
+            {[
+              { href: "/app", label: "家庭用户", color: "var(--coral)" },
+              { href: "/biz", label: "企业用户", color: "var(--indigo)" },
+              { href: "/family-admin", label: "家庭管理员", color: "var(--mint-deep)" },
+              { href: "/admin", label: "企业管理员", color: "var(--amber-deep)" },
+              { href: "/sysadmin", label: "系统管理员", color: "var(--indigo-deep)" },
+            ].map((r) => (
+              <Link
+                key={r.href}
+                href={r.href}
+                className="px-2 py-2 rounded-xl text-center font-mono text-[10px] font-extrabold uppercase tracking-[0.06em] hover:opacity-80 transition-opacity"
+                style={{ background: "var(--canvas-2)", color: r.color, border: "1px solid var(--border)" }}
+              >
+                {r.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
         <div className="pt-2 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-ink-ghost font-bold">
           登录即代表同意《服务协议》与《隐私政策》
         </div>

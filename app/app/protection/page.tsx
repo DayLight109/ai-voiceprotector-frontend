@@ -1,0 +1,321 @@
+"use client";
+import { useMemo, useState } from "react";
+import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/shared/PageHeader";
+import DataTable from "@/components/shared/DataTable";
+import Modal from "@/components/shared/Modal";
+import { useToast } from "@/components/shared/Toast";
+import { FAMILY_NAV } from "@/lib/nav";
+import { SEED, type BlackEntry, type WhiteEntry } from "@/lib/mock";
+import { useLocalStorage, uid } from "@/lib/storage";
+import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine } from "lucide-react";
+
+type Tab = "blacklist" | "whitelist";
+
+export default function ProtectionPage() {
+  const toast = useToast();
+  const [tab, setTab] = useState<Tab>("blacklist");
+  const [blist, setBlist] = useLocalStorage<BlackEntry[]>("blacklist", SEED.blacklist);
+  const [wlist, setWlist] = useLocalStorage<WhiteEntry[]>("whitelist", SEED.whitelist);
+  const [sortByRisk, setSortByRisk] = useState(true);
+  const [scanMode, setScanMode] = useState<"local" | "cloud">("cloud");
+  const [editing, setEditing] = useState<BlackEntry | WhiteEntry | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const blistView = useMemo(() => {
+    const s = [...blist];
+    if (sortByRisk) s.sort((a, b) => b.risk - a.risk);
+    return s;
+  }, [blist, sortByRisk]);
+
+  const onSave = (form: any) => {
+    if (tab === "blacklist") {
+      if (editing && "risk" in editing) {
+        setBlist((prev) => prev.map((x) => (x.id === editing.id ? { ...editing, ...form } : x)));
+        toast("success", "已更新", `黑名单条目 ${form.number}`);
+      } else {
+        const entry: BlackEntry = {
+          id: uid("b"),
+          number: form.number,
+          reason: form.reason,
+          category: form.category,
+          risk: Number(form.risk),
+          source: "手动",
+          createdAt: new Date().toLocaleString("zh-CN"),
+        };
+        setBlist((prev) => [entry, ...prev]);
+        toast("success", "已添加到黑名单", form.number);
+      }
+    } else {
+      if (editing && "relation" in editing) {
+        setWlist((prev) => prev.map((x) => (x.id === editing.id ? { ...editing, ...form } : x)));
+        toast("success", "已更新", `白名单条目 ${form.number}`);
+      } else {
+        const entry: WhiteEntry = {
+          id: uid("w"),
+          number: form.number,
+          name: form.name,
+          relation: form.relation,
+          createdAt: new Date().toLocaleString("zh-CN"),
+        };
+        setWlist((prev) => [entry, ...prev]);
+        toast("success", "已添加到白名单", form.number);
+      }
+    }
+    setShowAdd(false);
+    setEditing(null);
+  };
+
+  const onDelete = (id: string) => {
+    if (tab === "blacklist") {
+      setBlist((p) => p.filter((x) => x.id !== id));
+      toast("success", "已删除黑名单条目");
+    } else {
+      setWlist((p) => p.filter((x) => x.id !== id));
+      toast("success", "已删除白名单条目");
+    }
+  };
+
+  return (
+    <AppShell role="family" userName="王磊" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "实时安全防护"]}>
+      <PageHeader
+        eyebrow="REAL-TIME PROTECTION"
+        title="实时安全防护"
+        desc="本地 + 云端黑名单实时匹配来电号码，命中即触发自动拦截 / 警示 / 通话内容分析。"
+      />
+
+      {/* 设置区 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">扫描匹配源</div>
+            <ScanLine size={14} className="text-ink-soft" />
+          </div>
+          <div className="flex items-center gap-2 p-1 rounded-full bg-canvas-2 border border-border">
+            {[
+              { k: "local", label: "本地", icon: HardDrive },
+              { k: "cloud", label: "云端", icon: Cloud },
+            ].map((o) => {
+              const active = scanMode === o.k;
+              return (
+                <button
+                  key={o.k}
+                  onClick={() => setScanMode(o.k as any)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[12px] font-bold transition-colors"
+                  style={{
+                    background: active ? "var(--surface)" : "transparent",
+                    color: active ? "var(--ink)" : "var(--ink-soft)",
+                    boxShadow: active ? "var(--shadow-sm)" : "none",
+                  }}
+                >
+                  <o.icon size={12} />
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+            当前：{scanMode === "cloud" ? "云端实时同步 · 36 亿条" : "本地缓存 · 8.4 万条"}
+          </div>
+        </div>
+
+        <div className="panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">辅助助手</div>
+            <ArrowDownAZ size={14} className="text-ink-soft" />
+          </div>
+          <button
+            onClick={() => setSortByRisk((v) => !v)}
+            className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-colors"
+            style={{
+              background: sortByRisk ? "var(--indigo)" : "var(--canvas-2)",
+              color: sortByRisk ? "#fff" : "var(--ink)",
+            }}
+          >
+            {sortByRisk ? "✓ 按风险分排序" : "按时间排序"}
+          </button>
+          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+            打开后黑名单按风险分降序展示
+          </div>
+        </div>
+
+        <div className="panel p-5" style={{ background: "linear-gradient(135deg, var(--mint-soft), var(--indigo-soft))" }}>
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-2">通话内容匹配</div>
+          <div className="font-display text-[18px] font-extrabold mb-1">实时语义分析</div>
+          <div className="text-[12px] text-ink-2 font-medium leading-[1.6]">
+            通话过程中按 5 类话术模型实时比对，命中转账 / 公检法 / 验证码等关键词自动弹屏警示。
+          </div>
+        </div>
+      </div>
+
+      {/* Tab 切换 */}
+      <div className="panel p-5 md:p-6">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border">
+            {[
+              { k: "blacklist", label: `黑名单 · ${blist.length}`, icon: ShieldOff, tone: "coral" },
+              { k: "whitelist", label: `白名单 · ${wlist.length}`, icon: ShieldCheck, tone: "mint" },
+            ].map((t) => {
+              const active = t.k === tab;
+              return (
+                <button
+                  key={t.k}
+                  onClick={() => setTab(t.k as Tab)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-bold transition-colors"
+                  style={{
+                    background: active ? "var(--surface)" : "transparent",
+                    color: active ? (t.tone === "coral" ? "var(--coral-deep)" : "var(--mint-deep)") : "var(--ink-soft)",
+                    boxShadow: active ? "var(--shadow-sm)" : "none",
+                  }}
+                >
+                  <t.icon size={14} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={() => { setEditing(null); setShowAdd(true); }} className="btn-indigo py-2 px-3 text-[12px]">
+            <Plus size={12} /> {tab === "blacklist" ? "手动添加黑名单" : "手动添加白名单"}
+          </button>
+        </div>
+
+        {tab === "blacklist" ? (
+          <DataTable<BlackEntry>
+            rows={blistView}
+            searchKeys={["number", "reason", "category"]}
+            columns={[
+              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+              { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="coral">{r.category}</span> },
+              { key: "reason", label: "原因", render: (r) => <span className="text-ink-2">{r.reason}</span> },
+              {
+                key: "risk", label: "风险分", align: "right", render: (r) => (
+                  <span className="font-mono font-extrabold" style={{ color: r.risk >= 90 ? "var(--coral-deep)" : r.risk >= 75 ? "var(--amber-deep)" : "var(--ink)" }}>
+                    {r.risk}
+                  </span>
+                )
+              },
+              { key: "source", label: "来源", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span> },
+              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
+            ]}
+            actions={(r) => (
+              <div className="flex items-center gap-1 justify-end">
+                <button onClick={() => { setEditing(r); setShowAdd(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                <button onClick={() => onDelete(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              </div>
+            )}
+          />
+        ) : (
+          <DataTable<WhiteEntry>
+            rows={wlist}
+            searchKeys={["number", "name", "relation"]}
+            columns={[
+              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+              { key: "name", label: "联系人" },
+              { key: "relation", label: "关系", render: (r) => <span className="tag-chip" data-tone="mint">{r.relation}</span> },
+              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
+            ]}
+            actions={(r) => (
+              <div className="flex items-center gap-1 justify-end">
+                <button onClick={() => { setEditing(r); setShowAdd(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                <button onClick={() => onDelete(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              </div>
+            )}
+          />
+        )}
+      </div>
+
+      <Modal
+        open={showAdd}
+        onClose={() => { setShowAdd(false); setEditing(null); }}
+        title={tab === "blacklist" ? (editing ? "编辑黑名单" : "添加到黑名单") : (editing ? "编辑白名单" : "添加到白名单")}
+        desc={tab === "blacklist" ? "命中此号段后系统将自动拦截或预警" : "命中此号段后系统将直接放行"}
+        footer={
+          <>
+            <button onClick={() => { setShowAdd(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
+            <button
+              onClick={() => {
+                const f = document.getElementById("entry-form") as HTMLFormElement;
+                if (f) f.requestSubmit();
+              }}
+              className="btn-indigo py-2 px-4 text-[13px]"
+            >
+              保存
+            </button>
+          </>
+        }
+      >
+        <EntryForm tab={tab} editing={editing} onSubmit={onSave} />
+      </Modal>
+    </AppShell>
+  );
+}
+
+function EntryForm({
+  tab,
+  editing,
+  onSubmit,
+}: {
+  tab: Tab;
+  editing: BlackEntry | WhiteEntry | null;
+  onSubmit: (form: any) => void;
+}) {
+  const e = editing as any;
+  const [form, setForm] = useState<any>(
+    tab === "blacklist"
+      ? { number: e?.number ?? "", reason: e?.reason ?? "", category: e?.category ?? "AI合成", risk: e?.risk ?? 80 }
+      : { number: e?.number ?? "", name: e?.name ?? "", relation: e?.relation ?? "亲属" }
+  );
+
+  return (
+    <form
+      id="entry-form"
+      onSubmit={(ev) => { ev.preventDefault(); onSubmit(form); }}
+      className="space-y-4"
+    >
+      <Field label="号码">
+        <input value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} required className="ipt" placeholder="+86 138 0013 4921" />
+      </Field>
+
+      {tab === "blacklist" ? (
+        <>
+          <Field label="原因">
+            <input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} required className="ipt" placeholder="如：AI 克隆冒充亲属" />
+          </Field>
+          <Field label="类别">
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="ipt">
+              {["AI合成", "话术诈骗", "号码伪冒", "其他"].map((c) => (<option key={c}>{c}</option>))}
+            </select>
+          </Field>
+          <Field label="风险分（0–100）">
+            <input type="number" min={0} max={100} value={form.risk} onChange={(e) => setForm({ ...form, risk: e.target.value })} className="ipt" />
+          </Field>
+        </>
+      ) : (
+        <>
+          <Field label="联系人">
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="ipt" placeholder="如：父亲 · 王建国" />
+          </Field>
+          <Field label="关系">
+            <select value={form.relation} onChange={(e) => setForm({ ...form, relation: e.target.value })} className="ipt">
+              {["亲属", "好友", "同事", "银行", "公检法", "其他"].map((c) => (<option key={c}>{c}</option>))}
+            </select>
+          </Field>
+        </>
+      )}
+
+      <style>{`
+        .ipt { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; font-weight: 500; }
+        .ipt:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent); }
+      `}</style>
+    </form>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      {children}
+    </div>
+  );
+}

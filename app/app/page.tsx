@@ -1,16 +1,7 @@
 "use client";
-import { Home, ShieldCheck, Bell, Users, ListChecks, PhoneCall, Settings, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Plus, Circle } from "lucide-react";
+import { ShieldCheck, Bell, Users, ListChecks, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Plus, Circle } from "lucide-react";
 import AppShell from "@/components/AppShell";
-
-const NAV = [
-  { href: "/app", label: "首页", icon: Home },
-  { href: "/app", label: "实时监测", icon: Radio },
-  { href: "/app", label: "告警记录", icon: Bell, badge: 3 },
-  { href: "/app", label: "白名单", icon: ListChecks },
-  { href: "/app", label: "家属同步", icon: Users },
-  { href: "/app", label: "通话日志", icon: PhoneCall },
-  { href: "/settings", label: "个人设置", icon: Settings },
-];
+import { FAMILY_NAV } from "@/lib/nav";
 
 const ALERTS = [
   { t: "2 分钟前", phone: "+86 138 0013 4921", loc: "柬埔寨 · 金边", tone: "block", reason: "AI 合成语音 · 0.94" },
@@ -31,7 +22,7 @@ export default function FamilyDashboard() {
     <AppShell
       role="family"
       userName="王磊"
-      nav={NAV}
+      nav={FAMILY_NAV}
       breadcrumb={["SENTINEL", "家庭用户", "首页"]}
     >
       {/* 头部欢迎 */}

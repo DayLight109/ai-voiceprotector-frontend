@@ -1,17 +1,8 @@
 "use client";
-import { LayoutDashboard, Users2, Sliders, Shield, FileBarChart2, Database, FileLock2, Server, AlertTriangle, ArrowUpRight, MoreHorizontal, Search, TrendingUp, TrendingDown } from "lucide-react";
+import { Shield, FileBarChart2, AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown, Users, Mic2, Sliders, Database } from "lucide-react";
 import AppShell from "@/components/AppShell";
-
-const NAV = [
-  { href: "/admin", label: "总览", icon: LayoutDashboard },
-  { href: "/admin", label: "用户管理", icon: Users2 },
-  { href: "/admin", label: "策略配置", icon: Sliders },
-  { href: "/admin", label: "三层引擎", icon: Shield },
-  { href: "/admin", label: "数据统计", icon: FileBarChart2 },
-  { href: "/admin", label: "证据留样", icon: Database, badge: 12 },
-  { href: "/admin", label: "审计日志", icon: FileLock2 },
-  { href: "/admin", label: "服务器", icon: Server },
-];
+import { ADMIN_NAV } from "@/lib/nav";
+import Link from "next/link";
 
 const TRENDS = [
   { day: "周一", v: 62 },
@@ -23,20 +14,12 @@ const TRENDS = [
   { day: "今日", v: 96 },
 ];
 
-const USERS = [
-  { id: "U-1024", name: "李梦楠", role: "企业管理员", dept: "杭州反诈中心", status: "active", last: "刚刚" },
-  { id: "U-1018", name: "周珩", role: "客服专员", dept: "建设银行 · 95533", status: "active", last: "12 分钟前" },
-  { id: "U-1009", name: "陈安怡", role: "审计", dept: "公安部刑侦三处", status: "review", last: "2 小时前" },
-  { id: "U-0997", name: "刘旭东", role: "运营", dept: "中国联通安全部", status: "active", last: "今天 09:24" },
-  { id: "U-0982", name: "张梓豪", role: "实习", dept: "网信办合作组", status: "suspended", last: "昨天" },
-];
-
 export default function AdminDashboard() {
   return (
     <AppShell
       role="admin"
       userName="李梦楠"
-      nav={NAV}
+      nav={ADMIN_NAV}
       breadcrumb={["SENTINEL", "管理控制台", "总览"]}
     >
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -180,72 +163,33 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        {/* 用户管理 */}
+        {/* 快捷管理入口 */}
         <section className="col-span-12 panel p-6">
           <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">USER MANAGEMENT</div>
-              <h2 className="font-display text-[22px] font-extrabold mt-1">账号与权限</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-canvas-2 border border-border w-64">
-                <Search size={14} className="text-ink-soft" />
-                <input placeholder="搜索姓名 / 部门 / 工号" className="flex-1 bg-transparent text-[13px] font-medium placeholder:text-ink-ghost focus:outline-none" />
-              </div>
-              <button className="btn-indigo py-2 px-3 text-[12px]">
-                + 新增成员
-              </button>
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">ADMIN MODULES</div>
+              <h2 className="font-display text-[22px] font-extrabold mt-1">管理模块</h2>
             </div>
           </div>
 
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
-                  <th className="px-3 py-3">工号</th>
-                  <th className="px-3 py-3">姓名</th>
-                  <th className="px-3 py-3">角色</th>
-                  <th className="px-3 py-3">部门</th>
-                  <th className="px-3 py-3">状态</th>
-                  <th className="px-3 py-3">最近活动</th>
-                  <th className="px-3 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {USERS.map((u) => {
-                  const s = u.status;
-                  const sBg = s === "active" ? "var(--mint-soft)" : s === "review" ? "var(--amber-soft)" : "var(--coral-soft)";
-                  const sFg = s === "active" ? "var(--mint-deep)" : s === "review" ? "var(--amber-deep)" : "var(--coral-deep)";
-                  const sLabel = s === "active" ? "正常" : s === "review" ? "审核中" : "已停用";
-                  return (
-                    <tr key={u.id} className="border-t border-border hover:bg-canvas-2/60 transition-colors">
-                      <td className="px-3 py-3 font-mono text-[12px] font-bold text-ink-soft">{u.id}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center font-display text-white text-[11px] font-extrabold" style={{ background: "linear-gradient(135deg, var(--indigo), var(--coral))" }}>
-                            {u.name.slice(0, 1)}
-                          </div>
-                          <span className="font-display font-extrabold">{u.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 font-medium">{u.role}</td>
-                      <td className="px-3 py-3 text-ink-soft font-medium">{u.dept}</td>
-                      <td className="px-3 py-3">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold" style={{ background: sBg, color: sFg }}>
-                          {sLabel}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 font-mono text-[11px] text-ink-soft font-bold">{u.last}</td>
-                      <td className="px-3 py-3 text-right">
-                        <button className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center">
-                          <MoreHorizontal size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { href: "/admin/users", icon: Users, title: "员工管理", desc: "增 / 删 / 编辑账号", tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+              { href: "/admin/recordings", icon: Mic2, title: "录音数据", desc: "管理通话留样", tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+              { href: "/admin/risk-level", icon: Sliders, title: "风控等级", desc: "L1–L5 自定义规则", tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+              { href: "/admin/blacklist", icon: Database, title: "企业黑名单", desc: "CSV / XLSX 批量导入", tint: "var(--coral)", soft: "var(--coral-soft)" },
+            ].map((a) => (
+              <Link key={a.href} href={a.href} className="panel panel-lift p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: a.soft, color: a.tint }}>
+                  <a.icon size={20} />
+                </div>
+                <div className="flex-1">
+                  <div className="font-display text-[14px] font-extrabold">{a.title}</div>
+                  <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{a.desc}</div>
+                </div>
+                <ArrowUpRight size={16} className="text-ink-soft" />
+              </Link>
+            ))}
           </div>
         </section>
       </div>

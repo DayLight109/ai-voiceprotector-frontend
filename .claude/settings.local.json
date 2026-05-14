@@ -14,7 +14,11 @@
       "Bash(curl -fsSL --retry 2 -o /c/Users/Lilce/Desktop/声纹捕手/public/world-topo.json \"https://cdn.jsdelivr.net/npm/world-atlas@2/world/110m.json\")",
       "Bash(curl -fsSL --retry 2 -o /c/Users/Lilce/Desktop/声纹捕手/public/world-topo.json \"https://unpkg.com/world-atlas@2/countries-110m.json\")",
       "Bash(npm install *)",
-      "Bash(node scripts/build-world-svg.mjs)"
+      "Bash(node scripts/build-world-svg.mjs)",
+      "Bash(cmd *)",
+      "Bash(/c/Windows/system32/cmd.exe *)",
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }
