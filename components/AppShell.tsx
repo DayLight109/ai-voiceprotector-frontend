@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bell, Search, ChevronRight } from "lucide-react";
 import { ToastProvider } from "./shared/Toast";
 
@@ -32,6 +33,30 @@ export default function AppShell({
   const roleLabel = ROLE_LABEL[role];
   const initials = userName.slice(0, 1);
 
+  const navRef = useRef<HTMLElement | null>(null);
+  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [indicator, setIndicator] = useState<{ top: number; height: number } | null>(null);
+  const [primed, setPrimed] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!navRef.current) return;
+    const activeHref = nav.find((n) => pathname === n.href)?.href ?? null;
+    if (!activeHref) {
+      setIndicator(null);
+      return;
+    }
+    const el = itemRefs.current[activeHref];
+    if (!el) return;
+    const navRect = navRef.current.getBoundingClientRect();
+    const itemRect = el.getBoundingClientRect();
+    setIndicator({ top: itemRect.top - navRect.top + navRef.current.scrollTop, height: itemRect.height });
+  }, [pathname, nav]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPrimed(true), 60);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <ToastProvider>
     <div className="min-h-screen bg-canvas text-ink flex">
@@ -52,16 +77,32 @@ export default function AppShell({
           </Link>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+        <nav ref={navRef} className="relative flex-1 overflow-y-auto p-4 space-y-1">
+          {indicator && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-4 right-4 rounded-xl"
+              style={{
+                top: indicator.top,
+                height: indicator.height,
+                background: "var(--indigo-soft)",
+                opacity: primed ? 1 : 0,
+                transition:
+                  "top 380ms cubic-bezier(0.22,1,0.36,1), height 380ms cubic-bezier(0.22,1,0.36,1), opacity 240ms ease-out",
+              }}
+            />
+          )}
           {nav.map((n) => {
             const active = pathname === n.href;
             return (
               <Link
                 key={n.href}
                 href={n.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-colors"
+                ref={(el) => {
+                  itemRefs.current[n.href] = el;
+                }}
+                className="relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-colors duration-300"
                 style={{
-                  background: active ? "var(--indigo-soft)" : "transparent",
                   color: active ? "var(--indigo-deep)" : "var(--ink-2)",
                 }}
               >
@@ -131,7 +172,7 @@ export default function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        <main key={pathname} className="flex-1 p-6 md:p-8 page-enter">{children}</main>
       </div>
     </div>
     </ToastProvider>

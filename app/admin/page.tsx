@@ -1,6 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Shield, FileBarChart2, AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown, Users, Mic2, Sliders, Database } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import CountUp from "@/components/shared/CountUp";
 import { ADMIN_NAV } from "@/lib/nav";
 import Link from "next/link";
 
@@ -15,6 +17,11 @@ const TRENDS = [
 ];
 
 export default function AdminDashboard() {
+  const [chartIn, setChartIn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setChartIn(true), 80);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <AppShell
       role="admin"
@@ -32,8 +39,8 @@ export default function AdminDashboard() {
             企业控制台 · 总览
           </h1>
           <p className="mt-2 text-[14px] text-ink-soft font-medium">
-            最近 24 小时累计判决 <span className="font-extrabold text-ink">1,283,471</span> 通话，
-            阻断 <span className="font-extrabold text-coral-deep">9,824</span> 起 AI 合成诈骗。
+            最近 24 小时累计判决 <CountUp to={1283471} duration={1300} className="font-extrabold text-ink" /> 通话，
+            阻断 <CountUp to={9824} duration={1100} className="font-extrabold text-coral-deep" /> 起 AI 合成诈骗。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -49,15 +56,21 @@ export default function AdminDashboard() {
       {/* KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "判决通话", val: "1.28M", delta: "+12.4%", up: true, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-          { label: "拦截诈骗", val: "9,824", delta: "+5.7%", up: true, tint: "var(--coral)", soft: "var(--coral-soft)" },
-          { label: "误报率", val: "0.31%", delta: "-0.08", up: false, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-          { label: "P99 延迟", val: "118ms", delta: "+2ms", up: true, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+          { label: "判决通话", num: 1.28, suffix: "M", decimals: 2, delta: "+12.4%", up: true, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+          { label: "拦截诈骗", num: 9824, suffix: "", decimals: 0, delta: "+5.7%", up: true, tint: "var(--coral)", soft: "var(--coral-soft)" },
+          { label: "误报率", num: 0.31, suffix: "%", decimals: 2, delta: "-0.08", up: false, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+          { label: "P99 延迟", num: 118, suffix: "ms", decimals: 0, delta: "+2ms", up: true, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-50" style={{ background: k.soft }} />
             <div className="relative font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</div>
-            <div className="relative mt-2 numplate text-[36px] leading-none">{k.val}</div>
+            <CountUp
+              to={k.num}
+              decimals={k.decimals}
+              suffix={k.suffix}
+              duration={1100}
+              className="relative mt-2 numplate text-[36px] leading-none block"
+            />
             <div className="relative mt-3 flex items-center gap-1.5 font-mono text-[11px] font-bold" style={{ color: k.up ? "var(--mint-deep)" : "var(--coral-deep)" }}>
               {k.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
               {k.delta}
@@ -96,9 +109,11 @@ export default function AdminDashboard() {
               <div key={d.day} className="flex-1 flex flex-col items-center gap-2">
                 <div className="w-full flex items-end justify-center" style={{ height: "180px" }}>
                   <div
-                    className="w-full max-w-[42px] rounded-t-xl relative group cursor-pointer transition-all hover:opacity-90"
+                    className="w-full max-w-[42px] rounded-t-xl relative group cursor-pointer transition-[height,opacity] duration-700 ease-out hover:opacity-90"
                     style={{
-                      height: `${d.v}%`,
+                      height: chartIn ? `${d.v}%` : "0%",
+                      opacity: chartIn ? 1 : 0,
+                      transitionDelay: `${i * 80}ms`,
                       background: i === TRENDS.length - 1 ? "linear-gradient(to top, var(--coral), var(--amber))" : "linear-gradient(to top, var(--indigo), var(--indigo-deep))",
                     }}
                   >
@@ -116,16 +131,22 @@ export default function AdminDashboard() {
 
           <div className="mt-6 grid grid-cols-3 gap-4 pt-5 border-t border-border">
             {[
-              { k: "AI 合成", v: "62.4%", c: "var(--coral)" },
-              { k: "话术诈骗", v: "23.1%", c: "var(--amber)" },
-              { k: "号码伪冒", v: "14.5%", c: "var(--indigo)" },
+              { k: "AI 合成", v: 62.4, c: "var(--coral)" },
+              { k: "话术诈骗", v: 23.1, c: "var(--amber)" },
+              { k: "号码伪冒", v: 14.5, c: "var(--indigo)" },
             ].map((s) => (
               <div key={s.k}>
                 <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
                   <span className="w-2 h-2 rounded-full" style={{ background: s.c }} />
                   {s.k}
                 </div>
-                <div className="numplate text-[22px] mt-1">{s.v}</div>
+                <CountUp
+                  to={s.v}
+                  decimals={1}
+                  suffix="%"
+                  duration={1000}
+                  className="numplate text-[22px] mt-1 block"
+                />
               </div>
             ))}
           </div>

@@ -55,15 +55,15 @@ export default function Sources() {
           {SOURCES.map((s) => (
             <div key={s.cat} className="panel panel-lift p-6">
               <div
-                className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold mb-4 pb-3 border-b border-border inline-flex items-center gap-2"
+                className="font-mono text-[20px] uppercase tracking-[0.14em] font-bold mb-5 pb-3 border-b border-border inline-flex items-center gap-2"
               >
                 <span className="w-2 h-2 rounded-full" style={{ background: s.tint }} />
                 <span style={{ color: "var(--ink-soft)" }}>{s.cat}</span>
               </div>
-              <ul className="space-y-2.5">
+              <ul className="space-y-3">
                 {s.items.map((it) => (
-                  <li key={it} className="flex items-start gap-2.5 text-[13px] leading-[1.6] font-medium">
-                    <span className="mt-[6px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.tint }} />
+                  <li key={it} className="flex items-start gap-2.5 text-[15px] leading-[1.7] font-medium">
+                    <span className="mt-[8px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.tint }} />
                     <span className="text-ink-2">{it}</span>
                   </li>
                 ))}

@@ -2,18 +2,24 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Play, Shield, Radio, Waves, ScanLine } from "lucide-react";
 
+const STATIC_BARS = Array.from({ length: 44 }, (_, i) => 0.35 + ((i * 37) % 13) / 26);
+
 export default function Hero() {
+  const [mounted, setMounted] = useState(false);
   const [tick, setTick] = useState(0);
   useEffect(() => {
+    setMounted(true);
     const id = setInterval(() => setTick((t) => (t + 1) % 60), 100);
     return () => clearInterval(id);
   }, []);
 
-  const bars = Array.from({ length: 44 }, (_, i) => {
-    const base = Math.abs(Math.sin((i + tick / 3) * 0.42)) * 0.7;
-    const jitter = Math.abs(Math.sin((i * 1.9 + tick) * 0.21)) * 0.35;
-    return Math.min(1, base + jitter + 0.12);
-  });
+  const bars = mounted
+    ? Array.from({ length: 44 }, (_, i) => {
+        const base = Math.abs(Math.sin((i + tick / 3) * 0.42)) * 0.7;
+        const jitter = Math.abs(Math.sin((i * 1.9 + tick) * 0.21)) * 0.35;
+        return Math.min(1, base + jitter + 0.12);
+      })
+    : STATIC_BARS;
 
   return (
     <section className="relative overflow-hidden bg-canvas">
@@ -120,7 +126,7 @@ export default function Hero() {
                         key={i}
                         className="flex-1 rounded-full transition-[height] duration-150"
                         style={{
-                          height: `${h * 100}%`,
+                          height: `${(h * 100).toFixed(2)}%`,
                           background:
                             i < 14 ? "var(--mint)" :
                             i < 28 ? "var(--amber)" : "var(--coral)",

@@ -1,6 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import { ShieldCheck, Bell, ListChecks, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Plus, Circle, Building2, MessageSquareWarning, AlertTriangle } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import CountUp from "@/components/shared/CountUp";
 import { BIZ_NAV } from "@/lib/nav";
 
 const ALERTS = [
@@ -12,6 +14,11 @@ const ALERTS = [
 ];
 
 export default function BizHome() {
+  const [loadIn, setLoadIn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setLoadIn(true), 120);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "首页"]}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -23,8 +30,8 @@ export default function BizHome() {
             欢迎回来，周珩
           </h1>
           <p className="mt-2 text-[14px] text-ink-soft font-medium">
-            本月已拦截冒充话术 <span className="font-extrabold text-coral-deep">2,318 起</span>，
-            申诉 <span className="font-extrabold text-indigo-deep">12 起处理中</span>。
+            本月已拦截冒充话术 <CountUp to={2318} duration={1200} className="font-extrabold text-coral-deep" /> 起，
+            申诉 <CountUp to={12} duration={900} className="font-extrabold text-indigo-deep" /> 起处理中。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -39,10 +46,10 @@ export default function BizHome() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "今日通话", val: "4,128", sub: "条客服 + API 调用", tint: "var(--indigo)", soft: "var(--indigo-soft)", icon: Building2 },
-          { label: "拦截命中", val: "186", sub: "次诈骗伪冒", tint: "var(--coral)", soft: "var(--coral-soft)", icon: PhoneOff },
-          { label: "申诉处理中", val: "12", sub: "起待复核", tint: "var(--amber)", soft: "var(--amber-soft)", icon: MessageSquareWarning },
-          { label: "本月误报率", val: "0.28%", sub: "环比 ↓ 0.06", tint: "var(--mint-deep)", soft: "var(--mint-soft)", icon: ListChecks },
+          { label: "今日通话", num: 4128, suffix: "", decimals: 0, sub: "条客服 + API 调用", tint: "var(--indigo)", soft: "var(--indigo-soft)", icon: Building2 },
+          { label: "拦截命中", num: 186, suffix: "", decimals: 0, sub: "次诈骗伪冒", tint: "var(--coral)", soft: "var(--coral-soft)", icon: PhoneOff },
+          { label: "申诉处理中", num: 12, suffix: "", decimals: 0, sub: "起待复核", tint: "var(--amber)", soft: "var(--amber-soft)", icon: MessageSquareWarning },
+          { label: "本月误报率", num: 0.28, suffix: "%", decimals: 2, sub: "环比 ↓ 0.06", tint: "var(--mint-deep)", soft: "var(--mint-soft)", icon: ListChecks },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-60" style={{ background: k.soft }} />
@@ -52,7 +59,13 @@ export default function BizHome() {
               </div>
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</span>
             </div>
-            <div className="relative numplate text-[36px] leading-none">{k.val}</div>
+            <CountUp
+              to={k.num}
+              decimals={k.decimals}
+              suffix={k.suffix}
+              duration={1100}
+              className="relative numplate text-[36px] leading-none"
+            />
             <div className="relative mt-2 text-[12px] text-ink-soft font-semibold">{k.sub}</div>
           </div>
         ))}
@@ -104,10 +117,10 @@ export default function BizHome() {
           </div>
           <div className="space-y-3">
             {[
-              { icon: Radio, name: "L1 来电溯源", lat: "22ms", load: 68, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-              { icon: Waves, name: "L2 声纹取证", lat: "61ms", load: 82, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-              { icon: ScanLine, name: "L3 话术语义", lat: "37ms", load: 54, tint: "var(--coral)", soft: "var(--coral-soft)" },
-            ].map((l) => (
+              { icon: Radio, name: "L1 来电溯源", lat: 22, load: 68, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+              { icon: Waves, name: "L2 声纹取证", lat: 61, load: 82, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+              { icon: ScanLine, name: "L3 话术语义", lat: 37, load: 54, tint: "var(--coral)", soft: "var(--coral-soft)" },
+            ].map((l, i) => (
               <div key={l.name} className="p-4 rounded-2xl bg-canvas-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -116,12 +129,23 @@ export default function BizHome() {
                     </div>
                     <span className="font-display text-[13px] font-extrabold">{l.name}</span>
                   </div>
-                  <span className="font-mono text-[11px] font-bold" style={{ color: l.tint }}>{l.lat}</span>
+                  <span className="font-mono text-[11px] font-bold" style={{ color: l.tint }}>
+                    <CountUp to={l.lat} duration={1000} suffix="ms" />
+                  </span>
                 </div>
                 <div className="h-1.5 rounded-full bg-surface overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${l.load}%`, background: l.tint }} />
+                  <div
+                    className="h-full rounded-full transition-[width] duration-700 ease-out"
+                    style={{
+                      width: loadIn ? `${l.load}%` : "0%",
+                      transitionDelay: `${i * 120}ms`,
+                      background: l.tint,
+                    }}
+                  />
                 </div>
-                <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">负载 {l.load}%</div>
+                <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+                  负载 <CountUp to={l.load} duration={1000} suffix="%" />
+                </div>
               </div>
             ))}
           </div>

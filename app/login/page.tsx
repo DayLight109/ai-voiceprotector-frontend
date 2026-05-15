@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Building2, Home, Fingerprint, Smartphone, Eye, EyeOff, ArrowRight } from "lucide-react";
 import AuthShell from "@/components/AuthShell";
 
 type Role = "enterprise" | "family";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [role, setRole] = useState<Role>("family");
   const [show, setShow] = useState(false);
 
@@ -67,7 +69,13 @@ export default function LoginPage() {
         })}
       </div>
 
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          router.push(role === "enterprise" ? "/biz" : "/app");
+        }}
+      >
         {/* 账号 */}
         <div>
           <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">

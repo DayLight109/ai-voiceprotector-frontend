@@ -1,6 +1,7 @@
 "use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
+import CountUp from "@/components/shared/CountUp";
 import { FAMILY_ADMIN_NAV } from "@/lib/nav";
 import { SEED } from "@/lib/mock";
 import { useLocalStorage } from "@/lib/storage";
@@ -27,10 +28,10 @@ export default function FamilyAdminHome() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "家庭成员", val: users.length, sub: "在管账号", icon: Users, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-          { label: "录音数据", val: recordings.length, sub: "条已留样", icon: Mic2, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-          { label: "黑名单", val: blist.length, sub: "条私有规则", icon: Database, tint: "var(--coral)", soft: "var(--coral-soft)" },
-          { label: "当前风控", val: "L3", sub: "弹窗预警级别", icon: Sliders, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+          { label: "家庭成员", val: users.length, kind: "num", sub: "在管账号", icon: Users, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+          { label: "录音数据", val: recordings.length, kind: "num", sub: "条已留样", icon: Mic2, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+          { label: "黑名单", val: blist.length, kind: "num", sub: "条私有规则", icon: Database, tint: "var(--coral)", soft: "var(--coral-soft)" },
+          { label: "当前风控", val: "L3", kind: "text", sub: "弹窗预警级别", icon: Sliders, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-60" style={{ background: k.soft }} />
@@ -40,7 +41,15 @@ export default function FamilyAdminHome() {
               </div>
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</span>
             </div>
-            <div className="relative numplate text-[36px] leading-none">{k.val}</div>
+            {k.kind === "num" ? (
+              <CountUp
+                to={k.val as number}
+                duration={1100}
+                className="relative numplate text-[36px] leading-none block"
+              />
+            ) : (
+              <div className="relative numplate text-[36px] leading-none">{k.val}</div>
+            )}
             <div className="relative mt-2 text-[12px] text-ink-soft font-semibold">{k.sub}</div>
           </div>
         ))}
@@ -89,7 +98,13 @@ export default function FamilyAdminHome() {
                   <s.icon size={14} style={{ color: s.tint }} />
                 </div>
                 <div className="flex-1 font-display text-[13px] font-extrabold">{s.label}</div>
-                <div className="numplate text-[22px]" style={{ color: s.tint }}>{s.v}</div>
+                <span style={{ color: s.tint }}>
+                  <CountUp
+                    to={s.v}
+                    duration={900}
+                    className="numplate text-[22px]"
+                  />
+                </span>
               </div>
             ))}
           </div>

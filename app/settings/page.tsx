@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell";
 
 const NAV = [
   { href: "/app", label: "首页", icon: Home },
-  { href: "/app", label: "家属同步", icon: Users },
+  { href: "/family-admin/users", label: "家属同步", icon: Users },
   { href: "/settings", label: "系统设置", icon: SettingsIcon },
 ];
 

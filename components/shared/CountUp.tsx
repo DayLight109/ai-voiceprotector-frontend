@@ -18,28 +18,43 @@ export default function CountUp({
 }) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const node = ref.current;
+    if (!node) return;
+
+    let cancelled = false;
+    let rafId: number | null = null;
+    let started = false;
+
+    const animate = () => {
+      const start = performance.now();
+      const step = (t: number) => {
+        if (cancelled) return;
+        const p = Math.min(1, (t - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setVal(to * eased);
+        if (p < 1) rafId = requestAnimationFrame(step);
+      };
+      rafId = requestAnimationFrame(step);
+    };
+
     const obs = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !started.current) {
-          started.current = true;
-          const start = performance.now();
-          const tick = (t: number) => {
-            const p = Math.min(1, (t - start) / duration);
-            const eased = 1 - Math.pow(1 - p, 3);
-            setVal(to * eased);
-            if (p < 1) requestAnimationFrame(tick);
-          };
-          requestAnimationFrame(tick);
+        if (entries[0].isIntersecting && !started) {
+          started = true;
+          animate();
         }
       },
       { threshold: 0.25 }
     );
-    obs.observe(ref.current);
-    return () => obs.disconnect();
+    obs.observe(node);
+
+    return () => {
+      cancelled = true;
+      if (rafId != null) cancelAnimationFrame(rafId);
+      obs.disconnect();
+    };
   }, [to, duration]);
 
   const formatted = decimals > 0 ? val.toFixed(decimals) : Math.round(val).toLocaleString();

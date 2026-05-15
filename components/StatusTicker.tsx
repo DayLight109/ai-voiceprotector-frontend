@@ -14,20 +14,20 @@ export default function StatusTicker() {
     <div className="relative bg-deep text-canvas overflow-hidden">
       <div className="flex items-center">
         <div
-          className="hidden md:flex shrink-0 items-center gap-2 px-5 py-2.5 text-white"
+          className="hidden md:flex shrink-0 items-center gap-2 px-7 py-3 text-white"
           style={{ background: "var(--indigo)" }}
         >
           <span className="signal-dot text-coral" />
-          <span className="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">
+          <span className="font-mono text-[15px] font-bold uppercase tracking-[0.18em]">
             Live · 实时态势
           </span>
         </div>
         <div className="relative flex-1 overflow-hidden">
-          <div className="marquee-track whitespace-nowrap py-2.5">
+          <div className="marquee-track whitespace-nowrap py-3">
             {items.map((t, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-3 font-body text-[13px] font-medium"
+                className="inline-flex items-center gap-3 font-body text-[15px] font-medium"
                 style={{ color: "rgba(242, 243, 247, 0.85)" }}
               >
                 <span style={{ color: "var(--mint)" }}>▸</span>

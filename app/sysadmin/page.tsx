@@ -1,6 +1,7 @@
 "use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
+import CountUp from "@/components/shared/CountUp";
 import { SYSADMIN_NAV } from "@/lib/nav";
 import { SEED } from "@/lib/mock";
 import { useLocalStorage } from "@/lib/storage";
@@ -27,10 +28,10 @@ export default function SysAdminHome() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "判定规则", val: rules.length, sub: "条诈骗关键词", icon: ScrollText, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-          { label: "待审样本", val: samples.filter((s) => s.status === "待审核").length, sub: "起需要复核", icon: FlaskConical, tint: "var(--coral)", soft: "var(--coral-soft)" },
-          { label: "在线设备", val: devices.filter((d) => d.status === "online").length, sub: `/ ${devices.length} 总数`, icon: Server, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-          { label: "声纹准确率", val: "99.24%", sub: "voiceguard v2.6.1", icon: AudioLines, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+          { label: "判定规则", num: rules.length, suffix: "", decimals: 0, sub: "条诈骗关键词", icon: ScrollText, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+          { label: "待审样本", num: samples.filter((s) => s.status === "待审核").length, suffix: "", decimals: 0, sub: "起需要复核", icon: FlaskConical, tint: "var(--coral)", soft: "var(--coral-soft)" },
+          { label: "在线设备", num: devices.filter((d) => d.status === "online").length, suffix: "", decimals: 0, sub: `/ ${devices.length} 总数`, icon: Server, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+          { label: "声纹准确率", num: 99.24, suffix: "%", decimals: 2, sub: "voiceguard v2.6.1", icon: AudioLines, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-60" style={{ background: k.soft }} />
@@ -40,7 +41,13 @@ export default function SysAdminHome() {
               </div>
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</span>
             </div>
-            <div className="relative numplate text-[36px] leading-none">{k.val}</div>
+            <CountUp
+              to={k.num}
+              decimals={k.decimals}
+              suffix={k.suffix}
+              duration={1100}
+              className="relative numplate text-[36px] leading-none block"
+            />
             <div className="relative mt-2 text-[12px] text-ink-soft font-semibold">{k.sub}</div>
           </div>
         ))}

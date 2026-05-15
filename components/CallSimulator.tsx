@@ -65,10 +65,33 @@ export default function CallSimulator() {
     const last = events[events.length - 1];
     return last ? last.phase : "IDLE";
   }, [events]);
+
+  const RISK_ANCHORS = useMemo(() => {
+    const points = TIMELINE
+      .filter((e) => typeof e.risk === "number")
+      .map((e) => ({ t: e.t, risk: e.risk as number }));
+    const blockT = TIMELINE.find((e) => e.phase === "BLOCK")!.t;
+    return [{ t: 0, risk: 0 }, ...points, { t: blockT, risk: 100 }];
+  }, []);
   const risk = useMemo(() => {
-    const r = [...events].reverse().find((e) => typeof e.risk === "number")?.risk ?? 0;
-    return r;
-  }, [events]);
+    for (let i = 0; i < RISK_ANCHORS.length - 1; i++) {
+      const a = RISK_ANCHORS[i];
+      const b = RISK_ANCHORS[i + 1];
+      if (t >= a.t && t <= b.t) {
+        const span = Math.max(0.0001, b.t - a.t);
+        const k = (t - a.t) / span;
+        return a.risk + (b.risk - a.risk) * k;
+      }
+    }
+    return RISK_ANCHORS[RISK_ANCHORS.length - 1].risk;
+  }, [t, RISK_ANCHORS]);
+
+  const PHASE_MARKS = useMemo(() => {
+    const order: Phase[] = ["RING", "ANSWER", "ANALYZE", "WARN", "BLOCK"];
+    return order.map((p) => ({ phase: p, t: TIMELINE.find((e) => e.phase === p)!.t }));
+  }, []);
+  const VISUAL_END = PHASE_MARKS[PHASE_MARKS.length - 1].t;
+  const progress = Math.min(1, t / VISUAL_END);
 
   const reset = () => {
     setT(0);
@@ -131,33 +154,44 @@ export default function CallSimulator() {
 
               <div className="relative h-10 rounded-full bg-canvas-2 overflow-hidden">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all"
+                  className="absolute inset-y-0 left-0 rounded-full"
                   style={{
-                    width: `${(t / DURATION) * 100}%`,
+                    width: `${progress * 100}%`,
                     background: "linear-gradient(to right, var(--mint), var(--amber), var(--coral))",
                   }}
                 />
-                {TIMELINE.map((e, i) => (
+                {PHASE_MARKS.slice(1, -1).map((m) => (
                   <div
-                    key={i}
-                    className="absolute top-1.5 bottom-1.5 w-[2px] bg-white/50"
-                    style={{ left: `${(e.t / DURATION) * 100}%` }}
+                    key={m.phase}
+                    className="absolute top-1.5 bottom-1.5 w-[2px] bg-white/60"
+                    style={{ left: `${(m.t / VISUAL_END) * 100}%` }}
                   />
                 ))}
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-surface border-[3px] shadow-lg transition-all"
+                  className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-surface border-[3px] shadow-lg"
                   style={{
-                    left: `calc(${(t / DURATION) * 100}% - 10px)`,
+                    left: `calc(${progress * 100}% - 10px)`,
                     borderColor: "var(--indigo)",
                   }}
                 />
               </div>
-              <div className="mt-3 flex items-center justify-between font-mono text-[10px] font-bold uppercase tracking-wider text-ink-soft">
-                <span>RING</span>
-                <span>ANSWER</span>
-                <span>ANALYZE</span>
-                <span>WARN</span>
-                <span style={{ color: "var(--coral-deep)" }}>BLOCK</span>
+              <div className="relative mt-3 h-4 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                {PHASE_MARKS.map((m, i) => {
+                  const last = i === PHASE_MARKS.length - 1;
+                  return (
+                    <span
+                      key={m.phase}
+                      className="absolute top-0"
+                      style={{
+                        left: `${(m.t / VISUAL_END) * 100}%`,
+                        transform: i === 0 ? "translateX(0)" : last ? "translateX(-100%)" : "translateX(-50%)",
+                        color: last ? "var(--coral-deep)" : undefined,
+                      }}
+                    >
+                      {m.phase}
+                    </span>
+                  );
+                })}
               </div>
             </div>
 
@@ -254,7 +288,7 @@ function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }
               </div>
               <div className="h-2 rounded-full bg-canvas-2 overflow-hidden">
                 <div
-                  className="h-full transition-all rounded-full"
+                  className="h-full rounded-full"
                   style={{
                     width: `${risk}%`,
                     background: risk < 40 ? "var(--mint)" : risk < 75 ? "var(--amber)" : "var(--coral)",

@@ -96,7 +96,7 @@ export default function Header() {
               style={{
                 left: indicator.left,
                 width: indicator.width,
-                backgroundColor: "#2E2EF4",
+                backgroundColor: "#5B5FDE",
               }}
             />
           )}

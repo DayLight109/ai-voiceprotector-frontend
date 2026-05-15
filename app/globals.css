@@ -316,9 +316,9 @@
 .section-idx {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size:20px;
   letter-spacing: 0.08em;
   color: var(--ink-soft);
   font-weight: 500;
@@ -327,14 +327,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px; height: 22px;
-  padding: 0 10px;
+  min-width: 42px; height: 30px;
+  padding: 0 14px;
   border-radius: 999px;
   background: var(--indigo-soft);
   color: var(--indigo-deep);
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 11px;
+  font-size: 20px;
   letter-spacing: 0.02em;
 }
 
@@ -573,6 +573,30 @@ button { cursor: pointer; }
     animation: none !important;
   }
   .press-soft:active { transform: none; }
+}
+
+/* ============================================================
+   Route page enter animation (AppShell <main key={pathname}>)
+   ============================================================ */
+.page-enter {
+  animation: rise-soft 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page-enter > * {
+  animation: rise-soft 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--page-enter-i, 0) * 60ms + 80ms);
+}
+.page-enter > *:nth-child(1)  { --page-enter-i: 0; }
+.page-enter > *:nth-child(2)  { --page-enter-i: 1; }
+.page-enter > *:nth-child(3)  { --page-enter-i: 2; }
+.page-enter > *:nth-child(4)  { --page-enter-i: 3; }
+.page-enter > *:nth-child(5)  { --page-enter-i: 4; }
+.page-enter > *:nth-child(6)  { --page-enter-i: 5; }
+.page-enter > *:nth-child(7)  { --page-enter-i: 6; }
+.page-enter > *:nth-child(8)  { --page-enter-i: 7; }
+.page-enter > *:nth-child(n+9) { --page-enter-i: 8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter, .page-enter > * { animation: none !important; }
 }
 
 

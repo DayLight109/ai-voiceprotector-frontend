@@ -83,7 +83,7 @@ export default function AuthShell({
                 TRUST PILLARS
               </div>
             </div>
-            <h2 className="font-display text-[36px] font-extrabold tracking-tight leading-[1.1]">
+            <h2 className="font-display text-[36px] font-extrabold tracking-tight leading-[1.1] text-white">
               {sideTitle}
             </h2>
             <ul className="mt-8 space-y-4">

@@ -36,7 +36,7 @@ const PEOPLE = [
 export default function Personas() {
   return (
     <section className="relative py-24 md:py-32 bg-canvas-2">
-      <div className="max-w-[1400px] mx-auto px-5 md:px-8">
+      <div className="max-w-[1400px] mx-auto px-10 md:px-8">
         <div className="mb-14 grid grid-cols-12 gap-6 items-end">
           <div className="col-span-12 md:col-span-7">
             <div className="section-idx mb-4"><b>07</b>三类用户画像</div>
@@ -75,7 +75,7 @@ export default function Personas() {
               </div>
 
               <div
-                className="relative inline-block font-mono text-[11px] font-bold px-2.5 py-1 rounded-full mb-3"
+                className="relative inline-block font-mono text-[13px] font-bold px-2.5 py-1 rounded-full mb-3"
                 style={{ background: p.soft, color: p.deep }}
               >
                 {p.tag}
