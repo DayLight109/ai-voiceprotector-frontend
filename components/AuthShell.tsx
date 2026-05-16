@@ -39,7 +39,7 @@ export default function AuthShell({
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6 md:px-10 pb-10">
-          <div className="w-full max-w-[440px]">
+          <div className="w-full max-w-[440px] popup" style={{ animationDelay: "60ms" }}>
             <div className="tag-chip mb-5" data-tone="indigo">{eyebrow}</div>
             <h1 className="font-display text-[40px] md:text-[44px] font-extrabold tracking-tight leading-[1.05]">
               {title}
@@ -56,10 +56,11 @@ export default function AuthShell({
       {/* 右侧视觉区 */}
       <aside className="hidden lg:flex flex-col w-[520px] xl:w-[580px] p-6">
         <div
-          className="relative flex-1 rounded-[28px] overflow-hidden p-10 flex flex-col justify-between"
+          className="relative flex-1 rounded-[28px] overflow-hidden p-10 flex flex-col justify-between popup"
           style={{
             background: "linear-gradient(160deg, var(--deep) 0%, var(--deep-2) 55%, var(--indigo-deep) 120%)",
             color: "#F2F3F7",
+            animationDelay: "180ms",
           }}
         >
           <div className="absolute -top-20 -right-20 w-[28rem] h-[28rem] rounded-full opacity-40 blob-indigo" />
@@ -86,7 +87,7 @@ export default function AuthShell({
             <h2 className="font-display text-[36px] font-extrabold tracking-tight leading-[1.1] text-white">
               {sideTitle}
             </h2>
-            <ul className="mt-8 space-y-4">
+            <ul className="mt-8 space-y-3">
               {bullets.map((b) => (
                 <li key={b} className="flex items-start gap-3 text-[14px] font-medium" style={{ color: "rgba(242, 243, 247, 0.88)" }}>
                   <CheckCircle2 size={18} style={{ color: "var(--mint)" }} className="shrink-0 mt-0.5" />

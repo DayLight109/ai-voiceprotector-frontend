@@ -91,7 +91,21 @@ export default function ProtectionPage() {
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">扫描匹配源</div>
             <ScanLine size={14} className="text-ink-soft" />
           </div>
-          <div className="flex items-center gap-2 p-1 rounded-full bg-canvas-2 border border-border">
+          <div className="relative flex items-center gap-2 p-1 rounded-full bg-canvas-2 border border-border">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute rounded-full"
+              style={{
+                top: 4,
+                bottom: 4,
+                left: 4,
+                width: "calc(50% - 8px)",
+                background: "var(--surface)",
+                boxShadow: "var(--shadow-sm)",
+                transform: scanMode === "cloud" ? "translateX(calc(100% + 8px))" : "translateX(0)",
+                transition: "transform 380ms cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            />
             {[
               { k: "local", label: "本地", icon: HardDrive },
               { k: "cloud", label: "云端", icon: Cloud },
@@ -100,15 +114,21 @@ export default function ProtectionPage() {
               return (
                 <button
                   key={o.k}
+                  type="button"
                   onClick={() => setScanMode(o.k as any)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[12px] font-bold transition-colors"
+                  className="relative z-10 flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[12px] font-bold"
                   style={{
-                    background: active ? "var(--surface)" : "transparent",
                     color: active ? "var(--ink)" : "var(--ink-soft)",
-                    boxShadow: active ? "var(--shadow-sm)" : "none",
+                    transition: "color 320ms cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 >
-                  <o.icon size={12} />
+                  <o.icon
+                    size={12}
+                    style={{
+                      transform: active ? "scale(1.08)" : "scale(1)",
+                      transition: "transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+                    }}
+                  />
                   {o.label}
                 </button>
               );

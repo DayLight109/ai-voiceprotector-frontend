@@ -45,7 +45,21 @@ export default function LoginPage() {
       bullets={content.bullets}
     >
       {/* 角色切换 */}
-      <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-canvas-2 border border-border mb-6">
+      <div className="relative grid grid-cols-2 gap-2 p-1 rounded-2xl bg-canvas-2 border border-border mb-6">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute rounded-xl"
+          style={{
+            top: 4,
+            bottom: 4,
+            left: 4,
+            width: "calc(50% - 8px)",
+            background: "var(--surface)",
+            boxShadow: "var(--shadow-sm)",
+            transform: role === "enterprise" ? "translateX(calc(100% + 8px))" : "translateX(0)",
+            transition: "transform 380ms cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
+        />
         {[
           { k: "family", label: "家庭用户", icon: Home },
           { k: "enterprise", label: "企业用户", icon: Building2 },
@@ -54,15 +68,21 @@ export default function LoginPage() {
           return (
             <button
               key={r.k}
+              type="button"
               onClick={() => setRole(r.k as Role)}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[14px] transition-all"
+              className="relative z-10 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[14px]"
               style={{
-                background: active ? "var(--surface)" : "transparent",
                 color: active ? "var(--ink)" : "var(--ink-soft)",
-                boxShadow: active ? "var(--shadow-sm)" : "none",
+                transition: "color 320ms cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
-              <r.icon size={16} />
+              <r.icon
+                size={16}
+                style={{
+                  transform: active ? "scale(1.05)" : "scale(1)",
+                  transition: "transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+              />
               {r.label}
             </button>
           );
