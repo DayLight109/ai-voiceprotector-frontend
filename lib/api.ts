@@ -66,6 +66,27 @@ export interface User {
   role: "family" | "biz" | "family_admin" | "admin" | "sysadmin";
   status: string;
   dept?: string;
+  hasAvatar?: boolean;
+}
+
+export interface EmergencyContact {
+  id: string;
+  userId: string;
+  name: string;
+  phone: string;
+  relation: string;
+  createdAt: string;
+}
+
+export interface SessionView {
+  token: string;
+  deviceLabel: string;
+  ip: string;
+  userAgent: string;
+  createdAt: string;
+  lastSeenAt: string;
+  expiresAt: string;
+  current: boolean;
 }
 
 export interface Envelope<T> {
@@ -312,6 +333,7 @@ export const api = {
   async register(input: {
     name: string; phone?: string; email?: string;
     password: string; role: "family" | "biz"; tenantId?: string;
+    account?: string;
   }): Promise<User> {
     return request<User>("/api/v1/auth/register", {
       method: "POST",
@@ -323,7 +345,55 @@ export const api = {
     try { await request<void>("/api/v1/auth/logout", { method: "POST" }); } catch {}
     clearTokens();
   },
-  async me(): Promise<User> { return request<User>("/api/v1/me"); },
+  async me(): Promise<User> { return request<User>("/api/v1/me/"); },
+  async updateMe(patch: { name?: string; phone?: string; email?: string; dept?: string }): Promise<User> {
+    return request<User>("/api/v1/me/", { method: "PUT", body: JSON.stringify(patch) });
+  },
+  async uploadAvatar(file: File): Promise<User> {
+    const fd = new FormData();
+    fd.append("file", file, file.name);
+    return request<User>("/api/v1/me/avatar", { method: "PUT", body: fd });
+  },
+  async deleteAvatar(): Promise<User> {
+    return request<User>("/api/v1/me/avatar", { method: "DELETE" });
+  },
+  avatarURL(user: { id: string; hasAvatar?: boolean }, version = 0): string | null {
+    if (!user.hasAvatar) return null;
+    // GET /api/v1/me/avatar 需要 token；改用 fetch+blob 拉再 URL.createObjectURL，由调用方处理。
+    // 这里只暴露原始路径，settings 页用 fetch+blob。
+    return `${API_BASE}/api/v1/me/avatar?v=${version}`;
+  },
+
+  // ── 紧急联系人（/me/emergency-contacts）
+  emergencyContacts: {
+    list: () => request<EmergencyContact[]>("/api/v1/me/emergency-contacts"),
+    create: (input: { name: string; phone: string; relation?: string }) =>
+      request<EmergencyContact>("/api/v1/me/emergency-contacts", {
+        method: "POST", body: JSON.stringify(input),
+      }),
+    update: (id: string, input: { name: string; phone: string; relation?: string }) =>
+      request<EmergencyContact>(`/api/v1/me/emergency-contacts/${id}`, {
+        method: "PUT", body: JSON.stringify(input),
+      }),
+    remove: (id: string) =>
+      request<void>(`/api/v1/me/emergency-contacts/${id}`, { method: "DELETE" }),
+  },
+
+  // ── 修改密码（/me/password）
+  changePassword: (oldPassword: string, newPassword: string) =>
+    request<{ ok: boolean }>("/api/v1/me/password", {
+      method: "PUT",
+      body: JSON.stringify({ oldPassword, newPassword }),
+    }),
+
+  // ── 登录设备 / 会话（/me/sessions）
+  sessions: {
+    list: () => request<SessionView[]>("/api/v1/me/sessions"),
+    revoke: (token: string) =>
+      request<void>(`/api/v1/me/sessions/${encodeURIComponent(token)}`, { method: "DELETE" }),
+    revokeOthers: () =>
+      request<{ revoked: number }>("/api/v1/me/sessions/others", { method: "DELETE" }),
+  },
 
   // ── warroom 兼容
   async getDefcon() { return request<{ level: number }>("/api/v1/defcon"); },
@@ -353,7 +423,7 @@ export const api = {
         { method: "POST", body: JSON.stringify(items) },
       ),
   },
-  whitelist: crudFor<WhiteEntry>("/api/v1/whitelist"),
+  whitelist: crudFor<WhiteEntry>("/api/v1/me/whitelist"),
   knowledge: crudFor<KnowledgeArticle>("/api/v1/knowledge"),
   rules: crudFor<ScamRule>("/api/v1/scam-rules"),
 
@@ -498,6 +568,8 @@ export const api = {
     myStatus: () => request<any>("/api/v1/admin-apply/status"),
     submit: (input: { scope: "family" | "biz"; reason: string; contact: string }) =>
       request<any>("/api/v1/admin-apply", { method: "POST", body: JSON.stringify(input) }),
+    withdraw: () =>
+      request<void>("/api/v1/admin-apply/mine", { method: "DELETE" }),
     review: (id: string, status: "approved" | "rejected") =>
       request<any>(`/api/v1/admin-apply/${id}/review`, {
         method: "PUT", body: JSON.stringify({ status }),
@@ -552,6 +624,16 @@ export const api = {
       }),
     remove: (kind: string) =>
       request<void>(`/api/v1/me/credentials/${kind}`, { method: "DELETE" }),
+    upload: async (kind: string, slot: "face" | "emblem" | "main", file: File) => {
+      const fd = new FormData();
+      fd.append("slot", slot);
+      fd.append("file", file, file.name);
+      return request<any>(`/api/v1/me/credentials/${kind}/upload`, {
+        method: "POST", body: fd,
+      });
+    },
+    removePhoto: (kind: string, slot: "face" | "emblem" | "main") =>
+      request<any>(`/api/v1/me/credentials/${kind}/photos/${slot}`, { method: "DELETE" }),
     getModes: () => request<any[]>("/api/v1/me/identity-modes"),
     setModes: (items: { key: string; enabled: boolean }[]) =>
       request<any[]>("/api/v1/me/identity-modes", {

@@ -35,7 +35,10 @@ export default function AdminApplyPage() {
       toast("success", "申请已提交", "管理员将在 24 小时内审核");
       statusRes.refresh();
     } catch (e) {
-      if (e instanceof APIError && e.status === 403) {
+      if (e instanceof APIError && e.code === "ADMIN_APPLY_PENDING") {
+        toast("error", "已存在审核中申请", "请等待结果或先撤回再提交");
+        statusRes.refresh();
+      } else if (e instanceof APIError && e.status === 403) {
         toast("error", "权限不足");
       } else {
         toast("error", e instanceof APIError ? e.message : "提交失败");
@@ -45,9 +48,20 @@ export default function AdminApplyPage() {
     }
   };
 
-  const reset = () => {
-    setForm({ scope: "family", reason: "", contact: "" });
-    statusRes.refresh();
+  const withdraw = async () => {
+    try {
+      await api.adminApply.withdraw();
+      setForm({ scope: "family", reason: "", contact: "" });
+      toast("success", "已撤回申请");
+      statusRes.refresh();
+    } catch (e) {
+      if (e instanceof APIError && e.status === 404) {
+        toast("error", "无可撤回的申请");
+        statusRes.refresh();
+      } else {
+        toast("error", e instanceof APIError ? e.message : "撤回失败");
+      }
+    }
   };
 
   return (
@@ -118,8 +132,8 @@ export default function AdminApplyPage() {
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
-              {status !== "none" && (
-                <button type="button" onClick={reset} className="btn-ghost py-2.5 px-4 text-[13px]">
+              {status === "pending" && (
+                <button type="button" onClick={withdraw} className="btn-ghost py-2.5 px-4 text-[13px]">
                   撤回申请
                 </button>
               )}

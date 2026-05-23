@@ -113,7 +113,7 @@ export default function BizProtectionPage() {
                   blist.refresh();
                 } else {
                   await api.whitelist.create({
-                    number: "+86 000 0000 0000", name: "新增联系人", relation: "其他",
+                    phone: "+86 000 0000 0000", name: "新增联系人", relation: "其他",
                   } as any);
                   toast("success", "新增条目，请补全详情");
                   wlist.refresh();
@@ -146,9 +146,9 @@ export default function BizProtectionPage() {
         ) : (
           <DataTable<WhiteEntry>
             rows={wlist.items}
-            searchKeys={["number", "name", "relation"]}
+            searchKeys={["phone", "name", "relation"]}
             columns={[
-              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+              { key: "phone", label: "号码", render: (r) => <span className="font-mono font-bold">{r.phone}</span> },
               { key: "name", label: "联系人" },
               { key: "relation", label: "关系" },
               { key: "createdAt", label: "时间" },

@@ -147,29 +147,3 @@ function Field({ label, children }: any) {
     </div>
   );
 }
-
-function GBForm({ editing, onSubmit }: { editing: BlackEntry | null; onSubmit: (f: any) => void }) {
-  const [f, setF] = useState<any>(editing ?? { number: "", reason: "", category: "AI合成", risk: 85 });
-  return (
-    <form id="gb-form" onSubmit={(e) => { e.preventDefault(); onSubmit(f); }} className="space-y-4">
-      <Field label="号码"><input required value={f.number} onChange={(e) => setF({ ...f, number: e.target.value })} className="ipt" /></Field>
-      <Field label="类别">
-        <select value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} className="ipt">
-          {["AI合成", "话术诈骗", "号码伪冒", "其他"].map((c) => <option key={c}>{c}</option>)}
-        </select>
-      </Field>
-      <Field label="原因"><input value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} className="ipt" /></Field>
-      <Field label="风险分"><input type="number" min={0} max={100} value={f.risk} onChange={(e) => setF({ ...f, risk: e.target.value })} className="ipt" /></Field>
-      <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}`}</style>
-    </form>
-  );
-}
-
-function Field({ label, children }: any) {
-  return (
-    <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
-      {children}
-    </div>
-  );
-}

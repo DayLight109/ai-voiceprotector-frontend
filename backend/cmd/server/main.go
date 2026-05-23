@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -21,7 +22,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	"github.com/voiceguardian/backend/internal/api"
+	"github.com/voiceguardian/backend/internal/db"
 	"github.com/voiceguardian/backend/internal/engine"
 	"github.com/voiceguardian/backend/internal/feed"
 	"github.com/voiceguardian/backend/internal/store"
@@ -31,23 +35,57 @@ func main() {
 	addr := flag.String("addr", ":8080", "listen address")
 	flag.Parse()
 
+	// Best-effort load of backend/.env (relative to CWD when run via `go run` from
+	// repo root or backend/). Missing file is fine — env vars from the shell win.
+	for _, p := range []string{".env", "backend/.env", "../.env"} {
+		if err := godotenv.Load(p); err == nil {
+			break
+		}
+	}
+
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
-	st := store.New()
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		fmt.Fprintln(os.Stderr, "DATABASE_URL is not set")
+		fmt.Fprintln(os.Stderr, "  example: postgres://voiceguardian:dev@localhost:5432/voiceguardian?sslmode=disable")
+		os.Exit(1)
+	}
+	dbCtx, dbCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	pool, err := db.Open(dbCtx, dsn)
+	dbCancel()
+	if err != nil {
+		logger.Error("database open failed", "err", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+	logger.Info("database connected")
+
+	st := store.New(pool)
+	seedCtx, seedCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := st.SeedDemoUsers(seedCtx); err != nil {
+		seedCancel()
+		logger.Error("seed demo users failed", "err", err)
+		os.Exit(1)
+	}
+	seedCancel()
 	hub := feed.NewHub(logger)
 	eng := engine.New(logger)
+	sampler := api.NewSampler()
 
 	// Simulated event generator — feeds the live console.
 	simCtx, simCancel := context.WithCancel(context.Background())
 	defer simCancel()
 	go feed.Simulate(simCtx, hub, st, logger)
+	sampler.Start(simCtx)
 
 	router := api.NewRouter(api.Deps{
-		Logger: logger,
-		Store:  st,
-		Hub:    hub,
-		Engine: eng,
+		Logger:  logger,
+		Store:   st,
+		Hub:     hub,
+		Engine:  eng,
+		Sampler: sampler,
 	})
 
 	srv := &http.Server{

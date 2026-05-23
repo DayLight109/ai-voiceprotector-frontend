@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
@@ -15,6 +16,7 @@ type Tab = "blacklist" | "whitelist";
 
 export default function ProtectionPage() {
   const toast = useToast();
+  const params = useSearchParams();
   const [tab, setTab] = useState<Tab>("blacklist");
   const blist = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 100 }));
   const wlist = useResource<WhiteEntry>(() => api.whitelist.list({ pageSize: 100 }));
@@ -22,6 +24,15 @@ export default function ProtectionPage() {
   const [scanMode, setScanMode] = useState<"local" | "cloud">("cloud");
   const [editing, setEditing] = useState<BlackEntry | WhiteEntry | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+
+  useEffect(() => {
+    const t = params.get("tab");
+    if (t === "whitelist" || t === "blacklist") setTab(t);
+    if (params.get("add") === "1") {
+      setEditing(null);
+      setShowAdd(true);
+    }
+  }, [params]);
 
   const blistView = useMemo(() => {
     const s = [...blist.items];
@@ -48,12 +59,12 @@ export default function ProtectionPage() {
       } else {
         if (editing && "relation" in editing) {
           await api.whitelist.update(editing.id, {
-            number: form.number, name: form.name, relation: form.relation,
+            phone: form.number, name: form.name, relation: form.relation,
           });
           toast("success", "已更新", `白名单条目 ${form.number}`);
         } else {
           await api.whitelist.create({
-            number: form.number, name: form.name, relation: form.relation,
+            phone: form.number, name: form.name, relation: form.relation,
           } as any);
           toast("success", "已添加到白名单", form.number);
         }
@@ -62,7 +73,13 @@ export default function ProtectionPage() {
       setShowAdd(false);
       setEditing(null);
     } catch (e) {
-      toast("error", e instanceof APIError ? e.message : "操作失败");
+      if (e instanceof APIError && e.code === "WHITELIST_DUPLICATE") {
+        toast("error", "号码重复", e.message || "该号码已在白名单");
+      } else if (e instanceof APIError && e.code === "AUTH_REQUIRED") {
+        toast("error", "请先登录后再添加");
+      } else {
+        toast("error", e instanceof APIError ? e.message : "操作失败");
+      }
     }
   };
 
@@ -236,9 +253,9 @@ export default function ProtectionPage() {
           <div key="wl" className="fade-in">
           <DataTable<WhiteEntry>
             rows={wlist.items}
-            searchKeys={["number", "name", "relation"]}
+            searchKeys={["phone", "name", "relation"]}
             columns={[
-              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+              { key: "phone", label: "号码", render: (r) => <span className="font-mono font-bold">{r.phone}</span> },
               { key: "name", label: "联系人" },
               { key: "relation", label: "关系", render: (r) => <span className="tag-chip" data-tone="mint">{r.relation}</span> },
               { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
@@ -293,7 +310,7 @@ function EntryForm({
   const [form, setForm] = useState<any>(
     tab === "blacklist"
       ? { number: e?.number ?? "", reason: e?.reason ?? "", category: e?.category ?? "AI合成", risk: e?.risk ?? 80 }
-      : { number: e?.number ?? "", name: e?.name ?? "", relation: e?.relation ?? "亲属" }
+      : { number: e?.phone ?? "", name: e?.name ?? "", relation: e?.relation ?? "亲属" }
   );
 
   return (

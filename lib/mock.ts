@@ -12,7 +12,7 @@ export type BlackEntry = {
 
 export type WhiteEntry = {
   id: string;
-  number: string;
+  phone: string;
   name: string;
   relation: string;
   createdAt: string;
@@ -124,10 +124,10 @@ export const SEED = {
     { id: "b5", number: "+960-7-3344-2111", reason: "AI 换声实时对话", category: "AI合成", risk: 94, source: "云端", createdAt: "2026-05-08 11:30" },
   ],
   whitelist: <WhiteEntry[]>[
-    { id: "w1", number: "+86 138 0013 4921", name: "父亲 · 王建国", relation: "亲属", createdAt: "2026-04-01 10:00" },
-    { id: "w2", number: "+86 139 0011 2233", name: "母亲 · 李秀芬", relation: "亲属", createdAt: "2026-04-01 10:01" },
-    { id: "w3", number: "+86 155 8866 9988", name: "建设银行 95533", relation: "银行", createdAt: "2026-04-15 09:30" },
-    { id: "w4", number: "+86 010 5566 7788", name: "海淀公安分局", relation: "公检法", createdAt: "2026-04-20 14:10" },
+    { id: "w1", phone: "+86 138 0013 4921", name: "父亲 · 王建国", relation: "亲属", createdAt: "2026-04-01 10:00" },
+    { id: "w2", phone: "+86 139 0011 2233", name: "母亲 · 李秀芬", relation: "亲属", createdAt: "2026-04-01 10:01" },
+    { id: "w3", phone: "+86 155 8866 9988", name: "建设银行 95533", relation: "银行", createdAt: "2026-04-15 09:30" },
+    { id: "w4", phone: "+86 010 5566 7788", name: "海淀公安分局", relation: "公检法", createdAt: "2026-04-20 14:10" },
   ],
   knowledge: <KnowledgeArticle[]>[
     {

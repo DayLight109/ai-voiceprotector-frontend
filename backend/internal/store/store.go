@@ -5,6 +5,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Counters is the global aggregated state.
@@ -22,7 +24,8 @@ type Counters struct {
 }
 
 // New returns a store seeded with realistic baselines drawn from the published 2025 MPS figures.
-func New() *Store {
+// pool is the PostgreSQL pool used for persistent data (currently emergency contacts only).
+func New(pool *pgxpool.Pool) *Store {
 	c := &Counters{}
 	c.InterceptedCalls.Store(3_621_847)
 	c.BlockedCalls.Store(8_294)
@@ -33,12 +36,14 @@ func New() *Store {
 	c.defcon = 2
 	c.since = time.Now()
 
-	return &Store{c: c}
+	return &Store{c: c, cb: newCredBag(), pool: pool}
 }
 
 // Store wraps Counters for external access.
 type Store struct {
-	c *Counters
+	c    *Counters
+	cb   *credBag
+	pool *pgxpool.Pool
 }
 
 // Snapshot is a JSON-friendly view of current counters.

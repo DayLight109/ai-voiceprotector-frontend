@@ -1,5 +1,6 @@
 "use client";
 import { ShieldCheck, Bell, Users, ListChecks, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Plus, Circle } from "lucide-react";
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import CountUp from "@/components/shared/CountUp";
 import { FAMILY_NAV } from "@/lib/nav";
@@ -40,9 +41,9 @@ export default function FamilyDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-ghost py-2.5 px-4 text-[13px]">
+          <Link href="/app/protection?tab=whitelist&add=1" className="btn-ghost py-2.5 px-4 text-[13px]">
             <Plus size={14} /> 添加白名单
-          </button>
+          </Link>
           <button className="btn-indigo py-2.5 px-4 text-[13px]">
             <ShieldCheck size={14} /> 模拟演练
           </button>

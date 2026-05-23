@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, Activity } from "lucide-react";
 
 const NAV = [
   { href: "#crisis", label: "现状" },
@@ -123,6 +123,14 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/ops/health"
+            className="hidden md:inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
+            title="服务运维监测"
+          >
+            <Activity size={14} />
+            运维监测
+          </Link>
           <Link href="/login" className="hidden md:inline-flex text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors">
             登录
           </Link>
@@ -154,6 +162,14 @@ export default function Header() {
                 {n.label}
               </a>
             ))}
+            <Link
+              href="/ops/health"
+              onClick={() => setOpen(false)}
+              className="px-4 py-3 rounded-xl text-[14px] font-semibold hover:bg-canvas-2 flex items-center gap-2"
+            >
+              <Activity size={14} />
+              运维监测
+            </Link>
           </div>
         </div>
       )}

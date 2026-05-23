@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Nunito, JetBrains_Mono, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider, themeBootScript } from "@/lib/theme";
+import { FontSizeProvider, fontSizeBootScript } from "@/lib/font-size";
+import { I18nProvider, i18nBootScript } from "@/lib/i18n";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -38,11 +41,23 @@ export default function RootLayout({
 }) {
   return (
     <html
+      suppressHydrationWarning
       lang="zh-CN"
       className={`${nunito.variable} ${jetbrains.variable} ${notoSans.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: fontSizeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: i18nBootScript }} />
+      </head>
       <body className="bg-canvas text-ink antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <FontSizeProvider>
+            <I18nProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </I18nProvider>
+          </FontSizeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -16,10 +16,11 @@ import (
 
 // Deps bundles handler dependencies — passed by value, share-by-pointer.
 type Deps struct {
-	Logger *slog.Logger
-	Store  *store.Store
-	Hub    *feed.Hub
-	Engine *engine.Engine
+	Logger  *slog.Logger
+	Store   *store.Store
+	Hub     *feed.Hub
+	Engine  *engine.Engine
+	Sampler *Sampler
 }
 
 // NewRouter returns a chi router with /api/v1/* mounted.
@@ -42,10 +43,61 @@ func NewRouter(d Deps) http.Handler {
 		r.Get("/feed/stream", feedStream(d))
 		r.Get("/threats", threatsActive(d))
 		r.Post("/analyze", analyzeCall(d))
+
+		// Auth (无需鉴权) — /me/avatar 是 GET 图片资源，避免 fetch 加 Authorization 时的 CORS 复杂度
+		r.Post("/auth/login", authLogin(d))
+		r.Post("/auth/register", authRegister(d))
+		r.Post("/auth/refresh", authRefresh(d))
+		r.Post("/auth/logout", authLogout(d))
+
+		r.Route("/ops", func(r chi.Router) {
+			r.Get("/health", opsHealth(d))
+			r.Get("/ping", opsPing)
+			r.Get("/info", opsInfo(d))
+			r.Get("/series", opsSeries(d))
+		})
+
+		r.Route("/me", func(r chi.Router) {
+			r.Use(func(next http.Handler) http.Handler { return requireAuth(d, next) })
+			r.Get("/", meGet(d))
+			r.Put("/", meUpdate(d))
+			r.Get("/avatar", meAvatarGet(d))
+			r.Put("/avatar", meAvatarUpload(d))
+			r.Delete("/avatar", meAvatarDelete(d))
+			r.Get("/credentials", credList(d))
+			r.Post("/credentials/{kind}", credSubmit(d))
+			r.Delete("/credentials/{kind}", credDelete(d))
+			r.Post("/credentials/{kind}/upload", credUpload(d))
+			r.Delete("/credentials/{kind}/photos/{slot}", credPhotoDelete(d))
+			r.Get("/identity-modes", identityModesGet(d))
+			r.Patch("/identity-modes", identityModesSet(d))
+
+			r.Get("/emergency-contacts", emergencyContactsList(d))
+			r.Post("/emergency-contacts", emergencyContactsCreate(d))
+			r.Put("/emergency-contacts/{id}", emergencyContactsUpdate(d))
+			r.Delete("/emergency-contacts/{id}", emergencyContactsDelete(d))
+
+			r.Get("/whitelist", whitelistList(d))
+			r.Post("/whitelist", whitelistCreate(d))
+			r.Put("/whitelist/{id}", whitelistUpdate(d))
+			r.Delete("/whitelist/{id}", whitelistDelete(d))
+
+			r.Put("/password", mePasswordChange(d))
+			r.Get("/sessions", meSessionsList(d))
+			r.Delete("/sessions/others", meSessionsDeleteOthers(d))
+			r.Delete("/sessions/{token}", meSessionDelete(d))
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(func(next http.Handler) http.Handler { return requireAuth(d, next) })
+			r.Get("/admin-apply/status", adminApplyMyStatus(d))
+			r.Post("/admin-apply", adminApplySubmit(d))
+			r.Delete("/admin-apply/mine", adminApplyWithdraw(d))
+		})
 	})
 
-	r.NotFound(func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusNotFound, errMsg{Error: "not found"})
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		writeAPIError(w, http.StatusNotFound, "NOT_FOUND", "route not found: "+r.URL.Path)
 	})
 
 	return r
@@ -54,8 +106,8 @@ func NewRouter(d Deps) http.Handler {
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Last-Event-ID")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Last-Event-ID, X-Device-Label")
 		w.Header().Set("Access-Control-Expose-Headers", "X-Request-Id")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)

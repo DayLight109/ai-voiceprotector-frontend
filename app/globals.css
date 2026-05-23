@@ -81,17 +81,37 @@
 }
 
 .dark {
-  --canvas:   #171A2C;
-  --canvas-2: #1E2238;
-  --canvas-3: #252A42;
-  --surface:  #1E2238;
-  --surface-2:#252A42;
-  --ink:      #F2F3F7;
-  --ink-2:    #E0E3EF;
-  --ink-soft: #A8AEC8;
-  --ink-ghost:#6B7094;
-  --ink-faint:#323855;
+  /* ─── canvas · near-black with a hint of cool grey, layered for depth ─── */
+  --canvas:   #08080B;
+  --canvas-2: #101015;
+  --canvas-3: #17171D;
+  --surface:  #14141A;
+  --surface-2:#1C1C24;
 
+  /* ─── text · warmer than pure white, avoids the harsh-LCD look ─── */
+  --ink:      #ECEDF2;
+  --ink-2:    #C8CAD6;
+  --ink-soft: #8A8FA8;
+  --ink-ghost:#555A70;
+  --ink-faint:#26272F;
+
+  /* ─── accents · mid-saturation, modern dark-UI palette
+         (Tailwind 400-shade family — bright enough on black,
+         not neon, sits well next to indigo) ─── */
+  --indigo:       #818CF8;
+  --indigo-deep:  #A5B4FC;
+  --indigo-soft:  color-mix(in srgb, #818CF8 16%, transparent);
+  --coral:        #F87171;
+  --coral-deep:   #FCA5A5;
+  --coral-soft:   color-mix(in srgb, #F87171 16%, transparent);
+  --mint:         #34D399;
+  --mint-deep:    #6EE7B7;
+  --mint-soft:    color-mix(in srgb, #34D399 16%, transparent);
+  --amber:        #FBBF24;
+  --amber-deep:   #FCD34D;
+  --amber-soft:   color-mix(in srgb, #FBBF24 16%, transparent);
+
+  /* ─── shadcn bridge ─── */
   --background:  var(--canvas);
   --foreground:  var(--ink);
   --card:        var(--surface);
@@ -102,8 +122,19 @@
   --secondary-foreground: var(--ink);
   --muted:       var(--canvas-2);
   --muted-foreground: var(--ink-soft);
-  --border:      #323855;
-  --input:       #323855;
+  --accent:      var(--indigo-soft);
+  --accent-foreground: var(--indigo-deep);
+  --border:      #25252E;
+  --input:       #25252E;
+
+  /* ─── shadows · pair drop-shadow with a 1px inset top highlight so cards
+         look like frosted/edge-lit glass instead of flat dark rectangles ─── */
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-sm:  0 2px 6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-md:  0 6px 18px -4px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-lg:  0 20px 45px -15px rgba(0, 0, 0, 0.75), 0 6px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-xl:  0 40px 80px -30px rgba(0, 0, 0, 0.85), 0 10px 20px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-indigo: 0 16px 40px -20px rgba(129, 140, 248, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {

@@ -93,6 +93,27 @@ func (h *Hub) Recent(n int) []Event {
 	return out
 }
 
+// Stats reports lightweight hub counters used by ops monitoring.
+type Stats struct {
+	Subscribers int       `json:"subscribers"`
+	Buffered    int       `json:"buffered"`
+	LastEvent   time.Time `json:"lastEvent,omitempty"`
+}
+
+// Stats returns subscriber count, ring length, and timestamp of the last event.
+func (h *Hub) Stats() Stats {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	out := Stats{
+		Subscribers: len(h.subs),
+		Buffered:    len(h.recent),
+	}
+	if n := len(h.recent); n > 0 {
+		out.LastEvent = h.recent[n-1].Timestamp
+	}
+	return out
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Simulator                                                                  */
 /* -------------------------------------------------------------------------- */

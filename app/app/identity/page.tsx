@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import FormRow from "@/components/shared/FormRow";
@@ -9,7 +9,7 @@ import { FAMILY_NAV } from "@/lib/nav";
 import { useLocalStorage } from "@/lib/storage";
 import { api, APIError } from "@/lib/api";
 import { useSingle } from "@/lib/use-resource";
-import { Smartphone, IdCard, BookOpen, ShieldCheck, Plane, CheckCircle2, ScanFace, Users, Heart } from "lucide-react";
+import { Smartphone, IdCard, BookOpen, ShieldCheck, Plane, CheckCircle2, ScanFace, Users, Heart, X, Image as ImageIcon } from "lucide-react";
 
 type CredKey = "phone" | "id" | "passport" | "military" | "hkmo";
 
@@ -21,6 +21,9 @@ const CREDS: { k: CredKey; label: string; icon: any; example: string }[] = [
   { k: "hkmo", label: "港澳台居民证", icon: Plane, example: "港澳台居民居住证号" },
 ];
 
+type StoredPhoto = { slot: string; name: string; size: number; mime: string; dataUrl: string; updatedAt: string };
+type StoredCredential = { kind: CredKey; masked?: string; verified?: boolean; photos?: StoredPhoto[]; updatedAt?: string };
+
 const MODE_KEYS = ["offline", "relative", "care"] as const;
 
 export default function IdentityPage() {
@@ -29,14 +32,46 @@ export default function IdentityPage() {
   const credsRes = useSingle<any[]>(() => api.credentials.list());
   const modesRes = useSingle<any[]>(() => api.credentials.getModes());
 
+  // 乐观叠加：本地修改（删档/删图）立即生效，等下次 refresh 拉到新数据自然清空。
+  // null = 未触发；其它值会覆盖 credsRes.data 中对应 kind 的记录。
+  const [overrides, setOverrides] = useState<Record<string, StoredCredential | null>>({});
+
   // 前端输入：当前 tab 的姓名/号码
   const [nameInput, setNameInput] = useState("");
   const [valueInput, setValueInput] = useState("");
 
-  // 切换 tab 时清空输入
+  // 证件图片：File 持有 + dataUrl 预览，提交时通过 multipart 上送
+  type Pic = { file: File; dataUrl: string };
+  const [pics, setPics] = useState<Record<string, Pic>>({});
+
+  const acceptPic = (slot: string, file: File | null | undefined) => {
+    if (!file) return;
+    if (!/^image\/(jpeg|png)$/.test(file.type)) {
+      toast("error", "仅支持 JPG / PNG");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast("error", "图片需 ≤ 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPics(prev => ({ ...prev, [slot]: { file, dataUrl: reader.result as string } }));
+    };
+    reader.onerror = () => toast("error", "图片读取失败");
+    reader.readAsDataURL(file);
+  };
+  const clearPic = (slot: string) => setPics(prev => {
+    const next = { ...prev };
+    delete next[slot];
+    return next;
+  });
+
+  // 切换 tab 时清空输入与图片
   useEffect(() => {
     setNameInput("");
     setValueInput("");
+    setPics({});
   }, [tab]);
 
   // UI 偏好仍保留 localStorage（与后端 modes 区分）
@@ -44,12 +79,28 @@ export default function IdentityPage() {
   const [uiRelative, setUiRelative] = useLocalStorage("identity.relative", true);
   const [uiCare, setUiCare] = useLocalStorage("identity.care", false);
 
+  const credByKind = useMemo<Record<string, StoredCredential>>(() => {
+    const m: Record<string, StoredCredential> = {};
+    for (const c of (credsRes.data as StoredCredential[] | null) || []) {
+      if (c?.kind) m[c.kind] = c;
+    }
+    // overrides 优先：null 表示删除，对象表示替换
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v === null) delete m[k];
+      else m[k] = v;
+    }
+    return m;
+  }, [credsRes.data, overrides]);
+
+  // 当后端最新数据回流时清掉所有 override，避免旧覆盖盖住新真值。
+  useEffect(() => { setOverrides({}); }, [credsRes.data]);
+
   const verified = useMemo<Record<CredKey, boolean>>(() => {
     const m: Record<CredKey, boolean> = {
       phone: false, id: false, passport: false, military: false, hkmo: false,
     };
-    for (const c of credsRes.data || []) {
-      if (c?.kind && c.kind in m) m[c.kind as CredKey] = !!c.verified;
+    for (const c of (credsRes.data as StoredCredential[] | null) || []) {
+      if (c?.kind && c.kind in m) m[c.kind] = !!c.verified;
     }
     return m;
   }, [credsRes.data]);
@@ -86,18 +137,39 @@ export default function IdentityPage() {
   };
 
   const verifyOne = async (k: CredKey) => {
+    console.log("[identity] verifyOne start", { kind: k, value: valueInput, pics: Object.keys(pics) });
     if (!valueInput.trim()) {
       toast("error", "请填写证件号");
+      return;
+    }
+    const requiredSlots: ("face" | "emblem" | "main")[] =
+      k === "id" ? ["face", "emblem"]
+      : k === "phone" ? []
+      : ["main"];
+    const missing = requiredSlots.filter(s => !pics[s]);
+    if (missing.length > 0) {
+      toast("error", k === "id" ? "请上传人像面与国徽面照片" : "请上传证件照片");
       return;
     }
     try {
       // verified=false：后端会 hash 存储；后续接 OCR 后服务端置 true
       await api.credentials.submit(k, valueInput.trim(), false);
-      toast("success", "认证已提交", "公安信息接口异步回执，预计 1 分钟内完成");
+      for (const slot of requiredSlots) {
+        const pic = pics[slot];
+        if (!pic) continue;
+        await api.credentials.upload(k, slot, pic.file);
+      }
+      toast(
+        "success",
+        "认证已提交",
+        requiredSlots.length > 0 ? "证件号与照片已写入" : "证件号已写入",
+      );
       setNameInput("");
       setValueInput("");
+      setPics({});
       credsRes.refresh();
     } catch (e) {
+      console.error("[identity] verifyOne failed", e);
       toast("error", e instanceof APIError ? e.message : "提交失败");
     }
   };
@@ -112,20 +184,31 @@ export default function IdentityPage() {
 
       {/* 状态卡片 */}
       <div className="stagger grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-        {CREDS.map((c) => (
-          <div key={c.k} className="panel p-4">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center mb-2"
-              style={{ background: verified[c.k] ? "var(--mint-soft)" : "var(--canvas-2)", color: verified[c.k] ? "var(--mint-deep)" : "var(--ink-soft)" }}
-            >
-              <c.icon size={14} />
+        {CREDS.map((c) => {
+          const stored = credByKind[c.k];
+          const state: "none" | "pending" | "ok" =
+            !stored ? "none" : stored.verified ? "ok" : "pending";
+          const palette =
+            state === "ok"
+              ? { bg: "var(--mint-soft)", fg: "var(--mint-deep)", label: "已认证" }
+              : state === "pending"
+              ? { bg: "var(--amber-soft)", fg: "var(--amber-deep)", label: "待核验" }
+              : { bg: "var(--canvas-2)", fg: "var(--ink-soft)", label: "未认证" };
+          return (
+            <div key={c.k} className="panel p-4">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center mb-2"
+                style={{ background: palette.bg, color: palette.fg }}
+              >
+                <c.icon size={14} />
+              </div>
+              <div className="font-display text-[13px] font-extrabold truncate">{c.label}</div>
+              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: palette.fg }}>
+                {palette.label}
+              </div>
             </div>
-            <div className="font-display text-[13px] font-extrabold truncate">{c.label}</div>
-            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: verified[c.k] ? "var(--mint-deep)" : "var(--ink-soft)" }}>
-              {verified[c.k] ? "已认证" : "未认证"}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-12 gap-5">
@@ -169,26 +252,54 @@ export default function IdentityPage() {
                   </Field>
                   {tab === "id" && (
                     <div className="grid grid-cols-2 gap-3">
-                      {["人像面", "国徽面"].map((s) => (
-                        <div key={s} className="p-4 rounded-2xl border-2 border-dashed border-border hover:border-indigo cursor-pointer text-center transition-colors">
-                          <ScanFace size={22} className="mx-auto text-ink-soft mb-1" />
-                          <div className="font-display text-[12px] font-extrabold">上传{s}</div>
-                          <div className="font-mono text-[10px] text-ink-soft font-bold">JPG / PNG · ≤ 5MB</div>
-                        </div>
-                      ))}
+                      <PicSlot
+                        slot="face"
+                        label="人像面"
+                        pic={pics.face}
+                        onPick={(f) => acceptPic("face", f)}
+                        onClear={() => clearPic("face")}
+                      />
+                      <PicSlot
+                        slot="emblem"
+                        label="国徽面"
+                        pic={pics.emblem}
+                        onPick={(f) => acceptPic("emblem", f)}
+                        onClear={() => clearPic("emblem")}
+                      />
                     </div>
                   )}
                   {(tab === "passport" || tab === "military" || tab === "hkmo") && (
                     <Field label="证件照片">
-                      <div className="p-5 rounded-2xl border-2 border-dashed border-border hover:border-indigo cursor-pointer text-center transition-colors">
-                        <ScanFace size={26} className="mx-auto text-ink-soft mb-1" />
-                        <div className="font-display text-[13px] font-extrabold">点击上传证件</div>
-                        <div className="font-mono text-[10px] text-ink-soft font-bold">JPG / PNG · ≤ 5MB</div>
-                      </div>
+                      <PicSlot
+                        slot="main"
+                        label={cur.label}
+                        pic={pics.main}
+                        onPick={(f) => acceptPic("main", f)}
+                        onClear={() => clearPic("main")}
+                        large
+                      />
                     </Field>
                   )}
 
-                  <button onClick={() => verifyOne(cur.k)} className="btn-indigo w-full justify-center py-3 text-[14px]" style={{ width: "100%" }}>
+                  {credByKind[cur.k] && (
+                    <SubmittedRecord
+                      record={credByKind[cur.k]}
+                      onRemoveAll={async () => {
+                        const before = credByKind[cur.k];
+                        setOverrides(prev => ({ ...prev, [cur.k]: null }));
+                        try {
+                          await api.credentials.remove(cur.k);
+                          credsRes.refresh();
+                          toast("info", "已删除该认证");
+                        } catch (e) {
+                          setOverrides(prev => ({ ...prev, [cur.k]: before }));
+                          toast("error", e instanceof APIError ? e.message : "删除失败");
+                        }
+                      }}
+                    />
+                  )}
+
+                  <button type="button" onClick={() => verifyOne(cur.k)} className="btn-indigo w-full justify-center py-3 text-[14px]" style={{ width: "100%" }}>
                     {verified[cur.k] ? <CheckCircle2 size={14} /> : <ScanFace size={14} />}
                     {verified[cur.k] ? "重新提交认证" : "提交认证"}
                   </button>
@@ -246,5 +357,155 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
+  );
+}
+
+function SubmittedRecord({
+  record, onRemoveAll,
+}: {
+  record: StoredCredential;
+  onRemoveAll: () => void;
+}) {
+  const ts = record.updatedAt ? new Date(record.updatedAt) : null;
+  const tsLabel = ts && !Number.isNaN(ts.getTime()) ? ts.toLocaleString("zh-CN") : "—";
+  const tone = record.verified
+    ? { bg: "var(--mint-soft)", fg: "var(--mint-deep)", label: "已认证" }
+    : { bg: "var(--amber-soft)", fg: "var(--amber-deep)", label: "待核验" };
+  return (
+    <div className="rounded-2xl border border-border bg-canvas-2 p-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-[0.14em] font-extrabold"
+            style={{ background: tone.bg, color: tone.fg }}
+          >
+            {tone.label}
+          </span>
+          {record.masked && (
+            <span className="font-mono text-[12px] font-extrabold truncate">{record.masked}</span>
+          )}
+        </div>
+        <button
+          onClick={onRemoveAll}
+          className="text-[11px] font-bold text-ink-soft hover:text-ink"
+        >
+          删除该认证
+        </button>
+      </div>
+      <div className="mt-1 font-mono text-[10px] text-ink-soft font-bold">最近更新 {tsLabel}</div>
+      {record.photos && record.photos.length > 0 && (
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {record.photos.map((p) => (
+            <div key={p.slot} className="relative rounded-xl overflow-hidden border border-border bg-surface">
+              <img
+                src={p.dataUrl}
+                alt={`${p.slot} 已上传`}
+                className="block w-full object-cover"
+                style={{ aspectRatio: "16 / 10" }}
+              />
+              <div className="px-2 py-1.5 border-t border-border">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft truncate">
+                  {p.slot}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PicSlot({
+  slot, label, pic, onPick, onClear, large,
+}: {
+  slot: string;
+  label: string;
+  pic?: { file: File; dataUrl: string };
+  onPick: (f: File | null | undefined) => void;
+  onClear: () => void;
+  large?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [drag, setDrag] = useState(false);
+  const inputId = `pic-${slot}`;
+  const sizeKB = pic ? (pic.file.size / 1024).toFixed(0) : "";
+  const padding = large ? "p-5" : "p-4";
+
+  if (pic) {
+    return (
+      <div className={`relative rounded-2xl border border-border bg-canvas-2 overflow-hidden`}>
+        <img
+          src={pic.dataUrl}
+          alt={`${label} 预览`}
+          className="block w-full object-cover"
+          style={{ aspectRatio: "16 / 10" }}
+        />
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border bg-surface">
+          <div className="min-w-0">
+            <div className="font-display text-[12px] font-extrabold truncate">{label}</div>
+            <div className="font-mono text-[10px] text-ink-soft font-bold truncate">{pic.file.name} · {sizeKB} KB</div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="px-2.5 py-1 rounded-full text-[11px] font-bold border border-border hover:bg-canvas-2"
+            >
+              替换
+            </button>
+            <button
+              type="button"
+              onClick={onClear}
+              className="w-7 h-7 rounded-full border border-border flex items-center justify-center hover:bg-canvas-2"
+              aria-label="移除图片"
+              title="移除"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="file"
+          accept="image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => onPick(e.target.files?.[0])}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <label
+      htmlFor={inputId}
+      onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDrag(false);
+        onPick(e.dataTransfer.files?.[0]);
+      }}
+      className={`block ${padding} rounded-2xl border-2 border-dashed cursor-pointer text-center transition-colors`}
+      style={{
+        borderColor: drag ? "var(--indigo)" : "var(--border)",
+        background: drag ? "color-mix(in srgb, var(--indigo) 8%, transparent)" : "transparent",
+      }}
+    >
+      <ImageIcon size={large ? 26 : 22} className="mx-auto text-ink-soft mb-1" />
+      <div className={`font-display ${large ? "text-[13px]" : "text-[12px]"} font-extrabold`}>
+        上传{label}
+      </div>
+      <div className="font-mono text-[10px] text-ink-soft font-bold">JPG / PNG · ≤ 5MB</div>
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        accept="image/jpeg,image/png"
+        className="hidden"
+        onChange={(e) => onPick(e.target.files?.[0])}
+      />
+    </label>
   );
 }

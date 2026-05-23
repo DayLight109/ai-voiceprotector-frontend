@@ -19,6 +19,7 @@ yarn-error.log*
 
 # env
 .env*.local
+backend/.env
 
 # misc
 .DS_Store

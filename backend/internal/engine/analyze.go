@@ -6,17 +6,46 @@ import (
 	"context"
 	"log/slog"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 // Engine orchestrates the three layers.
 type Engine struct {
 	log *slog.Logger
+
+	analyzed     atomic.Int64
+	failed       atomic.Int64
+	lastAnalyzed atomic.Int64 // unix nano of last successful Analyze
+	lastFailed   atomic.Int64 // unix nano of last failure
 }
 
 // New returns an engine ready to analyze incoming calls.
 func New(log *slog.Logger) *Engine {
 	return &Engine{log: log}
+}
+
+// Stats reports lightweight engine counters used by ops monitoring.
+type Stats struct {
+	Analyzed     int64     `json:"analyzed"`
+	Failed       int64     `json:"failed"`
+	LastAnalyzed time.Time `json:"lastAnalyzed,omitempty"`
+	LastFailed   time.Time `json:"lastFailed,omitempty"`
+}
+
+// Stats returns a snapshot of engine counters.
+func (e *Engine) Stats() Stats {
+	out := Stats{
+		Analyzed: e.analyzed.Load(),
+		Failed:   e.failed.Load(),
+	}
+	if ns := e.lastAnalyzed.Load(); ns > 0 {
+		out.LastAnalyzed = time.Unix(0, ns)
+	}
+	if ns := e.lastFailed.Load(); ns > 0 {
+		out.LastFailed = time.Unix(0, ns)
+	}
+	return out
 }
 
 // Request describes an incoming call to analyze.
@@ -70,17 +99,26 @@ func (e *Engine) Analyze(ctx context.Context, req Request) (Verdict, error) {
 
 	t, v, s := <-tc, <-vc, <-sc
 	if t.err != nil {
+		e.failed.Add(1)
+		e.lastFailed.Store(time.Now().UnixNano())
 		return Verdict{}, t.err
 	}
 	if v.err != nil {
+		e.failed.Add(1)
+		e.lastFailed.Store(time.Now().UnixNano())
 		return Verdict{}, v.err
 	}
 	if s.err != nil {
+		e.failed.Add(1)
+		e.lastFailed.Store(time.Now().UnixNano())
 		return Verdict{}, s.err
 	}
 
 	risk := mergeRisk(t.v.Risk, v.v.Risk, s.v.Risk)
 	level, action := classify(risk)
+
+	e.analyzed.Add(1)
+	e.lastAnalyzed.Store(time.Now().UnixNano())
 
 	return Verdict{
 		CallID:        req.CallID,
