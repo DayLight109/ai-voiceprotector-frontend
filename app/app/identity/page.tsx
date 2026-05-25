@@ -431,6 +431,11 @@ function PicSlot({
   const inputId = `pic-${slot}`;
   const sizeKB = pic ? (pic.file.size / 1024).toFixed(0) : "";
   const padding = large ? "p-5" : "p-4";
+  const openPicker = () => inputRef.current?.click();
+  const handlePick = (file: File | null | undefined) => {
+    onPick(file);
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
   if (pic) {
     return (
@@ -449,7 +454,7 @@ function PicSlot({
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openPicker}
               className="px-2.5 py-1 rounded-full text-[11px] font-bold border border-border hover:bg-canvas-2"
             >
               替换
@@ -471,21 +476,29 @@ function PicSlot({
           type="file"
           accept="image/jpeg,image/png"
           className="hidden"
-          onChange={(e) => onPick(e.target.files?.[0])}
+          onChange={(e) => handlePick(e.target.files?.[0])}
         />
       </div>
     );
   }
 
   return (
-    <label
-      htmlFor={inputId}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={openPicker}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openPicker();
+        }
+      }}
       onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => {
         e.preventDefault();
         setDrag(false);
-        onPick(e.dataTransfer.files?.[0]);
+        handlePick(e.dataTransfer.files?.[0]);
       }}
       className={`block ${padding} rounded-2xl border-2 border-dashed cursor-pointer text-center transition-colors`}
       style={{
@@ -504,8 +517,8 @@ function PicSlot({
         type="file"
         accept="image/jpeg,image/png"
         className="hidden"
-        onChange={(e) => onPick(e.target.files?.[0])}
+        onChange={(e) => handlePick(e.target.files?.[0])}
       />
-    </label>
+    </div>
   );
 }

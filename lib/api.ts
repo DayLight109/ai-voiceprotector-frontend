@@ -13,10 +13,16 @@ import type {
   BlackEntry, WhiteEntry, KnowledgeArticle, ScamRule, ScamSample,
   Recording, ManagedUser, Appeal, CallLog, Device, AuditLog, VoiceModel,
 } from "./mock";
+import {
+  getMockAvatarDataUrl,
+  isMockApiEnabled,
+  MockHTTPError,
+  mockBlob,
+  mockRequest,
+} from "./mock-api";
 
 const API_BASE =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) ||
-  "http://localhost:8080";
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || "";
 
 // ── Token 存储（localStorage） ───────────────────────────────────
 const TOKEN_KEY = "sentinel.v1.token";
@@ -155,6 +161,18 @@ async function tryRefresh(): Promise<boolean> {
 
 /** request<T> 解 envelope.data；用于单实体 / 无分页接口 */
 export async function request<T>(path: string, opts: FetchOptions = {}): Promise<T> {
+  if (isMockApiEnabled()) {
+    try {
+      const body = await mockRequest<T>(path, opts);
+      return body?.data as T;
+    } catch (e) {
+      if (e instanceof MockHTTPError) {
+        throw new APIError(e.code, e.message || "请求失败", e.status);
+      }
+      throw e;
+    }
+  }
+
   let resp = await rawFetch(path, opts);
 
   if (resp.status === 401 && !opts.skipAuth) {
@@ -177,6 +195,17 @@ export async function requestList<T>(
   path: string,
   opts: FetchOptions = {},
 ): Promise<Envelope<T>> {
+  if (isMockApiEnabled()) {
+    try {
+      return await mockRequest<T>(path, opts);
+    } catch (e) {
+      if (e instanceof MockHTTPError) {
+        throw new APIError(e.code, e.message || "请求失败", e.status);
+      }
+      throw e;
+    }
+  }
+
   let resp = await rawFetch(path, opts);
 
   if (resp.status === 401 && !opts.skipAuth) {
@@ -359,6 +388,9 @@ export const api = {
   },
   avatarURL(user: { id: string; hasAvatar?: boolean }, version = 0): string | null {
     if (!user.hasAvatar) return null;
+    if (isMockApiEnabled()) {
+      return getMockAvatarDataUrl(user.id);
+    }
     // GET /api/v1/me/avatar 需要 token；改用 fetch+blob 拉再 URL.createObjectURL，由调用方处理。
     // 这里只暴露原始路径，settings 页用 fetch+blob。
     return `${API_BASE}/api/v1/me/avatar?v=${version}`;
@@ -409,6 +441,16 @@ export const api = {
     ...crudFor<BlackEntry>("/api/v1/blacklist"),
     // CSV 导出：返回 Blob
     async exportCSV(): Promise<Blob> {
+      if (isMockApiEnabled()) {
+        try {
+          return await mockBlob("/api/v1/blacklist/export");
+        } catch (e) {
+          if (e instanceof MockHTTPError) {
+            throw new APIError(e.code, e.message || "导出失败", e.status);
+          }
+          throw e;
+        }
+      }
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/blacklist/export`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -456,6 +498,16 @@ export const api = {
       request<{ id: string; status: string }>(`/api/v1/samples/${id}/reject`, { method: "POST" }),
     // .doc 导出 URL（含 token 不便，直接给前端打开链接；如需带 token 用 fetch+blob 下载）
     async exportDoc(id: string): Promise<Blob> {
+      if (isMockApiEnabled()) {
+        try {
+          return await mockBlob(`/api/v1/samples/${id}/export-doc`);
+        } catch (e) {
+          if (e instanceof MockHTTPError) {
+            throw new APIError(e.code, e.message || "导出失败", e.status);
+          }
+          throw e;
+        }
+      }
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/samples/${id}/export-doc`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -478,6 +530,9 @@ export const api = {
         method: "PUT", body: JSON.stringify({ uploadEnabled }),
       }),
     async upload(form: FormData) {
+      if (isMockApiEnabled()) {
+        return request<Recording>("/api/v1/recordings", { method: "POST", body: form });
+      }
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/recordings`, {
         method: "POST", body: form,
@@ -497,6 +552,9 @@ export const api = {
       request<{ id: string; active: boolean }>(`/api/v1/voice-models/${id}/activate`, { method: "POST" }),
     remove: (id: string) => request<void>(`/api/v1/voice-models/${id}`, { method: "DELETE" }),
     async upload(form: FormData) {
+      if (isMockApiEnabled()) {
+        return request<VoiceModel>("/api/v1/voice-models", { method: "POST", body: form });
+      }
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/voice-models`, {
         method: "POST", body: form,
@@ -517,6 +575,9 @@ export const api = {
       ),
     remove: (id: string) => request<void>(`/api/v1/voice-samples/${id}`, { method: "DELETE" }),
     async upload(form: FormData) {
+      if (isMockApiEnabled()) {
+        return request<any>("/api/v1/voice-samples", { method: "POST", body: form });
+      }
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/voice-samples`, {
         method: "POST", body: form,

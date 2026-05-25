@@ -18,7 +18,6 @@ export default function AuthShell({
 }) {
   return (
     <main className="min-h-screen bg-canvas text-ink flex">
-      {/* 左侧表单区 */}
       <div className="flex-1 flex flex-col min-h-screen">
         <div className="px-6 md:px-10 py-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
@@ -30,11 +29,11 @@ export default function AuthShell({
             </div>
             <div>
               <div className="font-display text-[18px] font-extrabold">SENTINEL</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-soft font-bold">声纹捕手</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-soft font-bold">VOICE DEFENSE</div>
             </div>
           </Link>
           <Link href="/" className="text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors">
-            ← 返回主页
+            Back to Home
           </Link>
         </div>
 
@@ -53,7 +52,6 @@ export default function AuthShell({
         </div>
       </div>
 
-      {/* 右侧视觉区 */}
       <aside className="hidden lg:flex flex-col w-[520px] xl:w-[580px] p-6">
         <div
           className="relative flex-1 rounded-[28px] overflow-hidden p-10 flex flex-col justify-between popup"
@@ -67,8 +65,12 @@ export default function AuthShell({
           <div className="absolute -bottom-24 -left-24 w-[24rem] h-[24rem] rounded-full opacity-30 blob-coral" />
 
           <div className="relative flex items-center justify-between">
-            <span className="tag-chip" data-live="true" style={{ background: "rgba(255,255,255,0.08)", color: "var(--mint)", borderColor: "rgba(255,255,255,0.15)" }}>
-              SECURE GATEWAY · TLS 1.3
+            <span
+              className="tag-chip"
+              data-live="true"
+              style={{ background: "rgba(255,255,255,0.08)", color: "var(--mint)", borderColor: "rgba(255,255,255,0.15)" }}
+            >
+              SECURE GATEWAY | TLS 1.3
             </span>
             <span className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
               v1.0.0
@@ -99,16 +101,22 @@ export default function AuthShell({
 
           <div className="relative grid grid-cols-3 gap-4 pt-8 border-t border-white/10">
             <div>
-              <div className="numplate text-[22px]" style={{ color: "#fff" }}>36 亿</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>日均拦截</div>
+              <div className="numplate text-[22px]" style={{ color: "#fff" }}>36M</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                Daily Blocks
+              </div>
             </div>
             <div>
               <div className="numplate text-[22px]" style={{ color: "#fff" }}>99.2%</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>召回率</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                Callback Rate
+              </div>
             </div>
             <div>
               <div className="numplate text-[22px]" style={{ color: "#fff" }}>&lt;120ms</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>判决延迟</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                Decision Latency
+              </div>
             </div>
           </div>
         </div>

@@ -1,36 +1,15 @@
 import type { Metadata } from "next";
-import { Nunito, JetBrains_Mono, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider, themeBootScript } from "@/lib/theme";
 import { FontSizeProvider, fontSizeBootScript } from "@/lib/font-size";
 import { I18nProvider, i18nBootScript } from "@/lib/i18n";
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-nunito",
-  display: "swap",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-jetbrains",
-  display: "swap",
-});
-
-const notoSans = Noto_Sans_SC({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-noto-sans",
-  display: "swap",
-});
+import { ToastProvider } from "@/components/shared/Toast";
 
 export const metadata: Metadata = {
-  title: "SENTINEL · 声纹捕手 — 实时 AI 语音反诈平台",
+  title: "SENTINEL | AI Voice Protection Platform",
   description:
-    "毫秒级识别与拦截 AI 合成语音 · 来电溯源 × 声纹取证 × 话术语义三重引擎。",
+    "Real-time AI voice scam detection, evidence capture, and protection workflows.",
   metadataBase: new URL("https://sentinel.example"),
 };
 
@@ -40,11 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      suppressHydrationWarning
-      lang="zh-CN"
-      className={`${nunito.variable} ${jetbrains.variable} ${notoSans.variable}`}
-    >
+    <html suppressHydrationWarning lang="zh-CN">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <script dangerouslySetInnerHTML={{ __html: fontSizeBootScript }} />
@@ -54,7 +29,9 @@ export default function RootLayout({
         <ThemeProvider>
           <FontSizeProvider>
             <I18nProvider>
-              <AuthProvider>{children}</AuthProvider>
+              <ToastProvider>
+                <AuthProvider>{children}</AuthProvider>
+              </ToastProvider>
             </I18nProvider>
           </FontSizeProvider>
         </ThemeProvider>

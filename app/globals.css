@@ -10,6 +10,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-nunito: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-jetbrains: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --font-noto-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
   /* ─── canvas · cool soft lavender-white ─── */
   --canvas:       #F2F3F7;
   --canvas-2:     #E9EBF1;

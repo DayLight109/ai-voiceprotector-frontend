@@ -3,7 +3,8 @@
   "version": "2.6.1",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n web,api -c blue,green --kill-others-on-fail \"next dev\" \"cd backend && go run ./cmd/server\"",
+    "dev": "next dev",
+    "dev:full": "concurrently -n web,api -c blue,green --kill-others-on-fail \"next dev\" \"cd backend && go run ./cmd/server\"",
     "dev:web": "next dev",
     "dev:api": "cd backend && go run ./cmd/server",
     "build": "next build",
