@@ -3,13 +3,9 @@
 package feed
 
 import (
-	"context"
 	"log/slog"
-	"math/rand"
 	"sync"
 	"time"
-
-	"github.com/voiceguardian/backend/internal/store"
 )
 
 // Event is a single dashboard event.
@@ -112,132 +108,4 @@ func (h *Hub) Stats() Stats {
 		out.LastEvent = h.recent[n-1].Timestamp
 	}
 	return out
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Simulator                                                                  */
-/* -------------------------------------------------------------------------- */
-
-var (
-	verbs = []string{"INTERCEPT", "ANALYZE", "VOICEPRINT", "ROUTE", "BLOCK", "FLAG", "TRACE", "ESCALATE"}
-
-	prefixes = []string{"+86-138", "+86-186", "+855-23", "+95-9", "+856-21",
-		"+84-28", "+90-553", "+62-21", "+91-90", "+960-7"}
-
-	origins = []string{"MM/YGN", "KH/PNH", "LA/VTE", "VN/SGN", "TH/BKK",
-		"PH/MNL", "MY/KUL", "NG/LAG", "IN/BOM", "AE/DXB"}
-
-	scriptHits = []string{
-		"URGENCY · 今天必须办",
-		"TRANSFER · 安全账户",
-		"ISOLATE · 不能告诉家人",
-		"CREDS · 验证码 / 卡号",
-		"AUTHORITY · 公检法",
-		"RELATIVE · 克隆孙子",
-		"DEEPFAKE · 实时换声",
-	}
-)
-
-func phone(rng *rand.Rand) string {
-	return prefixes[rng.Intn(len(prefixes))] +
-		"-" + zeroPad(rng.Intn(900)+100, 3) +
-		"-" + zeroPad(rng.Intn(9000)+1000, 4)
-}
-
-func zeroPad(n, width int) string {
-	s := []byte{}
-	str := []byte{}
-	for n > 0 {
-		str = append([]byte{byte('0' + n%10)}, str...)
-		n /= 10
-	}
-	for i := len(str); i < width; i++ {
-		s = append(s, '0')
-	}
-	return string(append(s, str...))
-}
-
-// Simulate emits realistic events at random intervals.
-// It also increments store counters so REST /stats reflects the same flux.
-func Simulate(ctx context.Context, h *Hub, st *store.Store, log *slog.Logger) {
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	idCounter := int64(0)
-
-	for {
-		// 700–1300 ms between events.
-		wait := time.Duration(700+rng.Intn(600)) * time.Millisecond
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(wait):
-		}
-
-		verb := verbs[rng.Intn(len(verbs))]
-		payload, level, side := makePayload(verb, rng)
-
-		idCounter++
-		ev := Event{
-			ID:        time.Now().Format("20060102T150405.000") + "-" + zeroPad(int(idCounter%10000), 4),
-			Timestamp: time.Now(),
-			Side:      side,
-			Verb:      verb,
-			Payload:   payload,
-			Level:     level,
-		}
-		h.Publish(ev)
-
-		// Side-effect counters.
-		switch verb {
-		case "INTERCEPT", "TRACE", "ROUTE":
-			st.IncIntercepted(int64(rng.Intn(4) + 1))
-		case "BLOCK":
-			st.IncBlocked(1)
-			st.IncIntercepted(1)
-		case "VOICEPRINT":
-			if rng.Float64() < 0.4 {
-				st.IncAIClones(1)
-			}
-		case "FLAG":
-			st.IncScriptHits(1)
-		}
-	}
-}
-
-func makePayload(verb string, rng *rand.Rand) (string, string, string) {
-	switch verb {
-	case "INTERCEPT":
-		return phone(rng), "info", "trace"
-	case "ANALYZE":
-		v := 85 + rng.Float64()*14
-		return formatPct("match=", v), "info", "voice"
-	case "VOICEPRINT":
-		v := 60 + rng.Float64()*38
-		level := "warn"
-		if v > 88 {
-			level = "danger"
-		}
-		return formatPct("synth=", v) + " / F0↓", level, "voice"
-	case "ROUTE":
-		return "actual_origin=" + origins[rng.Intn(len(origins))], "warn", "trace"
-	case "BLOCK":
-		return phone(rng) + " → KILL", "danger", "system"
-	case "FLAG":
-		return scriptHits[rng.Intn(len(scriptHits))], "warn", "script"
-	case "TRACE":
-		return "hops=" + zeroPad(rng.Intn(7)+2, 1) + " via VPN/PBX", "info", "trace"
-	case "ESCALATE":
-		return "→ DEFCON " + zeroPad(rng.Intn(2)+1, 1), "danger", "system"
-	}
-	return "", "info", "system"
-}
-
-func formatPct(prefix string, v float64) string {
-	// 1 decimal place, e.g. "synth=92.4%".
-	whole := int(v)
-	frac := int((v - float64(whole)) * 10)
-	if frac < 0 {
-		frac = -frac
-	}
-	return prefix +
-		zeroPad(whole, 1) + "." + zeroPad(frac, 1) + "%"
 }

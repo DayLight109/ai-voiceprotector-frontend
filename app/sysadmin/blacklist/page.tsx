@@ -14,7 +14,7 @@ import { Plus, Trash2, Edit3, Download } from "lucide-react";
 
 export default function SysBlacklistPage() {
   const toast = useToast();
-  const list = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 100 }));
+  const list = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 100, scope: "global" } as any));
   const [editing, setEditing] = useState<BlackEntry | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -29,8 +29,7 @@ export default function SysBlacklistPage() {
         await api.blacklist.create({
           number: f.number, reason: f.reason, category: f.category,
           risk: Number(f.risk), source: "云端",
-          // 全局黑名单：后端要求 sysadmin 才能 Global=true
-          global: true,
+          isGlobal: true,
         } as any);
         toast("success", "已下发全网", f.number);
       }

@@ -7,8 +7,8 @@ import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
 import { type ManagedUser } from "@/lib/mock";
-import { api, APIError } from "@/lib/api";
-import { useResource } from "@/lib/use-resource";
+import { APIError } from "@/lib/api";
+import { useHybridUsers } from "@/lib/users-store";
 import { Plus, Trash2, Edit3, UserPlus } from "lucide-react";
 
 export default function FamilyUsersPage() {
@@ -18,30 +18,27 @@ export default function FamilyUsersPage() {
 export function UsersPage({ role }: { role: "family-admin" | "admin" }) {
   const toast = useToast();
   const isFam = role === "family-admin";
-  const list = useResource<ManagedUser>(() => api.users.list({ pageSize: 100 }));
+  const list = useHybridUsers();
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [open, setOpen] = useState(false);
 
   const onSubmit = async (form: any) => {
     try {
       if (editing) {
-        await api.users.update(editing.id, {
+        await list.update(editing.id, {
           name: form.name, role: form.role, dept: form.dept,
           email: form.email, status: editing.status,
-        } as any);
+        });
         toast("success", "已更新", form.name);
       } else {
-        await api.users.create({
+        await list.create({
           name: form.name, role: form.role, dept: form.dept,
           email: form.email, status: "active",
-          // 后端要求 password；UI 没字段，用固定占位
-          password: "Init#2026",
-        } as any);
-        toast("success", "已新增成员", `${form.name} · 已用初始密码，请通知用户登录后修改`);
+        });
+        toast("success", "已新增成员", form.name);
       }
       setOpen(false);
       setEditing(null);
-      list.refresh();
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "保存失败");
     }
@@ -49,9 +46,8 @@ export function UsersPage({ role }: { role: "family-admin" | "admin" }) {
 
   const onDelete = async (r: ManagedUser) => {
     try {
-      await api.users.remove(r.id);
+      await list.remove(r.id);
       toast("success", "已删除", r.name);
-      list.refresh();
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "删除失败");
     }
@@ -140,13 +136,6 @@ function UserForm({ editing, onSubmit, isFam }: { editing: ManagedUser | null; o
   return (
     <form id="user-form" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
       <Field label="姓名"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="ipt" /></Field>
-      <Field label="角色">
-        <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="ipt">
-          <option value="admin">管理员</option>
-          <option value="operator">操作员</option>
-          <option value="viewer">查看者</option>
-        </select>
-      </Field>
       <Field label={isFam ? "亲属关系" : "部门"}><input value={form.dept} onChange={(e) => setForm({ ...form, dept: e.target.value })} className="ipt" placeholder={isFam ? "父亲 / 母亲 / 兄弟…" : "客服 / 风控 / 审计…"} /></Field>
       <Field label="联系方式"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="ipt" placeholder="手机号 / 邮箱" /></Field>
       <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}`}</style>

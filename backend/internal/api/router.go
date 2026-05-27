@@ -44,6 +44,11 @@ func NewRouter(d Deps) http.Handler {
 		r.Get("/threats", threatsActive(d))
 		r.Post("/analyze", analyzeCall(d))
 
+		r.Route("/warroom", func(r chi.Router) {
+			r.Get("/overview", warroomOverview(d))
+			r.Get("/voiceprint/latest", warroomLatestVoiceprint(d))
+		})
+
 		// Auth (无需鉴权) — /me/avatar 是 GET 图片资源，避免 fetch 加 Authorization 时的 CORS 复杂度
 		r.Post("/auth/login", authLogin(d))
 		r.Post("/auth/register", authRegister(d))
@@ -93,6 +98,22 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/admin-apply/status", adminApplyMyStatus(d))
 			r.Post("/admin-apply", adminApplySubmit(d))
 			r.Delete("/admin-apply/mine", adminApplyWithdraw(d))
+
+			r.Get("/blacklist", blacklistList(d))
+			r.Post("/blacklist", blacklistCreate(d))
+			r.Put("/blacklist/{id}", blacklistUpdate(d))
+			r.Delete("/blacklist/{id}", blacklistDelete(d))
+			r.Get("/blacklist/export", blacklistExport(d))
+			r.Post("/blacklist/import", blacklistImport(d))
+
+			r.Get("/users", usersList(d))
+			r.Post("/users", usersCreate(d))
+			r.Put("/users/{id}", usersUpdate(d))
+			r.Delete("/users/{id}", usersDelete(d))
+
+			r.Get("/appeals", appealsList(d))
+			r.Post("/appeals", appealsCreate(d))
+			r.Put("/appeals/{id}/status", appealsSetStatus(d))
 		})
 	})
 

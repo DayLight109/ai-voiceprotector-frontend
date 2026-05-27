@@ -23,16 +23,12 @@ type Counters struct {
 	since  time.Time
 }
 
-// New returns a store seeded with realistic baselines drawn from the published 2025 MPS figures.
+// New returns a store with zeroed counters. Counters now grow from real
+// /api/v1/analyze traffic (publishVerdict in the api package); there is no
+// synthetic baseline.
 // pool is the PostgreSQL pool used for persistent data (currently emergency contacts only).
 func New(pool *pgxpool.Pool) *Store {
 	c := &Counters{}
-	c.InterceptedCalls.Store(3_621_847)
-	c.BlockedCalls.Store(8_294)
-	c.AICloneDetected.Store(142)
-	c.ScriptHits.Store(11_730)
-	c.SmsBlocked.Store(33_000_000) // 3.3 亿条简化为示例
-	c.FundsHeldYuan.Store(21_707_000)
 	c.defcon = 2
 	c.since = time.Now()
 

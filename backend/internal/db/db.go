@@ -101,6 +101,25 @@ CREATE UNIQUE INDEX IF NOT EXISTS whitelist_entries_user_phone_uniq
 CREATE INDEX IF NOT EXISTS whitelist_entries_user_idx
     ON whitelist_entries (user_id, created_at);
 
+CREATE TABLE IF NOT EXISTS blacklist_entries (
+    id          TEXT PRIMARY KEY,
+    tenant_id   TEXT NOT NULL DEFAULT '',
+    is_global   BOOLEAN NOT NULL DEFAULT false,
+    number      TEXT NOT NULL,
+    category    TEXT NOT NULL DEFAULT '其他',
+    reason      TEXT NOT NULL DEFAULT '',
+    risk        INTEGER NOT NULL DEFAULT 60,
+    source      TEXT NOT NULL DEFAULT '手动',
+    created_by  TEXT NOT NULL DEFAULT '',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS blacklist_entries_scope_number_uniq
+    ON blacklist_entries (tenant_id, number);
+CREATE INDEX IF NOT EXISTS blacklist_entries_global_idx
+    ON blacklist_entries (is_global, created_at DESC);
+CREATE INDEX IF NOT EXISTS blacklist_entries_tenant_idx
+    ON blacklist_entries (tenant_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS admin_applications (
     id          TEXT PRIMARY KEY,
     user_id     TEXT NOT NULL,
@@ -116,6 +135,37 @@ CREATE UNIQUE INDEX IF NOT EXISTS admin_applications_user_pending_uniq
     ON admin_applications (user_id) WHERE status = 'pending';
 CREATE INDEX IF NOT EXISTS admin_applications_user_idx
     ON admin_applications (user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS appeals (
+    id          TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL,
+    type        TEXT NOT NULL,
+    number      TEXT NOT NULL,
+    reason      TEXT NOT NULL,
+    status      TEXT NOT NULL DEFAULT '处理中',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    decided_at  TIMESTAMPTZ,
+    decided_by  TEXT
+);
+CREATE INDEX IF NOT EXISTS appeals_user_idx
+    ON appeals (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS appeals_status_idx
+    ON appeals (status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS managed_users (
+    id          TEXT PRIMARY KEY,
+    tenant_id   TEXT NOT NULL,
+    name        TEXT NOT NULL DEFAULT '',
+    role        TEXT NOT NULL DEFAULT 'viewer',
+    dept        TEXT NOT NULL DEFAULT '',
+    email       TEXT NOT NULL DEFAULT '',
+    status      TEXT NOT NULL DEFAULT 'active',
+    last_seen   TEXT NOT NULL DEFAULT '',
+    created_by  TEXT NOT NULL DEFAULT '',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS managed_users_tenant_idx
+    ON managed_users (tenant_id, created_at DESC);
 `
 
 func applySchema(ctx context.Context, pool *pgxpool.Pool) error {

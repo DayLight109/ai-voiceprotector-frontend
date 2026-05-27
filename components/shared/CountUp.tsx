@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export default function CountUp({
   to,
@@ -16,12 +16,17 @@ export default function CountUp({
   suffix?: string;
   className?: string;
 }) {
-  const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+
+    const format = (n: number) =>
+      decimals > 0 ? n.toFixed(decimals) : Math.round(n).toLocaleString();
+    const write = (n: number) => {
+      node.textContent = `${prefix}${format(n)}${suffix}`;
+    };
 
     let cancelled = false;
     let rafId: number | null = null;
@@ -33,7 +38,7 @@ export default function CountUp({
         if (cancelled) return;
         const p = Math.min(1, (t - start) / duration);
         const eased = 1 - Math.pow(1 - p, 3);
-        setVal(to * eased);
+        write(to * eased);
         if (p < 1) rafId = requestAnimationFrame(step);
       };
       rafId = requestAnimationFrame(step);
@@ -55,8 +60,14 @@ export default function CountUp({
       if (rafId != null) cancelAnimationFrame(rafId);
       obs.disconnect();
     };
-  }, [to, duration]);
+  }, [to, duration, decimals, prefix, suffix]);
 
-  const formatted = decimals > 0 ? val.toFixed(decimals) : Math.round(val).toLocaleString();
-  return <span ref={ref} className={className}>{prefix}{formatted}{suffix}</span>;
+  const initial = decimals > 0 ? (0).toFixed(decimals) : "0";
+  return (
+    <span ref={ref} className={className}>
+      {prefix}
+      {initial}
+      {suffix}
+    </span>
+  );
 }

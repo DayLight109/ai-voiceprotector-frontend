@@ -74,10 +74,11 @@ func main() {
 	eng := engine.New(logger)
 	sampler := api.NewSampler()
 
-	// Simulated event generator — feeds the live console.
+	// Sampler tracks real CPU / memory / net for the dashboard's runtime panel.
+	// The live feed and counters are driven by /api/v1/analyze — no synthetic
+	// event generator runs in the background.
 	simCtx, simCancel := context.WithCancel(context.Background())
 	defer simCancel()
-	go feed.Simulate(simCtx, hub, st, logger)
 	sampler.Start(simCtx)
 
 	router := api.NewRouter(api.Deps{

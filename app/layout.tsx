@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider, themeBootScript } from "@/lib/theme";
 import { FontSizeProvider, fontSizeBootScript } from "@/lib/font-size";
 import { I18nProvider, i18nBootScript } from "@/lib/i18n";
+import { ToastProvider } from "@/components/shared/Toast";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -54,7 +55,9 @@ export default function RootLayout({
         <ThemeProvider>
           <FontSizeProvider>
             <I18nProvider>
-              <AuthProvider>{children}</AuthProvider>
+              <AuthProvider>
+                <ToastProvider>{children}</ToastProvider>
+              </AuthProvider>
             </I18nProvider>
           </FontSizeProvider>
         </ThemeProvider>

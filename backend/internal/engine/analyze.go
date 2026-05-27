@@ -18,6 +18,8 @@ type Engine struct {
 	failed       atomic.Int64
 	lastAnalyzed atomic.Int64 // unix nano of last successful Analyze
 	lastFailed   atomic.Int64 // unix nano of last failure
+
+	lastVerdict atomic.Pointer[Verdict]
 }
 
 // New returns an engine ready to analyze incoming calls.
@@ -120,7 +122,7 @@ func (e *Engine) Analyze(ctx context.Context, req Request) (Verdict, error) {
 	e.analyzed.Add(1)
 	e.lastAnalyzed.Store(time.Now().UnixNano())
 
-	return Verdict{
+	verdict := Verdict{
 		CallID:        req.CallID,
 		Timestamp:     time.Now(),
 		Trace:         t.v,
@@ -130,7 +132,15 @@ func (e *Engine) Analyze(ctx context.Context, req Request) (Verdict, error) {
 		RiskLevel:     level,
 		Action:        action,
 		LatencyMillis: time.Since(start).Milliseconds(),
-	}, nil
+	}
+	e.lastVerdict.Store(&verdict)
+	return verdict, nil
+}
+
+// LastVerdict returns the most recent successful verdict, or nil if Analyze
+// has not produced one yet.
+func (e *Engine) LastVerdict() *Verdict {
+	return e.lastVerdict.Load()
 }
 
 // mergeRisk takes the (probabilistically) worst of the three signals while

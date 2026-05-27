@@ -404,6 +404,34 @@ export const api = {
   },
   async getStats() { return request<Record<string, number>>("/api/v1/stats"); },
 
+  warroom: {
+    overview: () =>
+      request<{
+        counters: {
+          interceptedCalls: number; blockedCalls: number; aiCloneDetected: number;
+          scriptHits: number; smsBlocked: number; fundsHeldYuan: number;
+        };
+        defcon: number; since: string; nowUtc: string;
+        hub: { subscribers: number; buffered: number; lastEventAt: string };
+        engine: { analyzed: number; failed: number; lastAnalyzedAt: string };
+        runtime: {
+          cpuPct: number; memPct: number; netRxBps: number; netTxBps: number;
+          goroutines: number; sampledAt: string;
+        };
+      }>("/api/v1/warroom/overview"),
+    latestVoiceprint: () =>
+      request<null | {
+        callId: string;
+        ts: string;
+        riskScore: number;
+        riskLevel: string;
+        voiceprint: {
+          synthProbability: number; f0Jitter: number; breathScore: number;
+          regularity: number; risk: number; verdict: string;
+        };
+      }>("/api/v1/warroom/voiceprint/latest"),
+  },
+
   // ── 业务资源（CRUD）
   blacklist: {
     ...crudFor<BlackEntry>("/api/v1/blacklist"),

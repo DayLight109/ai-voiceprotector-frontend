@@ -9,9 +9,9 @@ import { useToast } from "@/components/shared/Toast";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
 import { type BlackEntry } from "@/lib/mock";
 import { downloadBlob } from "@/lib/storage";
-import { api, APIError } from "@/lib/api";
-import { useResource } from "@/lib/use-resource";
-import { Plus, Trash2, Edit3, Database, FileSpreadsheet, Download } from "lucide-react";
+import { APIError } from "@/lib/api";
+import { useHybridBlacklist } from "@/lib/blacklist-store";
+import { Plus, Trash2, Edit3, Database, FileSpreadsheet, Download, Cloud } from "lucide-react";
 
 export default function FamilyBlacklistPage() {
   return <BlacklistAdminPage role="family-admin" />;
@@ -20,7 +20,7 @@ export default function FamilyBlacklistPage() {
 export function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" }) {
   const isFam = role === "family-admin";
   const toast = useToast();
-  const list = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 100 }));
+  const list = useHybridBlacklist();
   const [editing, setEditing] = useState<BlackEntry | null>(null);
   const [open, setOpen] = useState(false);
   const [uploads, setUploads] = useState<{ name: string; size: number; lines: number }[]>([]);
@@ -28,20 +28,19 @@ export function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" })
   const onSubmit = async (form: any) => {
     try {
       if (editing) {
-        await api.blacklist.update(editing.id, {
+        await list.update(editing.id, {
           number: form.number, reason: form.reason, category: form.category, risk: Number(form.risk),
         });
         toast("success", "已更新");
       } else {
-        await api.blacklist.create({
+        await list.create({
           number: form.number, reason: form.reason, category: form.category,
-          risk: Number(form.risk), source: "手动",
-        } as any);
+          risk: Number(form.risk),
+        });
         toast("success", "已新增", form.number);
       }
       setOpen(false);
       setEditing(null);
-      list.refresh();
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "保存失败");
     }
@@ -59,9 +58,8 @@ export function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" })
       }))
     );
     try {
-      const res = await api.blacklist.importJSON(extra);
+      const res = await list.importMany(extra);
       toast("success", `已导入 ${files.length} 个文件`, `合计 ${res.imported} 条`);
-      list.refresh();
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "导入失败");
     }
@@ -69,9 +67,12 @@ export function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" })
 
   const exportCsv = async () => {
     try {
-      const blob = await api.blacklist.exportCSV();
-      const ab = await blob.arrayBuffer();
-      downloadBlob(`blacklist-${Date.now()}.csv`, ab, "text/csv;charset=utf-8");
+      const header = "号码,类别,原因,风险分,来源,创建时间\n";
+      const rows = [...list.tenant, ...list.global]
+        .map((r) => [r.number, r.category, r.reason, r.risk, r.source, r.createdAt]
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+      downloadBlob(`blacklist-${Date.now()}.csv`, "﻿" + header + rows, "text/csv;charset=utf-8");
       toast("success", "已导出 CSV");
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "导出失败");
@@ -98,24 +99,54 @@ export function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" })
       />
 
       <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-12 lg:col-span-8 panel p-6">
-          <DataTable<BlackEntry>
-            rows={list.items}
-            searchKeys={["number", "reason", "category"]}
-            columns={[
-              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
-              { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="coral">{r.category}</span> },
-              { key: "reason", label: "原因" },
-              { key: "risk", label: "风险分", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.risk >= 90 ? "var(--coral-deep)" : "var(--ink)" }}>{r.risk}</span> },
-              { key: "source", label: "来源", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span> },
-            ]}
-            actions={(r) => (
-              <div className="flex items-center gap-1 justify-end">
-                <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
-                <button onClick={async () => { try { await api.blacklist.remove(r.id); toast("success", "已删除"); list.refresh(); } catch (e) { toast("error", e instanceof APIError ? e.message : "删除失败"); } }} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+        <div className="col-span-12 lg:col-span-8 space-y-5">
+          <div className="panel p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--canvas-2)", color: "var(--ink)" }}>
+                <Database size={14} />
               </div>
-            )}
-          />
+              <div className="font-display text-[15px] font-extrabold">本地缓存（本组织私有，{list.tenant.length} 条）</div>
+            </div>
+            <DataTable<BlackEntry>
+              rows={list.tenant}
+              searchKeys={["number", "reason", "category"]}
+              columns={[
+                { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+                { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="coral">{r.category}</span> },
+                { key: "reason", label: "原因" },
+                { key: "risk", label: "风险分", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.risk >= 90 ? "var(--coral-deep)" : "var(--ink)" }}>{r.risk}</span> },
+                { key: "source", label: "来源", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span> },
+              ]}
+              actions={(r) => (
+                <div className="flex items-center gap-1 justify-end">
+                  <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                  <button onClick={async () => { try { await list.remove(r.id); toast("success", "已删除"); } catch (e) { toast("error", e instanceof APIError ? e.message : "删除失败"); } }} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+                </div>
+              )}
+            />
+          </div>
+
+          {list.global.length > 0 && (
+            <div className="panel p-6" style={{ borderColor: "var(--indigo-soft)" }}>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
+                  <Cloud size={14} />
+                </div>
+                <div className="font-display text-[15px] font-extrabold">云端同步（系统管理员下发，{list.global.length} 条）</div>
+              </div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3 ml-11">READ ONLY · 由平台统一维护，不可编辑</div>
+              <DataTable<BlackEntry>
+                rows={list.global}
+                searchKeys={["number", "reason", "category"]}
+                columns={[
+                  { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+                  { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="indigo">{r.category}</span> },
+                  { key: "reason", label: "原因" },
+                  { key: "risk", label: "风险分", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.risk >= 90 ? "var(--coral-deep)" : "var(--ink)" }}>{r.risk}</span> },
+                ]}
+              />
+            </div>
+          )}
         </div>
 
         <aside className="col-span-12 lg:col-span-4 space-y-4">

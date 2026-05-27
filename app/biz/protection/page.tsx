@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
@@ -9,24 +9,105 @@ import { BIZ_NAV } from "@/lib/nav";
 import { type BlackEntry, type WhiteEntry } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine, Building2 } from "lucide-react";
+import { useHybridBlacklist } from "@/lib/blacklist-store";
+import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine } from "lucide-react";
+
+type BlackForm = { number: string; reason: string; category: BlackEntry["category"]; risk: number };
+type WhiteForm = { phone: string; name: string; relation: string };
+const emptyBlack: BlackForm = { number: "", reason: "", category: "其他", risk: 70 };
+const emptyWhite: WhiteForm = { phone: "", name: "", relation: "" };
 
 export default function BizProtectionPage() {
   const toast = useToast();
   const [tab, setTab] = useState<"blacklist" | "whitelist">("blacklist");
-  const blist = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 100 }));
+  const blist = useHybridBlacklist();
   const wlist = useResource<WhiteEntry>(() => api.whitelist.list({ pageSize: 100 }));
   const [sortByRisk, setSortByRisk] = useState(true);
-  const [scanMode, setScanMode] = useState<"local" | "cloud">("cloud");
+  const [scanMode, setScanMode] = useState<"local" | "cloud">("local");
 
-  const view = useMemo(() => sortByRisk ? [...blist.items].sort((a, b) => b.risk - a.risk) : blist.items, [blist.items, sortByRisk]);
+  const [open, setOpen] = useState(false);
+  const [editingBlack, setEditingBlack] = useState<BlackEntry | null>(null);
+  const [editingWhite, setEditingWhite] = useState<WhiteEntry | null>(null);
+  const [bForm, setBForm] = useState<BlackForm>(emptyBlack);
+  const [wForm, setWForm] = useState<WhiteForm>(emptyWhite);
+  const [saving, setSaving] = useState(false);
+
+  const blackRows = useMemo(
+    () => (scanMode === "cloud" ? blist.global : blist.tenant),
+    [scanMode, blist.global, blist.tenant],
+  );
+  useEffect(() => {
+    if (scanMode === "cloud" && tab === "whitelist") setTab("blacklist");
+  }, [scanMode, tab]);
+  const view = useMemo(
+    () => sortByRisk ? [...blackRows].sort((a, b) => b.risk - a.risk) : blackRows,
+    [blackRows, sortByRisk],
+  );
+
+  const openCreate = () => {
+    setEditingBlack(null);
+    setEditingWhite(null);
+    setBForm(emptyBlack);
+    setWForm(emptyWhite);
+    setOpen(true);
+  };
+  const openEditBlack = (r: BlackEntry) => {
+    setEditingBlack(r);
+    setEditingWhite(null);
+    setBForm({ number: r.number, reason: r.reason, category: r.category, risk: r.risk });
+    setOpen(true);
+  };
+  const openEditWhite = (r: WhiteEntry) => {
+    setEditingWhite(r);
+    setEditingBlack(null);
+    setWForm({ phone: r.phone, name: r.name, relation: r.relation });
+    setOpen(true);
+  };
+
+  const submit = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (tab === "blacklist") {
+        const f = { ...bForm, number: bForm.number.trim(), reason: bForm.reason.trim() };
+        if (!f.number) { toast("error", "请填写号码"); setSaving(false); return; }
+        if (editingBlack) {
+          await blist.update(editingBlack.id, {
+            number: f.number, reason: f.reason, category: f.category, risk: Number(f.risk),
+          });
+          toast("success", "已更新黑名单");
+        } else {
+          await blist.create({
+            number: f.number, reason: f.reason, category: f.category,
+            risk: Number(f.risk),
+          });
+          toast("success", "已加入本地黑名单", f.number);
+        }
+      } else {
+        const f = { ...wForm, phone: wForm.phone.trim(), name: wForm.name.trim(), relation: wForm.relation.trim() };
+        if (!f.phone) { toast("error", "请填写号码"); setSaving(false); return; }
+        if (editingWhite) {
+          await api.whitelist.update(editingWhite.id, f);
+          toast("success", "已更新白名单");
+        } else {
+          await api.whitelist.create(f as any);
+          toast("success", "已加入白名单", f.phone);
+        }
+        wlist.refresh();
+      }
+      setOpen(false);
+    } catch (e) {
+      toast("error", e instanceof APIError ? e.message : "保存失败");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const remove = async (id: string) => {
     try {
       if (tab === "blacklist") {
-        await api.blacklist.remove(id);
+        await blist.remove(id);
         toast("success", "已从黑名单移除");
-        blist.refresh();
       } else {
         await api.whitelist.remove(id);
         toast("success", "已从白名单移除");
@@ -36,6 +117,8 @@ export default function BizProtectionPage() {
       toast("error", e instanceof APIError ? e.message : "操作失败");
     }
   };
+
+  const isEditing = !!(editingBlack || editingWhite);
 
   return (
     <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "实时安全防护"]}>
@@ -90,8 +173,8 @@ export default function BizProtectionPage() {
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border">
             {[
-              { k: "blacklist", label: `黑名单 · ${blist.items.length}`, icon: ShieldOff, tone: "coral" },
-              { k: "whitelist", label: `白名单 · ${wlist.items.length}`, icon: ShieldCheck, tone: "mint" },
+              { k: "blacklist", label: `黑名单 · ${scanMode === "cloud" ? blist.global.length : blist.tenant.length}`, icon: ShieldOff, tone: "coral" },
+              ...(scanMode === "cloud" ? [] : [{ k: "whitelist", label: `白名单 · ${wlist.items.length}`, icon: ShieldCheck, tone: "mint" }]),
             ].map((t) => {
               const active = t.k === tab;
               return (
@@ -101,29 +184,7 @@ export default function BizProtectionPage() {
               );
             })}
           </div>
-          <button
-            onClick={async () => {
-              try {
-                if (tab === "blacklist") {
-                  await api.blacklist.create({
-                    number: "+86 000 0000 0000", reason: "新增条目", category: "其他",
-                    risk: 60, source: "手动",
-                  } as any);
-                  toast("success", "新增条目，请补全详情");
-                  blist.refresh();
-                } else {
-                  await api.whitelist.create({
-                    phone: "+86 000 0000 0000", name: "新增联系人", relation: "其他",
-                  } as any);
-                  toast("success", "新增条目，请补全详情");
-                  wlist.refresh();
-                }
-              } catch (e) {
-                toast("error", e instanceof APIError ? e.message : "操作失败");
-              }
-            }}
-            className="btn-indigo py-2 px-3 text-[12px]"
-          >
+          <button onClick={openCreate} disabled={tab === "blacklist" && scanMode === "cloud"} className="btn-indigo py-2 px-3 text-[12px] disabled:opacity-40 disabled:cursor-not-allowed" title={tab === "blacklist" && scanMode === "cloud" ? "云端同步条目由系统管理员维护，不可编辑" : undefined}>
             <Plus size={12} /> 新增{tab === "blacklist" ? "黑" : "白"}名单
           </button>
         </div>
@@ -140,7 +201,14 @@ export default function BizProtectionPage() {
               { key: "source", label: "来源" },
             ]}
             actions={(r) => (
-              <button onClick={() => remove(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              scanMode === "cloud" ? (
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft">READ ONLY</span>
+              ) : (
+                <div className="flex items-center gap-1 justify-end">
+                  <button onClick={() => openEditBlack(r)} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                  <button onClick={() => remove(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+                </div>
+              )
             )}
           />
         ) : (
@@ -154,11 +222,71 @@ export default function BizProtectionPage() {
               { key: "createdAt", label: "时间" },
             ]}
             actions={(r) => (
-              <button onClick={() => remove(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              <div className="flex items-center gap-1 justify-end">
+                <button onClick={() => openEditWhite(r)} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                <button onClick={() => remove(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              </div>
             )}
           />
         )}
       </div>
+
+      <Modal
+        open={open}
+        onClose={() => { if (!saving) setOpen(false); }}
+        title={`${isEditing ? "编辑" : "新增"}${tab === "blacklist" ? "黑名单" : "白名单"}`}
+        footer={
+          <>
+            <button disabled={saving} onClick={() => setOpen(false)} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
+            <button disabled={saving} onClick={submit} className="btn-indigo py-2 px-4 text-[13px]">
+              {saving ? "保存中…" : "保存"}
+            </button>
+          </>
+        }
+      >
+        {tab === "blacklist" ? (
+          <form id="biz-bl-form" onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
+            <Field label="号码">
+              <input required value={bForm.number} onChange={(e) => setBForm({ ...bForm, number: e.target.value })} placeholder="+86 138 0000 0000" className="ipt" />
+            </Field>
+            <Field label="类别">
+              <select value={bForm.category} onChange={(e) => setBForm({ ...bForm, category: e.target.value as BlackEntry["category"] })} className="ipt">
+                {(["AI合成", "话术诈骗", "号码伪冒", "其他"] as const).map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="原因">
+              <input value={bForm.reason} onChange={(e) => setBForm({ ...bForm, reason: e.target.value })} placeholder="例如：仿冒客服热线骚扰" className="ipt" />
+            </Field>
+            <Field label="风险分（0-100）">
+              <input type="number" min={0} max={100} value={bForm.risk}
+                onChange={(e) => setBForm({ ...bForm, risk: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                className="ipt" />
+            </Field>
+          </form>
+        ) : (
+          <form id="biz-wl-form" onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
+            <Field label="号码">
+              <input required value={wForm.phone} onChange={(e) => setWForm({ ...wForm, phone: e.target.value })} placeholder="+86 138 0000 0000" className="ipt" />
+            </Field>
+            <Field label="联系人">
+              <input value={wForm.name} onChange={(e) => setWForm({ ...wForm, name: e.target.value })} placeholder="例如：客户成功部" className="ipt" />
+            </Field>
+            <Field label="关系">
+              <input value={wForm.relation} onChange={(e) => setWForm({ ...wForm, relation: e.target.value })} placeholder="例如：合作方 / 内部分机" className="ipt" />
+            </Field>
+          </form>
+        )}
+        <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}`}</style>
+      </Modal>
     </AppShell>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      {children}
+    </div>
   );
 }

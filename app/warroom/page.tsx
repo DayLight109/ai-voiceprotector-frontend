@@ -8,18 +8,20 @@ import {
 } from "lucide-react";
 import { api, streamFeed, FeedEvent as BackendEvent, APIError } from "@/lib/api";
 
-const PHONE_PREFIXES = ["+86-138","+86-186","+855-23","+95-9","+856-21","+84-28","+90-553","+62-21","+91-90","+960-7"];
-const ORIGINS = ["MM/YGN","KH/PNH","LA/VTE","VN/SGN","TH/BKK","PH/MNL","MY/KUL","NG/LAG","IN/BOM","AE/DXB"];
-const SCRIPT_HITS = ["URGENCY · 今天必须办","TRANSFER · 安全账户","ISOLATE · 不能告诉家人","CREDS · 验证码 / 卡号","AUTHORITY · 公检法","RELATIVE · 克隆孙子","DEEPFAKE · 实时换声"];
-const VERBS = ["INTERCEPT","ANALYZE","VOICEPRINT","ROUTE","BLOCK","FLAG","TRACE","ESCALATE"];
 const API = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || "http://localhost:8080";
 
-const r = <T,>(a: T[]): T => a[Math.floor(Math.random()*a.length)];
-const rint = (a: number, b: number) => Math.floor(a + Math.random()*(b-a+1));
-const phone = () => `${r(PHONE_PREFIXES)}-${rint(100,999)}-${rint(1000,9999)}`;
 const pad = (n: number, l=2) => String(n).padStart(l,"0");
 
-type FeedEvent = { id: string; t: Date; verb: string; phone: string; origin: string; script: string; tone: "block"|"warn"|"watch"|"safe" };
+type FeedEvent = {
+  id: string;
+  t: Date;
+  verb: string;
+  phone: string;
+  origin: string;     // 来自后端 trace.actualOrigin（如 "CN" / "MM"）
+  script: string;     // 来自后端 scriptCategory（如 "引导转账"）；可能为空
+  riskScore: number;  // 0-100
+  tone: "block"|"warn"|"watch"|"safe";
+};
 
 const TONE = {
   block: "var(--coral)",
@@ -28,27 +30,25 @@ const TONE = {
   safe:  "var(--mint)",
 } as const;
 
-// adaptBackend 把后端 SSE 事件结构映射成 warroom UI 用的 FeedEvent。
-//
-// 后端 BackendEvent = { id, ts, side, verb, level, payload(JSON 字符串) }
-// 其中 payload 解析后含 { callId, shownNumber, riskScore, riskLevel, verdict }，
-// shownNumber 已被后端中间四位脱敏（如 138***8000）。
-//
-// origin / script 在后端 payload 中不存在，UI 装饰字段保留随机兜底以维持原视觉。
+// adaptBackend 把后端 SSE 事件转成 UI 事件。所有展示字段都来自真实 payload；
+// payload 由 publishVerdict 在 /api/v1/analyze 成功路径上写入，无任何随机回退。
 function adaptBackend(be: BackendEvent): FeedEvent {
   let parsed: any = {};
   try { parsed = JSON.parse(be.payload || "{}"); } catch {}
-  const toneMap: Record<string, FeedEvent["tone"]> = {
-    danger: "block", warn: "warn", info: "watch",
-  };
+  const score: number = typeof parsed.riskScore === "number" ? parsed.riskScore : 0;
+  const tone: FeedEvent["tone"] =
+    score >= 85 ? "block" :
+    score >= 65 ? "warn"  :
+    score >= 35 ? "watch" : "safe";
   return {
     id: be.id || crypto.randomUUID(),
     t: new Date(be.ts || Date.now()),
-    verb: be.verb || r(VERBS),
-    phone: parsed.shownNumber || phone(),
-    origin: r(ORIGINS),
-    script: r(SCRIPT_HITS),
-    tone: toneMap[be.level] || "watch",
+    verb: be.verb || "ANALYZE",
+    phone: parsed.shownNumber || "—",
+    origin: parsed.actualOrigin || parsed.registry || "??",
+    script: parsed.scriptCategory || "",
+    riskScore: score,
+    tone,
   };
 }
 
@@ -208,45 +208,20 @@ function Defcon() {
 
 function useFeed() {
   const [events, setEvents] = useState<FeedEvent[]>([]);
-  const simRef = useRef<number | null>(null);
   useEffect(() => {
     let closed = false;
-    let stopStream: (() => void) | null = null;
-
-    const pushSim = () => {
-      const tones: FeedEvent["tone"][] = ["block","warn","watch","safe"];
-      const tone = tones[rint(0,3)];
-      setEvents(prev => [{ id: crypto.randomUUID(), t: new Date(), verb: r(VERBS), phone: phone(), origin: r(ORIGINS), script: r(SCRIPT_HITS), tone }, ...prev].slice(0,48));
-    };
-    const startSim = () => {
-      if (simRef.current) return;
-      simRef.current = window.setInterval(pushSim, 1200) as any;
-      pushSim();
-    };
-
-    // 真实 SSE：fetch + ReadableStream（带 Bearer），失败 / 关闭时降级 mock。
-    let opened = false;
-    stopStream = streamFeed({
-      onOpen: () => { opened = true; },
+    const stop = streamFeed({
       onEvent: (be) => {
         setEvents(prev => [adaptBackend(be), ...prev].slice(0, 48));
       },
-      onError: () => { if (!closed && !simRef.current) startSim(); },
-      onClose: () => { if (!closed && !opened && !simRef.current) startSim(); },
+      onError: () => { /* SSE 断开时保持空列表，等真实事件 */ },
+      onClose: () => { /* 由 server / 用户离开页面触发 */ },
     });
-
-    // 兜底：若 1.4s 内既没收到事件、也没 open，启动 mock
-    const fallback = setTimeout(() => {
-      if (!closed && events.length === 0 && !simRef.current) startSim();
-    }, 1400);
-
     return () => {
       closed = true;
-      if (simRef.current) clearInterval(simRef.current);
-      stopStream?.();
-      clearTimeout(fallback);
+      void closed;
+      stop?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return events;
 }
@@ -275,13 +250,17 @@ function LiveFeed() {
   return (
     <Panel title="Live Feed · 事件流" icon={Activity} tag={`${events.length} EVT`} className="h-[42%]">
       <div className="divide-y divide-white/5 font-mono text-[11px] font-medium">
-        {events.length === 0 && <div className="p-4" style={{ color: "rgba(242, 243, 247, 0.55)" }}>正在连接事件流…</div>}
+        {events.length === 0 && (
+          <div className="p-4" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            等待事件 — 调用 /api/v1/analyze 后此处出现真实事件
+          </div>
+        )}
         {events.map(e => (
           <div key={e.id} className="px-4 py-2 flex items-start gap-2 hover:bg-white/[0.03]">
             <span className="w-1.5 h-1.5 mt-1.5 rounded-full shrink-0" style={{ background: TONE[e.tone] }} />
             <span className="shrink-0" style={{ color: "rgba(242, 243, 247, 0.55)" }}>{pad(e.t.getHours())}:{pad(e.t.getMinutes())}:{pad(e.t.getSeconds())}</span>
             <span className="font-extrabold shrink-0" style={{ color: TONE[e.tone] }}>{e.verb}</span>
-            <span className="truncate">{e.phone} · {e.origin}</span>
+            <span className="truncate">{e.phone}{e.origin ? ` · ${e.origin}` : ""}{e.riskScore ? ` · ${e.riskScore}` : ""}</span>
           </div>
         ))}
       </div>
@@ -290,28 +269,77 @@ function LiveFeed() {
 }
 
 function Voiceprint() {
-  const [bars, setBars] = useState<number[]>(Array.from({length: 38}, () => Math.random()));
+  // 三项指标全部来自最近一次 /api/v1/analyze 的 verdict。
+  // 频谱条按 synthProbability 做确定性可视化（高合成概率 = 红色高峰），
+  // 没有任何 Math.random。无 verdict 时显示 "—"。
+  type Latest = Awaited<ReturnType<typeof api.warroom.latestVoiceprint>>;
+  const [vp, setVp] = useState<Latest>(null);
+
   useEffect(() => {
-    const id = setInterval(() => setBars(Array.from({length: 38}, (_,i) => Math.abs(Math.sin(Date.now()/200 + i*0.3))*0.7 + Math.random()*0.3)), 120);
-    return () => clearInterval(id);
+    let stop = false;
+    const pull = async () => {
+      try {
+        const d = await api.warroom.latestVoiceprint();
+        if (!stop) setVp(d);
+      } catch { /* 后端不可用就保持空 */ }
+    };
+    void pull();
+    const id = setInterval(pull, 3000);
+    return () => { stop = true; clearInterval(id); };
   }, []);
+
+  // 38 条频谱：把 0..1 的 synthProb 映射成峰形（中段最高、两侧渐低），
+  // 没数据时全部归零。这样观众一眼能从条形高度看出合成概率。
+  const synth = vp?.voiceprint.synthProbability ?? 0;
+  const bars = useMemo(() => {
+    return Array.from({ length: 38 }, (_, i) => {
+      const center = 18.5;
+      const dist = Math.abs(i - center) / center;     // 0..1
+      const shape = Math.cos((dist * Math.PI) / 2);   // 1 at center, 0 at edge
+      return synth > 0 ? Math.max(0.05, shape * synth) : 0;
+    });
+  }, [synth]);
+
+  const fmt = (v: number | undefined, digits = 2) =>
+    v === undefined ? "—" : v.toFixed(digits);
+
+  const stats = [
+    { k: "F0",     v: fmt(vp?.voiceprint.f0Jitter, 3) },
+    { k: "BREATH", v: fmt(vp?.voiceprint.breathScore) },
+    { k: "SYNTH",  v: fmt(vp?.voiceprint.synthProbability) },
+  ];
+
   return (
-    <Panel title="Voiceprint · 声纹频谱" icon={Waves} tag="F0 · BREATH · SYNTH" className="flex-1">
+    <Panel
+      title="Voiceprint · 声纹频谱"
+      icon={Waves}
+      tag={vp ? `verdict ${vp.voiceprint.verdict}` : "NO DATA"}
+      className="flex-1"
+    >
       <div className="p-4 h-full flex flex-col justify-between gap-3">
         <div className="flex items-end gap-[3px] flex-1">
           {bars.map((h, i) => (
             <div
               key={i}
-              className="flex-1 rounded-full transition-[height] duration-150"
-              style={{ height: `${h*100}%`, background: i<13 ? "var(--mint)" : i<26 ? "var(--amber)" : "var(--coral)" }}
+              className="flex-1 rounded-full"
+              style={{
+                height: `${Math.max(2, h * 100)}%`,
+                background: i < 13 ? "var(--mint)" : i < 26 ? "var(--amber)" : "var(--coral)",
+                opacity: vp ? 1 : 0.25,
+              }}
             />
           ))}
         </div>
         <div className="grid grid-cols-3 gap-2 font-mono text-[10px] font-bold">
-          {[{k:"F0",v:"unstable"},{k:"BREATH",v:"absent"},{k:"SYNTH",v:"0.94"}].map(x => (
+          {stats.map(x => (
             <div key={x.k} className="p-2.5 rounded-xl border border-white/10 bg-white/[0.03]">
               <div className="uppercase tracking-wider text-[9px]" style={{ color: "rgba(242, 243, 247, 0.55)" }}>{x.k}</div>
-              <div className="mt-0.5 font-extrabold" style={{ color: "var(--coral)" }}>{x.v}</div>
+              <div
+                className="mt-0.5 font-extrabold"
+                style={{ color: vp && x.k === "SYNTH" && (vp.voiceprint.synthProbability >= 0.85) ? "var(--coral)" : "var(--mint)" }}
+              >
+                {x.v}
+              </div>
             </div>
           ))}
         </div>
@@ -374,7 +402,7 @@ function Radar() {
   const now = typeof performance !== "undefined" ? performance.now() : 0;
 
   return (
-    <Panel title="Tactical Radar · 战术雷达" icon={RadarIcon} tag="SWEEP · 4.5°/s" className="h-full">
+    <Panel title="Tactical Radar · 战术雷达" icon={RadarIcon} tag="DEMO · 视觉演示" className="h-full">
       <div className="relative h-full p-4">
         <div className="relative h-full w-full">
           <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
@@ -440,11 +468,8 @@ function Radar() {
               </circle>
             ))}
           </svg>
-          <div className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgb(74, 230, 138)" }}>
-            LAT 39.9° · LON 116.4°
-          </div>
-          <div className="absolute bottom-3 right-3 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "var(--mint)" }}>
-            8 CONTACTS · 3 HOSTILE
+          <div className="absolute top-3 left-3 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.45)" }}>
+            视觉演示 · 非实时坐标
           </div>
         </div>
       </div>
@@ -465,8 +490,11 @@ function PriorityAlerts() {
               <div className="flex items-center gap-2 font-mono text-[10px] font-bold">
                 <span className="font-extrabold" style={{ color: TONE[e.tone] }}>{e.verb}</span>
                 <span style={{ color: "rgba(242, 243, 247, 0.55)" }}>{e.phone}</span>
+                <span style={{ color: "rgba(242, 243, 247, 0.55)" }}>· risk {e.riskScore}</span>
               </div>
-              <div className="mt-0.5 font-mono text-[11px] font-medium truncate">{e.script}</div>
+              {e.script && (
+                <div className="mt-0.5 font-mono text-[11px] font-medium truncate">{e.script}</div>
+              )}
             </div>
           </div>
         ))}
@@ -476,58 +504,69 @@ function PriorityAlerts() {
 }
 
 function Counters() {
-  // 真实计数器：每 5s 拉 /stats 全量覆盖（后端只暴露 Snapshot，无增量）。
-  // 后端无响应时保留兜底 mock，与原视觉一致。
-  const [stats, setStats] = useState({ intercepted: 14382910, blocked: 284917, escalated: 1283 });
-  const [synced, setSynced] = useState(false);
+  // 全部数字来自 /api/v1/warroom/overview。业务计数（intercepted/blocked/aiClones）
+  // 由真实 /api/v1/analyze 调用驱动；CPU/Mem/订阅数由后端 sampler 实时采样。
+  // 没有任何前端随机增量。
+  type Overview = Awaited<ReturnType<typeof api.warroom.overview>>;
+  const [data, setData] = useState<Overview | null>(null);
+  const [err, setErr] = useState(false);
 
   useEffect(() => {
     let stop = false;
     const pull = async () => {
       try {
-        const d = await api.getStats();
+        const d = await api.warroom.overview();
         if (stop) return;
-        const next = {
-          intercepted: typeof d.intercepted === "number" ? d.intercepted : stats.intercepted,
-          blocked: typeof d.blocked === "number" ? d.blocked : stats.blocked,
-          escalated: typeof d.aiClones === "number" ? d.aiClones : stats.escalated,
-        };
-        setStats(next);
-        setSynced(true);
+        setData(d);
+        setErr(false);
       } catch {
-        // 静默；下面的 sim 接管
+        if (!stop) setErr(true);
       }
     };
     void pull();
-    const id = setInterval(pull, 5000);
+    const id = setInterval(pull, 3000);
+    return () => { stop = true; clearInterval(id); };
+  }, []);
 
-    // 未同步成功前用增量 mock 保持视觉活跃；同步成功后停 mock，依赖 /stats 刷新
-    const simId = setInterval(() => {
-      if (synced) return;
-      setStats(s => ({
-        intercepted: s.intercepted + rint(10,40),
-        blocked: s.blocked + rint(0,3),
-        escalated: s.escalated + (Math.random() < 0.2 ? 1 : 0),
-      }));
-    }, 1400);
+  const c = data?.counters;
+  const rt = data?.runtime;
+  const eng = data?.engine;
+  const hub = data?.hub;
 
-    return () => { stop = true; clearInterval(id); clearInterval(simId); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [synced]);
+  const businessRows = [
+    { k: "INTERCEPTED", v: c?.interceptedCalls, c: "var(--mint)" },
+    { k: "BLOCKED",     v: c?.blockedCalls,     c: "var(--coral)" },
+    { k: "AI CLONES",   v: c?.aiCloneDetected,  c: "var(--amber)" },
+  ];
+  const runtimeRows = [
+    { k: "ANALYZED",    v: eng?.analyzed,    c: "var(--mint)",   suffix: "" },
+    { k: "SUBSCRIBERS", v: hub?.subscribers, c: "var(--indigo)", suffix: "" },
+    { k: "CPU",         v: rt?.cpuPct,       c: "var(--amber)",  suffix: "%" },
+  ];
+
+  const fmt = (v: number | undefined, suffix = "") => {
+    if (v === undefined || v === null) return "—";
+    if (suffix === "%") return `${Math.round(v * 10) / 10}${suffix}`;
+    return `${v.toLocaleString()}${suffix}`;
+  };
 
   return (
-    <Panel title="Counters · 计数器" icon={Cpu} className="flex-1">
+    <Panel title="Counters · 计数器" icon={Cpu} tag={err ? "OFFLINE" : "LIVE"} className="flex-1">
       <div className="p-3 space-y-2.5 font-mono">
-        {[
-          {k:"INTERCEPTED",v:stats.intercepted,c:"var(--mint)"},
-          {k:"BLOCKED",v:stats.blocked,c:"var(--coral)"},
-          {k:"ESCALATED",v:stats.escalated,c:"var(--amber)"},
-        ].map(x => (
+        {businessRows.map(x => (
           <div key={x.k} className="flex items-center justify-between p-2 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
             <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>{x.k}</span>
-            <span className="text-[20px] numplate" style={{ color: x.c }}>{x.v.toLocaleString()}</span>
+            <span className="text-[20px] numplate" style={{ color: x.c }}>{fmt(x.v)}</span>
           </div>
         ))}
+        <div className="pt-1 mt-1 border-t border-white/5 space-y-2.5">
+          {runtimeRows.map(x => (
+            <div key={x.k} className="flex items-center justify-between p-2 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>{x.k}</span>
+              <span className="text-[16px] numplate" style={{ color: x.c }}>{fmt(x.v as number | undefined, x.suffix)}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </Panel>
   );
@@ -541,7 +580,7 @@ function AsciiMap() {
     "  ╰─━─━─SINGAPORE─━─━─╯  ",
   ];
   return (
-    <Panel title="Global Map · ASCII" icon={MapIcon} tag="LIVE" className="h-[26%]">
+    <Panel title="Global Map · ASCII" icon={MapIcon} tag="DEMO" className="h-[26%]">
       <pre className="p-3 font-mono text-[10px] leading-tight whitespace-pre font-bold" style={{ color: "var(--mint)" }}>
 {rows.join("\n")}
       </pre>
