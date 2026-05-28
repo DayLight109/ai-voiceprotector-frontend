@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -16,6 +16,14 @@ import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDr
 type Tab = "blacklist" | "whitelist";
 
 export default function ProtectionPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProtectionInner />
+    </Suspense>
+  );
+}
+
+function ProtectionInner() {
   const toast = useToast();
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>("blacklist");

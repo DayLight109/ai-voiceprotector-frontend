@@ -1,5 +1,5 @@
 "use client";
-import { BlacklistAdminPage } from "@/app/family-admin/blacklist/page";
+import BlacklistAdminPage from "@/components/admin/BlacklistAdminPage";
 export default function AdminBlacklistPage() {
   return <BlacklistAdminPage role="admin" />;
 }
