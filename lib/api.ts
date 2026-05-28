@@ -584,6 +584,7 @@ export const api = {
   // ── 申诉
   appeals: {
     list: (p?: PageParams) => requestList<Appeal[]>(`/api/v1/appeals${qs(p)}`),
+    listAll: (p?: PageParams) => requestList<Appeal[]>(`/api/v1/appeals/all${qs(p)}`),
     create: (input: Partial<Appeal>) =>
       request<Appeal>("/api/v1/appeals", { method: "POST", body: JSON.stringify(input) }),
     setStatus: (id: string, status: string) =>

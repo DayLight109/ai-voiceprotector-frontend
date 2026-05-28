@@ -74,6 +74,9 @@ export type Appeal = {
   reason: string;
   status: "处理中" | "已通过" | "已驳回";
   createdAt: string;
+  userId?: string;
+  userAccount?: string;
+  userRole?: string;
 };
 
 export type CallLog = {

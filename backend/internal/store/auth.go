@@ -56,10 +56,33 @@ var (
 const userColumns = `u.id, u.tenant_id, u.account, u.name, u.phone, u.email, u.role, u.status, u.dept,
     (u.avatar_mime <> '') AS has_avatar, u.created_at`
 
+// TenantForRole maps an auth role to its tenant namespace for tenant-scoped
+// resources (private blacklist, managed users). Family side (family +
+// family_admin) shares "tenant-family"; business side (biz + admin) shares
+// "tenant-biz"; sysadmin has no tenant since it only owns the global pool.
+// The persisted tenant_id column is overridden at read time, so legacy demo
+// rows (all seeded with tenant-demo) are partitioned correctly without a
+// migration.
+func TenantForRole(role string) string {
+	switch role {
+	case "family", "family_admin":
+		return "tenant-family"
+	case "biz", "admin":
+		return "tenant-biz"
+	case "sysadmin":
+		return ""
+	default:
+		return "tenant-family"
+	}
+}
+
 func scanUser(row pgx.Row) (User, error) {
 	var u User
 	err := row.Scan(&u.ID, &u.TenantID, &u.Account, &u.Name, &u.Phone, &u.Email,
 		&u.Role, &u.Status, &u.Dept, &u.HasAvatar, &u.CreatedAt)
+	if err == nil {
+		u.TenantID = TenantForRole(u.Role)
+	}
 	return u, err
 }
 
@@ -79,11 +102,11 @@ func (s *Store) SeedDemoUsers(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	const q = `INSERT INTO auth_users (id, account, name, role, phone, password_hash)
-	           VALUES ($1, $2, $3, $4, $5, $6)
+	const q = `INSERT INTO auth_users (id, tenant_id, account, name, role, phone, password_hash)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7)
 	           ON CONFLICT (id) DO NOTHING`
 	for _, d := range demos {
-		if _, err := s.pool.Exec(ctx, q, d.ID, d.Account, d.Name, d.Role, d.Phone, string(hash)); err != nil {
+		if _, err := s.pool.Exec(ctx, q, d.ID, TenantForRole(d.Role), d.Account, d.Name, d.Role, d.Phone, string(hash)); err != nil {
 			return err
 		}
 	}
@@ -121,6 +144,7 @@ func (s *Store) AuthenticatePassword(account, password string) (User, error) {
 	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
 		return User{}, ErrBadPassword
 	}
+	u.TenantID = TenantForRole(u.Role)
 	return u, nil
 }
 
@@ -140,9 +164,9 @@ func (s *Store) RegisterUser(account, password, name, phone, email, role string)
 	id := "u_" + randomToken(8)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	const q = `INSERT INTO auth_users (id, account, name, phone, email, role, password_hash)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	if _, err := s.pool.Exec(ctx, q, id, account, strings.TrimSpace(name),
+	const q = `INSERT INTO auth_users (id, tenant_id, account, name, phone, email, role, password_hash)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	if _, err := s.pool.Exec(ctx, q, id, TenantForRole(role), account, strings.TrimSpace(name),
 		strings.TrimSpace(phone), strings.TrimSpace(email), role, string(hash)); err != nil {
 		if isUniqueViolation(err) {
 			return User{}, ErrAccountTaken

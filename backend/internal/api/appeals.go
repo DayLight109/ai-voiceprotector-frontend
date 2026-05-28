@@ -73,6 +73,21 @@ func appealsList(d Deps) http.HandlerFunc {
 	}
 }
 
+func appealsListAll(d Deps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		u, ok := currentUser(r)
+		if !ok {
+			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing auth context")
+			return
+		}
+		if u.Role != "sysadmin" {
+			writeAPIError(w, http.StatusForbidden, "FORBIDDEN", "仅系统管理员可查看全部申诉")
+			return
+		}
+		writeEnvelope(w, http.StatusOK, d.Store.AppealsListAll())
+	}
+}
+
 func appealsCreate(d Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, ok := currentUser(r)
@@ -106,6 +121,10 @@ func appealsSetStatus(d Deps) http.HandlerFunc {
 			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing auth context")
 			return
 		}
+		if u.Role != "sysadmin" {
+			writeAPIError(w, http.StatusForbidden, "FORBIDDEN", "仅系统管理员可处理申诉")
+			return
+		}
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			writeAPIError(w, http.StatusBadRequest, "VALIDATION_FAILED", "id 必填")
@@ -121,7 +140,7 @@ func appealsSetStatus(d Deps) http.HandlerFunc {
 			writeAPIError(w, http.StatusBadRequest, "VALIDATION_FAILED", "status 取值无效")
 			return
 		}
-		a, err := d.Store.AppealsSetStatus(u.ID, id, body.Status)
+		a, err := d.Store.AppealsSetStatus(id, body.Status)
 		if err != nil {
 			if errors.Is(err, store.ErrAppealNotFound) {
 				writeAPIError(w, http.StatusNotFound, "NOT_FOUND", "appeal not found")

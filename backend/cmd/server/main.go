@@ -63,6 +63,13 @@ func main() {
 	logger.Info("database connected")
 
 	st := store.New(pool)
+	migCtx, migCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	if err := st.MigrateLegacyDemoTenant(migCtx); err != nil {
+		migCancel()
+		logger.Error("legacy tenant backfill failed", "err", err)
+		os.Exit(1)
+	}
+	migCancel()
 	seedCtx, seedCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if err := st.SeedDemoUsers(seedCtx); err != nil {
 		seedCancel()

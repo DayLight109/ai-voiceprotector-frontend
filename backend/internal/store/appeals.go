@@ -17,13 +17,15 @@ import (
 var ErrAppealNotFound = errors.New("appeal not found")
 
 type Appeal struct {
-	ID        string    `json:"id"`
-	UserID    string    `json:"userId"`
-	Type      string    `json:"type"`
-	Number    string    `json:"number"`
-	Reason    string    `json:"reason"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID            string    `json:"id"`
+	UserID        string    `json:"userId"`
+	UserAccount   string    `json:"userAccount,omitempty"`
+	UserRole      string    `json:"userRole,omitempty"`
+	Type          string    `json:"type"`
+	Number        string    `json:"number"`
+	Reason        string    `json:"reason"`
+	Status        string    `json:"status"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 func (s *Store) AppealsList(uid string) []Appeal {
@@ -42,6 +44,33 @@ func (s *Store) AppealsList(uid string) []Appeal {
 	for rows.Next() {
 		var a Appeal
 		if err := rows.Scan(&a.ID, &a.UserID, &a.Type, &a.Number, &a.Reason, &a.Status, &a.CreatedAt); err != nil {
+			return out
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
+// AppealsListAll returns every appeal in the system, joined with the
+// submitter's auth_users row so the sysadmin queue can show "谁提交的".
+func (s *Store) AppealsListAll() []Appeal {
+	const q = `SELECT a.id, a.user_id, COALESCE(u.account,''), COALESCE(u.role,''),
+	                  a.type, a.number, a.reason, a.status, a.created_at
+	             FROM appeals a
+	             LEFT JOIN auth_users u ON u.id = a.user_id
+	            ORDER BY a.created_at DESC`
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	rows, err := s.pool.Query(ctx, q)
+	if err != nil {
+		return []Appeal{}
+	}
+	defer rows.Close()
+	out := []Appeal{}
+	for rows.Next() {
+		var a Appeal
+		if err := rows.Scan(&a.ID, &a.UserID, &a.UserAccount, &a.UserRole,
+			&a.Type, &a.Number, &a.Reason, &a.Status, &a.CreatedAt); err != nil {
 			return out
 		}
 		out = append(out, a)
@@ -69,15 +98,17 @@ func (s *Store) AppealsCreate(uid, typ, number, reason string) (Appeal, error) {
 	return a, nil
 }
 
-func (s *Store) AppealsSetStatus(uid, id, status string) (Appeal, error) {
+// AppealsSetStatus updates the status of any appeal regardless of submitter.
+// Caller (handler) is expected to authorize (sysadmin only).
+func (s *Store) AppealsSetStatus(id, status string) (Appeal, error) {
 	const q = `UPDATE appeals
-	              SET status = $3
-	            WHERE user_id = $1 AND id = $2
+	              SET status = $2
+	            WHERE id = $1
 	        RETURNING id, user_id, type, number, reason, status, created_at`
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var a Appeal
-	err := s.pool.QueryRow(ctx, q, uid, id, status).
+	err := s.pool.QueryRow(ctx, q, id, status).
 		Scan(&a.ID, &a.UserID, &a.Type, &a.Number, &a.Reason, &a.Status, &a.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

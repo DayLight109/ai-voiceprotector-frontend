@@ -11,7 +11,7 @@ type Role = "enterprise" | "family";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const [role, setRole] = useState<Role>("family");
   const [show, setShow] = useState(false);
   const [account, setAccount] = useState("");
@@ -51,7 +51,14 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(account.trim(), password);
-      // 跳转到用户真实角色的首页（忽略前端 role tab —— 后端 role 为准）
+      const allowed = role === "enterprise"
+        ? user.role === "biz" || user.role === "admin"
+        : user.role === "family" || user.role === "family_admin";
+      if (!allowed) {
+        await logout();
+        setError("账号或密码错误");
+        return;
+      }
       router.push(roleHomePath(user.role));
     } catch (e) {
       if (e instanceof APIError) {
@@ -59,6 +66,19 @@ export default function LoginPage() {
       } else {
         setError("网络异常，请稍后再试");
       }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function demoLogin(account: string, target: string) {
+    setError(null);
+    setLoading(true);
+    try {
+      await login(account, "demo123");
+      router.push(target);
+    } catch (e) {
+      setError(e instanceof APIError ? messageForAuthError(e) : "网络异常，请稍后再试");
     } finally {
       setLoading(false);
     }
@@ -239,20 +259,22 @@ export default function LoginPage() {
           </div>
           <div className="grid grid-cols-5 gap-1.5">
             {[
-              { href: "/app", label: "家庭用户", color: "var(--coral)" },
-              { href: "/biz", label: "企业用户", color: "var(--indigo)" },
-              { href: "/family-admin", label: "家庭管理员", color: "var(--mint-deep)" },
-              { href: "/admin", label: "企业管理员", color: "var(--amber-deep)" },
-              { href: "/sysadmin", label: "系统管理员", color: "var(--indigo-deep)" },
+              { account: "family", href: "/app", label: "家庭用户", color: "var(--coral)" },
+              { account: "biz", href: "/biz", label: "企业用户", color: "var(--indigo)" },
+              { account: "family-admin", href: "/family-admin", label: "家庭管理员", color: "var(--mint-deep)" },
+              { account: "admin", href: "/admin", label: "企业管理员", color: "var(--amber-deep)" },
+              { account: "sysadmin", href: "/sysadmin", label: "系统管理员", color: "var(--indigo-deep)" },
             ].map((r) => (
-              <Link
+              <button
                 key={r.href}
-                href={r.href}
-                className="px-2 py-2 rounded-xl text-center font-mono text-[10px] font-extrabold uppercase tracking-[0.06em] hover:opacity-80 transition-opacity"
+                type="button"
+                disabled={loading}
+                onClick={() => demoLogin(r.account, r.href)}
+                className="px-2 py-2 rounded-xl text-center font-mono text-[10px] font-extrabold uppercase tracking-[0.06em] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: "var(--canvas-2)", color: r.color, border: "1px solid var(--border)" }}
               >
                 {r.label}
-              </Link>
+              </button>
             ))}
           </div>
         </div>

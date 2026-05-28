@@ -59,7 +59,11 @@ func whitelistList(d Deps) http.HandlerFunc {
 			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing auth context")
 			return
 		}
-		writeEnvelope(w, http.StatusOK, d.Store.WhitelistList(u.ID))
+		if u.TenantID == "" {
+			writeAPIError(w, http.StatusForbidden, "FORBIDDEN", "白名单不归系统管理员管理")
+			return
+		}
+		writeEnvelope(w, http.StatusOK, d.Store.WhitelistList(u.TenantID))
 	}
 }
 
@@ -68,6 +72,10 @@ func whitelistCreate(d Deps) http.HandlerFunc {
 		u, ok := currentUser(r)
 		if !ok {
 			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing auth context")
+			return
+		}
+		if u.TenantID == "" {
+			writeAPIError(w, http.StatusForbidden, "FORBIDDEN", "白名单不归系统管理员管理")
 			return
 		}
 		var body whitelistBody
@@ -80,7 +88,7 @@ func whitelistCreate(d Deps) http.HandlerFunc {
 			writeAPIError(w, status, code, msg)
 			return
 		}
-		e, err := d.Store.WhitelistCreate(u.ID, body.Phone, body.Name, body.Relation)
+		e, err := d.Store.WhitelistCreate(u.TenantID, u.ID, body.Phone, body.Name, body.Relation)
 		if err != nil {
 			if errors.Is(err, store.ErrWhitelistDuplicate) {
 				writeAPIError(w, http.StatusConflict, "WHITELIST_DUPLICATE", "该号码已在白名单")
@@ -100,6 +108,10 @@ func whitelistUpdate(d Deps) http.HandlerFunc {
 			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing auth context")
 			return
 		}
+		if u.TenantID == "" {
+			writeAPIError(w, http.StatusForbidden, "FORBIDDEN", "白名单不归系统管理员管理")
+			return
+		}
 		id := chi.URLParam(r, "id")
 		if id == "" {
 			writeAPIError(w, http.StatusBadRequest, "VALIDATION_FAILED", "id 必填")
@@ -115,7 +127,7 @@ func whitelistUpdate(d Deps) http.HandlerFunc {
 			writeAPIError(w, status, code, msg)
 			return
 		}
-		e, err := d.Store.WhitelistUpdate(u.ID, id, body.Phone, body.Name, body.Relation)
+		e, err := d.Store.WhitelistUpdate(u.TenantID, id, body.Phone, body.Name, body.Relation)
 		if err != nil {
 			switch {
 			case errors.Is(err, store.ErrWhitelistNotFound):
@@ -138,8 +150,12 @@ func whitelistDelete(d Deps) http.HandlerFunc {
 			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing auth context")
 			return
 		}
+		if u.TenantID == "" {
+			writeAPIError(w, http.StatusForbidden, "FORBIDDEN", "白名单不归系统管理员管理")
+			return
+		}
 		id := chi.URLParam(r, "id")
-		if err := d.Store.WhitelistDelete(u.ID, id); err != nil {
+		if err := d.Store.WhitelistDelete(u.TenantID, id); err != nil {
 			if errors.Is(err, store.ErrWhitelistNotFound) {
 				writeAPIError(w, http.StatusNotFound, "NOT_FOUND", "entry not found")
 				return

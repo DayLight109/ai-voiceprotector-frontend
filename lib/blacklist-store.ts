@@ -1,22 +1,20 @@
 "use client";
 
-// 混合存储：本地缓存为主，写入后异步同步后端。
+// 混合存储：后端为唯一数据源，乐观写入只在内存里短暂存在。
 //
 // 设计要点
-// - 企业管理员 / 企业用户的"私有黑名单"页用此 Hook：所有 CRUD 立刻写 localStorage，
-//   再后台 fire-and-forget 同步到后端 /api/v1/blacklist。后端落库成功后，把本地
-//   `local-*` 临时记录替换为后端返回的正式记录（id、source、createdAt 都更新）。
+// - 企业管理员 / 企业用户的"私有黑名单"页用此 Hook：CRUD 先在内存里乐观追加，
+//   再 await 后端 /api/v1/blacklist。后端返回成功后用真记录替换 `local-*` 临时项；
+//   失败时把临时项回滚。乐观状态不写 localStorage，避免切账号时上一账号的待
+//   同步条目被当前账号 token 重发，污染另一条 tenant。
 // - sysadmin 下发的全局条目（is_global=true）走 /sysadmin/blacklist，不经此 Hook。
 //   这里用一个独立的 `global` 数组返回，UI 上可以渲染成只读"云端同步"区块。
-// - 列表显示：本地条目（含 local-*）+ 后端本租户条目（is_global=false）；
-//   按 number 去重，已同步的后端记录优先于同号码的临时本地记录。
+// - 列表显示：内存乐观条目 + 后端本租户条目（is_global=false）；按 number 去重。
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, APIError } from "./api";
-import { useLocalStorage, uid } from "./storage";
+import { uid } from "./storage";
 import { type BlackEntry } from "./mock";
-
-const LOCAL_KEY = "blacklist.tenant";
 
 // 后端 list 返回的形状里 isGlobal 不是 BlackEntry 的字段，单独读
 type RawEntry = BlackEntry & { isGlobal?: boolean; tenantId?: string };
@@ -55,12 +53,21 @@ export interface UseHybridBlacklist {
 }
 
 export function useHybridBlacklist(): UseHybridBlacklist {
-  const [localRows, setLocalRows] = useLocalStorage<BlackEntry[]>(LOCAL_KEY, []);
+  const [localRows, setLocalRows] = useState<BlackEntry[]>([]);
   const [serverRows, setServerRows] = useState<RawEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  // 旧版本曾把乐观行写到 localStorage["sentinel.v1.blacklist.tenant"]，会让
+  // 切账号时上一账号的待同步条目被当前账号 token 重发，跨 tenant 串数据。
+  // 这里挂载时清掉这条历史 key（幂等）。
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem("sentinel.v1.blacklist.tenant");
+    } catch {}
+  }, []);
 
   // 拉一次后端列表
   useEffect(() => {
@@ -84,33 +91,6 @@ export function useHybridBlacklist(): UseHybridBlacklist {
       stop = true;
     };
   }, [tick]);
-
-  // 挂载后把仍是 local-* 的条目重发一次（之前离线/失败的）
-  const retriedRef = useRef(false);
-  useEffect(() => {
-    if (retriedRef.current) return;
-    if (loading) return;
-    retriedRef.current = true;
-    const pending = localRows.filter((r) => isLocalId(r.id));
-    if (pending.length === 0) return;
-    void (async () => {
-      for (const r of pending) {
-        try {
-          const created = (await api.blacklist.create({
-            number: r.number,
-            category: r.category,
-            reason: r.reason,
-            risk: r.risk,
-            source: "手动",
-          } as any)) as RawEntry;
-          setLocalRows((prev) => prev.filter((x) => x.id !== r.id));
-          setServerRows((prev) => [normalize(created), ...prev]);
-        } catch {
-          // 留在本地，下次再试
-        }
-      }
-    })();
-  }, [loading, localRows, setLocalRows]);
 
   const tenant = useMemo(() => {
     const tenantServer = serverRows.filter((r) => !r.isGlobal).map(normalize);
@@ -146,10 +126,8 @@ export function useHybridBlacklist(): UseHybridBlacklist {
         setLocalRows((prev) => prev.filter((x) => x.id !== tempId));
         setServerRows((prev) => [normalize(created), ...prev]);
       } catch (e) {
-        // duplicate 也按"已存在云端"处理：把本地这条摘掉，避免重复显示
-        if (e instanceof APIError && /duplicate/i.test(e.code)) {
-          setLocalRows((prev) => prev.filter((x) => x.id !== tempId));
-        }
+        // 任何失败都回滚乐观行：不再有 localStorage 暂存，下次重发的窗口也已删掉
+        setLocalRows((prev) => prev.filter((x) => x.id !== tempId));
         throw e;
       }
     },

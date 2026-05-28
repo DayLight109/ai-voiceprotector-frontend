@@ -112,6 +112,7 @@ func NewRouter(d Deps) http.Handler {
 			r.Delete("/users/{id}", usersDelete(d))
 
 			r.Get("/appeals", appealsList(d))
+			r.Get("/appeals/all", appealsListAll(d))
 			r.Post("/appeals", appealsCreate(d))
 			r.Put("/appeals/{id}/status", appealsSetStatus(d))
 		})

@@ -3,11 +3,8 @@
 // Demo only: tokens stored in-memory, 5 seeded accounts (password "demo123"),
 // no email verification, no rate limiting, no audit log.
 //
-// All /me/* routes are authenticated. To keep older demo flows working,
-// requireAuth falls back to user "u_family" when no token is provided —
-// that's the same identity any anonymous /me/credentials caller used to act
-// as before this commit. Once the frontend is fully wired through /auth/login,
-// remove the fallback.
+// All /me/* routes are authenticated. Requests without a bearer token are
+// rejected with 401 — there is no anonymous fallback identity.
 package api
 
 import (
@@ -32,26 +29,20 @@ const (
 type ctxUserKey struct{}
 type ctxTokenKey struct{}
 
-// requireAuth resolves the bearer token; on absence falls back to demo user "u_family".
+// requireAuth resolves the bearer token; missing or invalid token → 401.
 func requireAuth(d Deps, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 		token = strings.TrimSpace(token)
 
-		var user store.User
-		var ok bool
-		if token != "" {
-			user, ok = d.Store.ResolveAccessToken(token)
-			if !ok {
-				writeAPIError(w, http.StatusUnauthorized, "AUTH_TOKEN_INVALID", "token expired or invalid")
-				return
-			}
-		} else {
-			user, ok = d.Store.LookupByAccount("family")
-			if !ok {
-				writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing bearer token")
-				return
-			}
+		if token == "" {
+			writeAPIError(w, http.StatusUnauthorized, "AUTH_REQUIRED", "missing bearer token")
+			return
+		}
+		user, ok := d.Store.ResolveAccessToken(token)
+		if !ok {
+			writeAPIError(w, http.StatusUnauthorized, "AUTH_TOKEN_INVALID", "token expired or invalid")
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), ctxUserKey{}, user)

@@ -10,6 +10,7 @@ import { FAMILY_NAV } from "@/lib/nav";
 import { type BlackEntry, type WhiteEntry } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
+import { useHybridBlacklist } from "@/lib/blacklist-store";
 import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine } from "lucide-react";
 
 type Tab = "blacklist" | "whitelist";
@@ -18,10 +19,10 @@ export default function ProtectionPage() {
   const toast = useToast();
   const params = useSearchParams();
   const [tab, setTab] = useState<Tab>("blacklist");
-  const blist = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 100 }));
+  const blist = useHybridBlacklist();
   const wlist = useResource<WhiteEntry>(() => api.whitelist.list({ pageSize: 100 }));
   const [sortByRisk, setSortByRisk] = useState(true);
-  const [scanMode, setScanMode] = useState<"local" | "cloud">("cloud");
+  const [scanMode, setScanMode] = useState<"local" | "cloud">("local");
   const [editing, setEditing] = useState<BlackEntry | WhiteEntry | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -34,28 +35,36 @@ export default function ProtectionPage() {
     }
   }, [params]);
 
+  // 云端模式不允许停在白名单 tab（白名单只属于家庭本地）
+  useEffect(() => {
+    if (scanMode === "cloud" && tab === "whitelist") setTab("blacklist");
+  }, [scanMode, tab]);
+
+  const blackRows = useMemo(
+    () => (scanMode === "cloud" ? blist.global : blist.tenant),
+    [scanMode, blist.global, blist.tenant],
+  );
   const blistView = useMemo(() => {
-    const s = [...blist.items];
+    const s = [...blackRows];
     if (sortByRisk) s.sort((a, b) => b.risk - a.risk);
     return s;
-  }, [blist.items, sortByRisk]);
+  }, [blackRows, sortByRisk]);
 
   const onSave = async (form: any) => {
     try {
       if (tab === "blacklist") {
         if (editing && "risk" in editing) {
-          await api.blacklist.update(editing.id, {
+          await blist.update(editing.id, {
             number: form.number, reason: form.reason, category: form.category, risk: Number(form.risk),
           });
           toast("success", "已更新", `黑名单条目 ${form.number}`);
         } else {
-          await api.blacklist.create({
+          await blist.create({
             number: form.number, reason: form.reason, category: form.category,
-            risk: Number(form.risk), source: "手动",
-          } as any);
+            risk: Number(form.risk),
+          });
           toast("success", "已添加到黑名单", form.number);
         }
-        blist.refresh();
       } else {
         if (editing && "relation" in editing) {
           await api.whitelist.update(editing.id, {
@@ -86,9 +95,8 @@ export default function ProtectionPage() {
   const onDelete = async (id: string) => {
     try {
       if (tab === "blacklist") {
-        await api.blacklist.remove(id);
+        await blist.remove(id);
         toast("success", "已删除黑名单条目");
-        blist.refresh();
       } else {
         await api.whitelist.remove(id);
         toast("success", "已删除白名单条目");
@@ -196,8 +204,8 @@ export default function ProtectionPage() {
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border">
             {[
-              { k: "blacklist", label: `黑名单 · ${blist.items.length}`, icon: ShieldOff, tone: "coral" },
-              { k: "whitelist", label: `白名单 · ${wlist.items.length}`, icon: ShieldCheck, tone: "mint" },
+              { k: "blacklist", label: `黑名单 · ${scanMode === "cloud" ? blist.global.length : blist.tenant.length}`, icon: ShieldOff, tone: "coral" },
+              ...(scanMode === "cloud" ? [] : [{ k: "whitelist", label: `白名单 · ${wlist.items.length}`, icon: ShieldCheck, tone: "mint" }]),
             ].map((t) => {
               const active = t.k === tab;
               return (
@@ -217,7 +225,12 @@ export default function ProtectionPage() {
               );
             })}
           </div>
-          <button onClick={() => { setEditing(null); setShowAdd(true); }} className="btn-indigo py-2 px-3 text-[12px]">
+          <button
+            onClick={() => { setEditing(null); setShowAdd(true); }}
+            disabled={tab === "blacklist" && scanMode === "cloud"}
+            className="btn-indigo py-2 px-3 text-[12px] disabled:opacity-40 disabled:cursor-not-allowed"
+            title={tab === "blacklist" && scanMode === "cloud" ? "云端同步条目由系统管理员维护，不可编辑" : undefined}
+          >
             <Plus size={12} /> {tab === "blacklist" ? "手动添加黑名单" : "手动添加白名单"}
           </button>
         </div>
@@ -242,10 +255,14 @@ export default function ProtectionPage() {
               { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
             ]}
             actions={(r) => (
-              <div className="flex items-center gap-1 justify-end">
-                <button onClick={() => { setEditing(r); setShowAdd(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
-                <button onClick={() => onDelete(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
-              </div>
+              scanMode === "cloud" ? (
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft">READ ONLY</span>
+              ) : (
+                <div className="flex items-center gap-1 justify-end">
+                  <button onClick={() => { setEditing(r); setShowAdd(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                  <button onClick={() => onDelete(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+                </div>
+              )
             )}
           />
           </div>

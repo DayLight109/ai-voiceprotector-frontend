@@ -91,15 +91,20 @@ CREATE INDEX IF NOT EXISTS emergency_contacts_user_idx
 CREATE TABLE IF NOT EXISTS whitelist_entries (
     id          TEXT PRIMARY KEY,
     user_id     TEXT NOT NULL,
+    tenant_id   TEXT NOT NULL DEFAULT '',
     phone       TEXT NOT NULL,
     name        TEXT NOT NULL DEFAULT '',
     relation    TEXT NOT NULL DEFAULT '',
+    created_by  TEXT NOT NULL DEFAULT '',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS whitelist_entries_user_phone_uniq
-    ON whitelist_entries (user_id, phone);
-CREATE INDEX IF NOT EXISTS whitelist_entries_user_idx
-    ON whitelist_entries (user_id, created_at);
+ALTER TABLE whitelist_entries ADD COLUMN IF NOT EXISTS tenant_id  TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist_entries ADD COLUMN IF NOT EXISTS created_by TEXT NOT NULL DEFAULT '';
+DROP INDEX IF EXISTS whitelist_entries_user_phone_uniq;
+CREATE UNIQUE INDEX IF NOT EXISTS whitelist_entries_tenant_phone_uniq
+    ON whitelist_entries (tenant_id, phone) WHERE tenant_id <> '';
+CREATE INDEX IF NOT EXISTS whitelist_entries_tenant_idx
+    ON whitelist_entries (tenant_id, created_at);
 
 CREATE TABLE IF NOT EXISTS blacklist_entries (
     id          TEXT PRIMARY KEY,

@@ -2,7 +2,7 @@
 import {
   Home, Radio, Bell, ListChecks, Users, PhoneCall, Settings,
   BookOpen, ShieldCheck, IdCard, UserPlus, KeyRound,
-  Building2, MessageSquareWarning, ScrollText,
+  Building2, MessageSquareWarning, ScrollText, Inbox,
   LayoutDashboard, Sliders, Shield, FileBarChart2, Database, FileLock2, Server, Mic2,
   BookMarked, FlaskConical, Bot, AlertOctagon, HardDrive, Activity,
 } from "lucide-react";
@@ -51,6 +51,7 @@ export const SYSADMIN_NAV = [
   { href: "/sysadmin/rules", label: "诈骗规则库", icon: ScrollText },
   { href: "/sysadmin/knowledge", label: "反诈知识库", icon: BookMarked },
   { href: "/sysadmin/blacklist", label: "黑名单总库", icon: Database },
+  { href: "/sysadmin/appeals", label: "申诉处理", icon: Inbox },
   { href: "/sysadmin/samples", label: "样本审核", icon: FlaskConical },
   { href: "/sysadmin/audio-config", label: "音频分析配置", icon: Mic2 },
   { href: "/sysadmin/agents", label: "智能体管理", icon: Bot },
