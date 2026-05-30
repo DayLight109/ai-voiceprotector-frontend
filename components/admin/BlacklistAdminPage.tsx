@@ -11,7 +11,7 @@ import { type BlackEntry } from "@/lib/mock";
 import { downloadBlob } from "@/lib/storage";
 import { APIError } from "@/lib/api";
 import { useHybridBlacklist } from "@/lib/blacklist-store";
-import { Plus, Trash2, Edit3, Database, FileSpreadsheet, Download, Cloud } from "lucide-react";
+import { Plus, Trash2, Edit3, Database, FileSpreadsheet, Download, Cloud, Send } from "lucide-react";
 
 export default function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" }) {
   const isFam = role === "family-admin";
@@ -61,8 +61,7 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
     }
   };
 
-  const exportCsv = async () => {
-    try {
+  const exportCsv = async () => {    try {
       const header = "号码,类别,原因,风险分,来源,创建时间\n";
       const rows = [...list.tenant, ...list.global]
         .map((r) => [r.number, r.category, r.reason, r.risk, r.source, r.createdAt]
@@ -72,6 +71,15 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
       toast("success", "已导出 CSV");
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "导出失败");
+    }
+  };
+
+  const onDispatch = async (r: BlackEntry) => {
+    try {
+      await list.dispatch(r.id);
+      toast("success", "已下发", `${r.number} 已在本组织生效`);
+    } catch (e) {
+      toast("error", e instanceof APIError ? e.message : "下发失败");
     }
   };
 
@@ -111,10 +119,23 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
                 { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="coral">{r.category}</span> },
                 { key: "reason", label: "原因" },
                 { key: "risk", label: "风险分", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.risk >= 90 ? "var(--coral-deep)" : "var(--ink)" }}>{r.risk}</span> },
-                { key: "source", label: "来源", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span> },
+                {
+                  key: "source", label: "来源",
+                  render: (r) => (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span>
+                      {r.dispatched === false && (
+                        <span className="font-mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded font-bold" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>待下发</span>
+                      )}
+                    </span>
+                  ),
+                },
               ]}
               actions={(r) => (
                 <div className="flex items-center gap-1 justify-end">
+                  {r.dispatched === false && (
+                    <button onClick={() => onDispatch(r)} className="px-2.5 h-8 rounded-lg font-mono text-[10px] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ background: "var(--mint-soft)", color: "var(--mint-deep)" }}><Send size={11} /> 下发</button>
+                  )}
                   <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
                   <button onClick={async () => { try { await list.remove(r.id); toast("success", "已删除"); } catch (e) { toast("error", e instanceof APIError ? e.message : "删除失败"); } }} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
                 </div>

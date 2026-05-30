@@ -3,14 +3,15 @@ import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import { useToast } from "@/components/shared/Toast";
-import { SYSADMIN_NAV } from "@/lib/nav";
+import { ADMIN_NAV } from "@/lib/nav";
 import { type Appeal } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import { Inbox, Clock, CheckCircle2, XCircle, MessageSquareWarning, Flag, Mic2 } from "lucide-react";
+import { Inbox, Clock, CheckCircle2, XCircle, MessageSquareWarning, Flag, HardDrive, Mic2 } from "lucide-react";
 
-export default function SysAppealsPage() {
+export default function AdminAppealsPage() {
   const toast = useToast();
+  // 后端按角色分流：admin → 本租户的本地(local)举报。
   const list = useResource<Appeal>(() => api.appeals.listAll({ pageSize: 200 }));
 
   const stats = {
@@ -24,7 +25,7 @@ export default function SysAppealsPage() {
     try {
       await api.appeals.setStatus(r.id, status);
       if (status === "已通过" && r.type === "号码举报") {
-        toast("success", "已通过", `已生成待下发黑名单，请到「黑名单总库」下发 #${r.id.slice(-4)}`);
+        toast("success", "已通过", `已生成待下发黑名单，请到「企业黑名单」下发 #${r.id.slice(-4)}`);
       } else {
         toast("success", status, `#${r.id.slice(-4)}`);
       }
@@ -44,11 +45,11 @@ export default function SysAppealsPage() {
   };
 
   return (
-    <AppShell role="sysadmin" userName="陈静" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "申诉处理"]}>
+    <AppShell role="admin" userName="李梦楠" nav={ADMIN_NAV} breadcrumb={["SENTINEL", "企业管理员", "举报审批"]}>
       <PageHeader
-        eyebrow="CLOUD APPEAL QUEUE"
-        title="云端申诉与举报处理"
-        desc="家庭与企业用户提交到云端的号码举报集中在此审批。通过后会生成一条待下发的全局黑名单，需在「黑名单总库」手动下发后才会全网生效。"
+        eyebrow="LOCAL APPEAL QUEUE"
+        title="本地举报审批"
+        desc="本企业用户提交到本地的号码举报与误判申诉集中在此审批。通过号码举报后会生成一条待下发的企业黑名单，需在「企业黑名单」手动下发后在本组织生效。"
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -70,8 +71,17 @@ export default function SysAppealsPage() {
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
             <Inbox size={14} />
           </div>
-          <div className="font-display text-[15px] font-extrabold">工单列表（{list.items.length} 条）</div>
+          <div className="font-display text-[15px] font-extrabold">本地工单（{list.items.length} 条）</div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-full" style={{ background: "var(--canvas-2)", color: "var(--ink-soft)" }}>
+            <HardDrive size={10} /> LOCAL
+          </span>
         </div>
+        {list.error && (
+          <div className="mb-4 px-4 py-3 rounded-2xl text-[13px] font-medium"
+               style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", border: "1px solid var(--coral)" }}>
+            {list.error}
+          </div>
+        )}
         <DataTable<Appeal>
           rows={list.items}
           searchKeys={["number", "reason", "type", "userAccount"]}

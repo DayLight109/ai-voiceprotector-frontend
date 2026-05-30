@@ -10,7 +10,7 @@ import { type BlackEntry } from "@/lib/mock";
 import { downloadBlob } from "@/lib/storage";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import { Plus, Trash2, Edit3, Download } from "lucide-react";
+import { Plus, Trash2, Edit3, Download, Send } from "lucide-react";
 
 export default function SysBlacklistPage() {
   const toast = useToast();
@@ -48,6 +48,16 @@ export default function SysBlacklistPage() {
       list.refresh();
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "删除失败");
+    }
+  };
+
+  const onDispatch = async (id: string, number: string) => {
+    try {
+      await api.blacklist.dispatch(id);
+      toast("success", "已下发全网", number);
+      list.refresh();
+    } catch (e) {
+      toast("error", e instanceof APIError ? e.message : "下发失败");
     }
   };
 
@@ -91,11 +101,24 @@ export default function SysBlacklistPage() {
             { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="coral">{r.category}</span> },
             { key: "reason", label: "原因" },
             { key: "risk", label: "风险分", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.risk >= 90 ? "var(--coral-deep)" : "var(--ink)" }}>{r.risk}</span> },
-            { key: "source", label: "来源", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span> },
+            {
+              key: "source", label: "来源",
+              render: (r) => (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span>
+                  {r.dispatched === false && (
+                    <span className="font-mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded font-bold" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>待下发</span>
+                  )}
+                </span>
+              ),
+            },
             { key: "createdAt", label: "下发时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
           ]}
           actions={(r) => (
             <div className="flex items-center gap-1 justify-end">
+              {r.dispatched === false && (
+                <button onClick={() => onDispatch(r.id, r.number)} className="px-2.5 h-8 rounded-lg font-mono text-[10px] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ background: "var(--mint-soft)", color: "var(--mint-deep)" }}><Send size={11} /> 下发</button>
+              )}
               <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
               <button onClick={() => onDelete(r.id, r.number)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
             </div>

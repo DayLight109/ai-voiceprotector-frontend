@@ -450,8 +450,11 @@ export const api = {
         "/api/v1/blacklist/import",
         { method: "POST", body: JSON.stringify(items) },
       ),
+    // 下发待下发条目（举报通过自动入库的）。admin→本租户就地生效；sysadmin→提升全局。
+    dispatch: (id: string) =>
+      request<BlackEntry>(`/api/v1/blacklist/${id}/dispatch`, { method: "POST" }),
   },
-  whitelist: crudFor<WhiteEntry>("/api/v1/me/whitelist"),
+  whitelist: crudFor<WhiteEntry>("/api/v1/whitelist"),
   knowledge: crudFor<KnowledgeArticle>("/api/v1/knowledge"),
   rules: crudFor<ScamRule>("/api/v1/scam-rules"),
 
@@ -584,8 +587,10 @@ export const api = {
   // ── 申诉
   appeals: {
     list: (p?: PageParams) => requestList<Appeal[]>(`/api/v1/appeals${qs(p)}`),
-    listAll: (p?: PageParams) => requestList<Appeal[]>(`/api/v1/appeals/all${qs(p)}`),
-    create: (input: Partial<Appeal>) =>
+    // 审核方列表：后端按角色分流（sysadmin→全部云端 / admin→本租户本地 /
+    // family_admin→本租户全部），同一 /appeals 端点，无独立 /all 端点。
+    listAll: (p?: PageParams) => requestList<Appeal[]>(`/api/v1/appeals${qs(p)}`),
+    create: (input: Partial<Appeal> & { scope?: "local" | "cloud"; recordingId?: string }) =>
       request<Appeal>("/api/v1/appeals", { method: "POST", body: JSON.stringify(input) }),
     setStatus: (id: string, status: string) =>
       request<Appeal>(`/api/v1/appeals/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),

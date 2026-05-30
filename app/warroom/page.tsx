@@ -19,7 +19,7 @@ import {
   TerminalSquare,
   Workflow,
 } from "lucide-react";
-import { type FeedEvent, streamFeed } from "@/lib/api";
+import { type FeedEvent, streamFeed, api, APIError } from "@/lib/api";
 
 type Metric = {
   id: string;
@@ -209,11 +209,54 @@ export default function WarroomPage() {
   const [integrity, setIntegrity] = useState(96.8);
   const seedRef = useRef(0);
 
+  // ── 真实后端接入状态 ───────────────────────────────────
+  // defcon: 真实防御等级(/api/v1/defcon);statsSynced: 是否已成功拉到 /stats。
+  // statsSynced 为 true 后,下方随机 drift 动画对这些真实指标停手,改由后端数据驱动。
+  const [defcon, setDefcon] = useState<number | null>(null);
+  const [defconWarn, setDefconWarn] = useState<string | null>(null);
+  const [statsSynced, setStatsSynced] = useState(false);
+
   useEffect(() => {
     const updateClock = () => setClock(nowClock());
     updateClock();
     const timer = window.setInterval(updateClock, 1000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  // ── DEFCON 真实防御等级(/api/v1/defcon)───────────────
+  useEffect(() => {
+    let done = false;
+    api.getDefcon()
+      .then((d) => { if (!done && typeof d?.level === "number") setDefcon(d.level); })
+      .catch(() => {});
+    return () => { done = true; };
+  }, []);
+
+  // ── 计数器:轮询 /api/v1/stats 真实数据 ─────────────────
+  // 成功后 setStatsSynced(true),threatIndex/blocked/sessions 改由后端驱动;
+  // 失败则保持 false,下方随机 drift 动画继续兜底(暂时的假数据展示)。
+  useEffect(() => {
+    let stop = false;
+    const pull = async () => {
+      try {
+        const s = await api.getStats();
+        if (stop) return;
+        if (typeof s.blockedCalls === "number") setBlocked(s.blockedCalls);
+        if (typeof s.interceptedCalls === "number") setSessions(s.interceptedCalls);
+        if (typeof s.defcon === "number") setDefcon(s.defcon);
+        // threatIndex 用 AI 克隆 + 话术命中的相对热度粗略映射到 0-100 观感
+        if (typeof s.aiCloneDetected === "number") {
+          const heat = Math.min(98, 42 + s.aiCloneDetected * 6 + (s.scriptHits ?? 0) * 2);
+          setThreatIndex(Math.round(heat));
+        }
+        setStatsSynced(true);
+      } catch {
+        // 静默:未同步成功时由随机动画兜底
+      }
+    };
+    void pull();
+    const id = window.setInterval(pull, 5000);
+    return () => { stop = true; window.clearInterval(id); };
   }, []);
 
   useEffect(() => {
@@ -246,9 +289,12 @@ export default function WarroomPage() {
         }),
       );
 
-      setThreatIndex((prev) => Math.round(drift(prev, 4.8, 42, 98)));
-      setSessions((prev) => Math.round(drift(prev, 60, 1220, 3420)));
-      setBlocked((prev) => Math.round(drift(prev, 18, 180, 760)));
+      // 这三项有真实后端数据(/stats):同步成功后停止随机抖动,交给后端驱动。
+      if (!statsSynced) {
+        setThreatIndex((prev) => Math.round(drift(prev, 4.8, 42, 98)));
+        setSessions((prev) => Math.round(drift(prev, 60, 1220, 3420)));
+        setBlocked((prev) => Math.round(drift(prev, 18, 180, 760)));
+      }
       setIntegrity((prev) => Number(drift(prev, 0.5, 88.4, 99.5).toFixed(1)));
 
       setSignal((prev) => [...prev.slice(1), Math.round(drift(prev[prev.length - 1] ?? 50, 9, 22, 92))]);
@@ -309,7 +355,7 @@ export default function WarroomPage() {
     }, 1800);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [statsSynced]);
 
   useEffect(() => {
     const stop = streamFeed({
@@ -361,6 +407,29 @@ export default function WarroomPage() {
     if (threatIndex > 68) return "AMBER WATCH";
     return "CYAN STABLE";
   }, [criticalAlerts, threatIndex]);
+
+  // DEFCON 1(最危急)→ 5(和平)。后端默认 5。
+  const defconLabels = ["", "CRITICAL", "HIGH", "ELEVATED", "ADVISORY", "PEACE"];
+  const defconTone = (n: number) =>
+    n <= 1 ? "#ff4d6d" : n === 2 ? "#ff7b9a" : n === 3 ? "#ffb347" : n === 4 ? "#7df6ff" : "#66f5ff";
+
+  async function pickDefcon(n: number) {
+    setDefcon(n);
+    setDefconWarn(null);
+    try {
+      const d = await api.setDefcon(n);
+      if (typeof d?.level === "number") setDefcon(d.level);
+    } catch (e) {
+      if (e instanceof APIError && (e.status === 403 || e.code === "RBAC_FORBIDDEN")) {
+        setDefconWarn("仅系统管理员可调整 DEFCON");
+      } else if (e instanceof APIError && e.status === 401) {
+        setDefconWarn("请先登录");
+      } else {
+        setDefconWarn("同步失败,已本地切换");
+      }
+      setTimeout(() => setDefconWarn(null), 3000);
+    }
+  }
 
   return (
     <main
@@ -414,10 +483,46 @@ export default function WarroomPage() {
           >
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)]" />
             <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-              <HeadStat label="System Mode" value={systemMode} tone={criticalAlerts > 0 ? "#ff7b9a" : "#7df6ff"} />
+              <HeadStat
+                label="Defcon"
+                value={defcon !== null ? `${defcon} · ${defconLabels[defcon] ?? ""}` : systemMode}
+                tone={defcon !== null ? defconTone(defcon) : criticalAlerts > 0 ? "#ff7b9a" : "#7df6ff"}
+              />
               <HeadStat label="Threat Index" value={`${threatIndex}`} tone="#7df6ff" />
               <HeadStat label="Blocked" value={`${blocked}`} tone="#b794ff" />
               <HeadStat label="Integrity" value={`${integrity.toFixed(1)}%`} tone="#e6f7ff" />
+            </div>
+
+            {/* DEFCON 调级条:点击切换真实防御等级(后端要求 sysadmin)*/}
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-[9px] uppercase tracking-[0.3em] text-cyan-100/45">Set Defcon</span>
+              <div className="flex gap-1">
+                {[5, 4, 3, 2, 1].map((n) => {
+                  const active = n === defcon;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => pickDefcon(n)}
+                      className="h-6 w-6 text-[11px] font-bold transition duration-200 hover:scale-110"
+                      style={{
+                        clipPath: cutCorner,
+                        color: active ? "#08101f" : defconTone(n),
+                        background: active ? defconTone(n) : "rgba(255,255,255,0.05)",
+                        boxShadow: `inset 0 0 0 1px ${defconTone(n)}55`,
+                        fontFamily: monoFont,
+                      }}
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
+              </div>
+              {defconWarn ? (
+                <span className="text-[10px] tracking-[0.1em]" style={{ color: "#ffb347" }}>
+                  {defconWarn}
+                </span>
+              ) : null}
             </div>
           </div>
 

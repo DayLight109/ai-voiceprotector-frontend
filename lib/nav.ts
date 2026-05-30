@@ -42,6 +42,7 @@ export const ADMIN_NAV = [
   { href: "/admin/recordings", label: "录音数据", icon: Mic2 },
   { href: "/admin/risk-level", label: "风控等级", icon: Sliders },
   { href: "/admin/blacklist", label: "企业黑名单", icon: Database },
+  { href: "/admin/appeals", label: "举报审批", icon: Inbox },
   { href: "/warroom", label: "指挥中心", icon: Shield },
   { href: "/settings", label: "个人资料", icon: Settings },
 ];

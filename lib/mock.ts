@@ -6,7 +6,9 @@ export type BlackEntry = {
   reason: string;
   category: "AI合成" | "话术诈骗" | "号码伪冒" | "其他";
   risk: number;
-  source: "本地" | "云端" | "手动";
+  source: "本地" | "云端" | "手动" | "举报";
+  // 举报通过自动入库的条目：false=待审核方手动下发；普通条目为 true（已生效）。
+  dispatched?: boolean;
   createdAt: string;
 };
 
@@ -74,6 +76,9 @@ export type Appeal = {
   reason: string;
   status: "处理中" | "已通过" | "已驳回";
   createdAt: string;
+  // 号码举报分流：local=企业管理员处理 / cloud=系统管理员处理。误判申诉恒为 local。
+  scope?: "local" | "cloud";
+  recordingId?: string;
   userId?: string;
   userAccount?: string;
   userRole?: string;

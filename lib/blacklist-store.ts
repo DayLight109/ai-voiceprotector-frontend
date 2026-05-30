@@ -49,6 +49,7 @@ export interface UseHybridBlacklist {
   create: (input: Omit<BlackEntry, "id" | "createdAt" | "source"> & { source?: BlackEntry["source"] }) => Promise<void>;
   update: (id: string, patch: Partial<Pick<BlackEntry, "number" | "category" | "reason" | "risk">>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  dispatch: (id: string) => Promise<void>;
   importMany: (items: Partial<BlackEntry>[]) => Promise<{ imported: number; skipped: number }>;
 }
 
@@ -169,7 +170,17 @@ export function useHybridBlacklist(): UseHybridBlacklist {
     [],
   );
 
-  return { tenant, global, loading, error, refresh, create, update, remove, importMany };
+  // 下发：把举报通过自动入库的待下发条目正式生效（dispatched=false → true）。
+  // admin 就地本租户生效；sysadmin 提升为全局（后端处理，前端只需替换该行）。
+  const dispatch: UseHybridBlacklist["dispatch"] = useCallback(
+    async (id) => {
+      const updated = (await api.blacklist.dispatch(id)) as RawEntry;
+      setServerRows((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    },
+    [],
+  );
+
+  return { tenant, global, loading, error, refresh, create, update, remove, dispatch, importMany };
 }
 
 function normalize(r: RawEntry): BlackEntry {
@@ -185,6 +196,7 @@ function normalize(r: RawEntry): BlackEntry {
     category: r.category as BlackEntry["category"],
     risk: r.risk,
     source: (r.source as BlackEntry["source"]) ?? "手动",
+    dispatched: r.dispatched ?? true,
     createdAt: c as string,
   };
 }
