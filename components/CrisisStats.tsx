@@ -61,7 +61,7 @@ export default function CrisisStats() {
               伪装的陌生来电。
             </h2>
           </div>
-          <div className="font-mono text-[11px] text-ink-soft max-w-sm font-medium">
+          <div className="font-mono text-[calc(11px*var(--fz))] text-ink-soft max-w-sm font-medium">
             数据来源：公安部刑侦局 · 国家反诈大数据平台 · 2025 年度
           </div>
         </div>
@@ -83,13 +83,13 @@ export default function CrisisStats() {
                 >
                   <s.icon size={20} />
                 </div>
-                <span className="font-mono text-[11px] font-bold text-ink-soft">0{i + 1}</span>
+                <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-ink-soft">0{i + 1}</span>
               </div>
               <div className="relative mt-5 numplate text-[clamp(2.2rem,4.5vw,3.4rem)] leading-none">
                 <CountUp to={s.n} suffix={s.suffix} />
                 <span className="text-[0.4em] ml-2 font-body font-bold text-ink-soft">{s.unit}</span>
               </div>
-              <div className="relative mt-3 text-[13px] font-semibold text-ink-soft">
+              <div className="relative mt-3 text-[calc(13px*var(--fz))] font-semibold text-ink-soft">
                 {s.label}
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function CrisisStats() {
               <br />
               <span className="underline-soft">身份的凭证</span>。
             </h3>
-            <p className="mt-6 text-[15px] leading-[1.75] text-ink-2 font-medium max-w-[44ch]">
+            <p className="mt-6 text-[calc(15px*var(--fz))] leading-[1.75] text-ink-2 font-medium max-w-[44ch]">
               深度伪造工具把&ldquo;我是你孙子&rdquo;变成可批量生产的流水线。
               熟悉的声线、哽咽的语气、甚至具体的称谓——都可以由一段 3 秒的抖音片段生成。
             </p>
@@ -121,7 +121,7 @@ export default function CrisisStats() {
                   <div className="numplate text-[clamp(1.75rem,4vw,3rem)] leading-none" style={{ color: f.t }}>
                     {f.k}
                   </div>
-                  <div className="mt-3 font-body text-[12px] font-bold" style={{ color: f.t }}>
+                  <div className="mt-3 font-body text-[calc(12px*var(--fz))] font-bold" style={{ color: f.t }}>
                     {f.v}
                   </div>
                 </div>
@@ -131,18 +131,18 @@ export default function CrisisStats() {
             <div className="panel p-5">
               <div className="flex items-end justify-between mb-4">
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                     AI 诈骗涉案金额
                   </div>
-                  <div className="font-display text-[20px] font-extrabold mt-1">
+                  <div className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">
                     2020 → 2024 · CAGR <span style={{ color: "var(--coral-deep)" }}>+1928.8%</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                     2024 H1
                   </div>
-                  <div className="font-display text-[20px] font-extrabold mt-1">1.85 亿</div>
+                  <div className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">1.85 亿</div>
                 </div>
               </div>
               <div className="h-24 flex items-end gap-2">
@@ -156,7 +156,7 @@ export default function CrisisStats() {
                         opacity: 0.4 + (i * 0.15),
                       }}
                     />
-                    <div className="font-mono text-[10px] text-ink-soft font-bold">
+                    <div className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">
                       {2020 + i}
                     </div>
                   </div>

@@ -18,7 +18,7 @@ export default function StatusTicker() {
           style={{ background: "var(--indigo)" }}
         >
           <span className="signal-dot text-coral" />
-          <span className="font-mono text-[15px] font-bold uppercase tracking-[0.18em]">
+          <span className="font-mono text-[calc(15px*var(--fz))] font-bold uppercase tracking-[0.18em]">
             Live · 实时态势
           </span>
         </div>
@@ -27,7 +27,7 @@ export default function StatusTicker() {
             {items.map((t, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-3 font-body text-[15px] font-medium"
+                className="inline-flex items-center gap-3 font-body text-[calc(15px*var(--fz))] font-medium"
                 style={{ color: "rgba(242, 243, 247, 0.85)" }}
               >
                 <span style={{ color: "var(--mint)" }}>▸</span>

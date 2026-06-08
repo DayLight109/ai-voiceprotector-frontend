@@ -5,14 +5,17 @@ import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
+import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
 import { type KnowledgeArticle } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
+import { ListRowSkeleton } from "@/components/shared/Skeleton";
 import { Plus, Trash2, Edit3, BookMarked } from "lucide-react";
 
 export default function SysKnowledgePage() {
   const toast = useToast();
+  const confirm = useConfirm();
   const list = useResource<KnowledgeArticle>(() => api.knowledge.list({ pageSize: 100 }));
   const [editing, setEditing] = useState<KnowledgeArticle | null>(null);
   const [open, setOpen] = useState(false);
@@ -38,9 +41,16 @@ export default function SysKnowledgePage() {
     }
   };
 
-  const onDelete = async (id: string) => {
+  const onDelete = async (r: KnowledgeArticle) => {
+    const ok = await confirm({
+      title: "删除文章？",
+      desc: `将下架「${r.title}」，所有用户的知识库页面将不再显示该文章。`,
+      tone: "danger",
+      confirmText: "删除",
+    });
+    if (!ok) return;
     try {
-      await api.knowledge.remove(id);
+      await api.knowledge.remove(r.id);
       toast("success", "已删除");
       list.refresh();
     } catch (e) {
@@ -55,7 +65,7 @@ export default function SysKnowledgePage() {
         title="构建反诈知识库"
         desc="对外发布的反诈科普内容，发布即同步给所有家庭 / 企业用户的知识库页面。"
         actions={
-          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[13px]">
+          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <Plus size={14} /> 新增文章
           </button>
         }
@@ -63,27 +73,37 @@ export default function SysKnowledgePage() {
 
       <div className="panel p-6">
         {list.error && (
-          <div className="mb-4 px-4 py-3 rounded-2xl text-[13px] font-medium"
+          <div className="mb-4 px-4 py-3 rounded-2xl text-[calc(13px*var(--fz))] font-medium"
                style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", border: "1px solid var(--coral)" }}>
             {list.error}
           </div>
         )}
-        <DataTable<KnowledgeArticle>
-          rows={list.items}
-          searchKeys={["title", "summary", "category"]}
-          columns={[
-            { key: "title", label: "标题", render: (r) => <span className="font-display font-extrabold">{r.title}</span> },
-            { key: "category", label: "分类", render: (r) => <span className="tag-chip" data-tone="indigo">{r.category}</span> },
-            { key: "views", label: "阅读量", align: "right", render: (r) => <span className="font-mono font-bold">{r.views.toLocaleString()}</span> },
-            { key: "updatedAt", label: "更新时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.updatedAt}</span> },
-          ]}
-          actions={(r) => (
-            <div className="flex items-center gap-1 justify-end">
-              <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
-              <button onClick={() => onDelete(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
-            </div>
-          )}
-        />
+        {list.loading && list.items.length === 0 ? (
+          <ListRowSkeleton count={6} />
+        ) : list.items.length === 0 ? (
+          <div className="panel p-12 flex flex-col items-center justify-center text-center">
+            <BookMarked size={32} className="text-ink-ghost mb-3" />
+            <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">知识库还没有文章</div>
+            <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">NO KNOWLEDGE ARTICLES YET</div>
+          </div>
+        ) : (
+          <DataTable<KnowledgeArticle>
+            rows={list.items}
+            searchKeys={["title", "summary", "category"]}
+            columns={[
+              { key: "title", label: "标题", render: (r) => <span className="font-display font-extrabold">{r.title}</span> },
+              { key: "category", label: "分类", render: (r) => <span className="tag-chip" data-tone="indigo">{r.category}</span> },
+              { key: "views", label: "阅读量", align: "right", render: (r) => <span className="font-mono font-bold">{r.views.toLocaleString()}</span> },
+              { key: "updatedAt", label: "更新时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.updatedAt}</span> },
+            ]}
+            actions={(r) => (
+              <div className="flex items-center gap-1 justify-end">
+                <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                <button onClick={() => onDelete(r)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              </div>
+            )}
+          />
+        )}
       </div>
 
       <Modal
@@ -93,8 +113,8 @@ export default function SysKnowledgePage() {
         size="lg"
         footer={
           <>
-            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
-            <button onClick={() => (document.getElementById("k-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[13px]">保存</button>
+            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
+            <button onClick={() => (document.getElementById("k-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]">保存</button>
           </>
         }
       >
@@ -124,7 +144,7 @@ function KForm({ editing, onSubmit }: { editing: KnowledgeArticle | null; onSubm
 function Field({ label, children }: any) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

@@ -11,7 +11,8 @@ import { type BlackEntry, type WhiteEntry } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { useHybridBlacklist } from "@/lib/blacklist-store";
-import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine } from "lucide-react";
+import { ListRowSkeleton } from "@/components/shared/Skeleton";
+import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine, Inbox } from "lucide-react";
 
 type Tab = "blacklist" | "whitelist";
 
@@ -76,12 +77,12 @@ function ProtectionInner() {
       } else {
         if (editing && "relation" in editing) {
           await api.whitelist.update(editing.id, {
-            phone: form.number, name: form.name, relation: form.relation,
+            number: form.number, name: form.name, relation: form.relation,
           });
           toast("success", "已更新", `白名单条目 ${form.number}`);
         } else {
           await api.whitelist.create({
-            phone: form.number, name: form.name, relation: form.relation,
+            number: form.number, name: form.name, relation: form.relation,
           } as any);
           toast("success", "已添加到白名单", form.number);
         }
@@ -127,7 +128,7 @@ function ProtectionInner() {
       <div className="stagger grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="panel p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">扫描匹配源</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">扫描匹配源</div>
             <ScanLine size={14} className="text-ink-soft" />
           </div>
           <div className="relative flex items-center gap-2 p-1 rounded-full bg-canvas-2 border border-border">
@@ -155,7 +156,7 @@ function ProtectionInner() {
                   key={o.k}
                   type="button"
                   onClick={() => setScanMode(o.k as any)}
-                  className="relative z-10 flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[12px] font-bold"
+                  className="relative z-10 flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[calc(12px*var(--fz))] font-bold"
                   style={{
                     color: active ? "var(--ink)" : "var(--ink-soft)",
                     transition: "color 320ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -173,19 +174,19 @@ function ProtectionInner() {
               );
             })}
           </div>
-          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+          <div className="mt-3 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
             当前：{scanMode === "cloud" ? "云端实时同步 · 36 亿条" : "本地缓存 · 8.4 万条"}
           </div>
         </div>
 
         <div className="panel p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">辅助助手</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">辅助助手</div>
             <ArrowDownAZ size={14} className="text-ink-soft" />
           </div>
           <button
             onClick={() => setSortByRisk((v) => !v)}
-            className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-colors"
+            className="w-full py-2.5 rounded-xl text-[calc(13px*var(--fz))] font-bold transition-colors"
             style={{
               background: sortByRisk ? "var(--indigo)" : "var(--canvas-2)",
               color: sortByRisk ? "#fff" : "var(--ink)",
@@ -193,15 +194,15 @@ function ProtectionInner() {
           >
             {sortByRisk ? "✓ 按风险分排序" : "按时间排序"}
           </button>
-          <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+          <div className="mt-3 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
             打开后黑名单按风险分降序展示
           </div>
         </div>
 
         <div className="panel p-5" style={{ background: "linear-gradient(135deg, var(--mint-soft), var(--indigo-soft))" }}>
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-2">通话内容匹配</div>
-          <div className="font-display text-[18px] font-extrabold mb-1">实时语义分析</div>
-          <div className="text-[12px] text-ink-2 font-medium leading-[1.6]">
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-2">通话内容匹配</div>
+          <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">实时语义分析</div>
+          <div className="text-[calc(12px*var(--fz))] text-ink-2 font-medium leading-[1.6]">
             通话过程中按 5 类话术模型实时比对，命中转账 / 公检法 / 验证码等关键词自动弹屏警示。
           </div>
         </div>
@@ -220,7 +221,7 @@ function ProtectionInner() {
                 <button
                   key={t.k}
                   onClick={() => setTab(t.k as Tab)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-bold transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-[calc(13px*var(--fz))] font-bold transition-colors"
                   style={{
                     background: active ? "var(--surface)" : "transparent",
                     color: active ? (t.tone === "coral" ? "var(--coral-deep)" : "var(--mint-deep)") : "var(--ink-soft)",
@@ -236,7 +237,7 @@ function ProtectionInner() {
           <button
             onClick={() => { setEditing(null); setShowAdd(true); }}
             disabled={tab === "blacklist" && scanMode === "cloud"}
-            className="btn-indigo py-2 px-3 text-[12px] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-indigo py-2 px-3 text-[calc(12px*var(--fz))] disabled:opacity-40 disabled:cursor-not-allowed"
             title={tab === "blacklist" && scanMode === "cloud" ? "云端同步条目由系统管理员维护，不可编辑" : undefined}
           >
             <Plus size={12} /> {tab === "blacklist" ? "手动添加黑名单" : "手动添加白名单"}
@@ -259,12 +260,12 @@ function ProtectionInner() {
                   </span>
                 )
               },
-              { key: "source", label: "来源", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span> },
-              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
+              { key: "source", label: "来源", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.source}</span> },
+              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.createdAt}</span> },
             ]}
             actions={(r) => (
               scanMode === "cloud" ? (
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft">READ ONLY</span>
+                <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft">READ ONLY</span>
               ) : (
                 <div className="flex items-center gap-1 justify-end">
                   <button onClick={() => { setEditing(r); setShowAdd(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
@@ -276,14 +277,23 @@ function ProtectionInner() {
           </div>
         ) : (
           <div key="wl" className="fade-in">
+          {wlist.loading && wlist.items.length === 0 ? (
+            <ListRowSkeleton count={5} />
+          ) : wlist.items.length === 0 ? (
+            <div className="panel p-12 flex flex-col items-center justify-center text-center">
+              <Inbox size={32} className="text-ink-ghost mb-3" />
+              <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">白名单暂无放行号码</div>
+              <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">NO TRUSTED NUMBERS YET</div>
+            </div>
+          ) : (
           <DataTable<WhiteEntry>
             rows={wlist.items}
-            searchKeys={["phone", "name", "relation"]}
+            searchKeys={["number", "name", "relation"]}
             columns={[
-              { key: "phone", label: "号码", render: (r) => <span className="font-mono font-bold">{r.phone}</span> },
+              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
               { key: "name", label: "联系人" },
               { key: "relation", label: "关系", render: (r) => <span className="tag-chip" data-tone="mint">{r.relation}</span> },
-              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
+              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.createdAt}</span> },
             ]}
             actions={(r) => (
               <div className="flex items-center gap-1 justify-end">
@@ -292,6 +302,7 @@ function ProtectionInner() {
               </div>
             )}
           />
+          )}
           </div>
         )}
       </div>
@@ -303,13 +314,13 @@ function ProtectionInner() {
         desc={tab === "blacklist" ? "命中此号段后系统将自动拦截或预警" : "命中此号段后系统将直接放行"}
         footer={
           <>
-            <button onClick={() => { setShowAdd(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
+            <button onClick={() => { setShowAdd(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
             <button
               onClick={() => {
                 const f = document.getElementById("entry-form") as HTMLFormElement;
                 if (f) f.requestSubmit();
               }}
-              className="btn-indigo py-2 px-4 text-[13px]"
+              className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]"
             >
               保存
             </button>
@@ -335,7 +346,7 @@ function EntryForm({
   const [form, setForm] = useState<any>(
     tab === "blacklist"
       ? { number: e?.number ?? "", reason: e?.reason ?? "", category: e?.category ?? "AI合成", risk: e?.risk ?? 80 }
-      : { number: e?.phone ?? "", name: e?.name ?? "", relation: e?.relation ?? "亲属" }
+      : { number: e?.number ?? "", name: e?.name ?? "", relation: e?.relation ?? "亲属" }
   );
 
   return (
@@ -386,7 +397,7 @@ function EntryForm({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

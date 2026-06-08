@@ -18,13 +18,13 @@ export default function Footer() {
                 S
               </div>
               <div>
-                <div className="font-display text-[22px] font-extrabold">SENTINEL</div>
-                <div className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+                <div className="font-display text-[calc(22px*var(--fz))] font-extrabold">SENTINEL</div>
+                <div className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.16em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
                   声纹捕手 · VOICE GUARDIAN
                 </div>
               </div>
             </div>
-            <p className="max-w-[44ch] text-[14px] leading-[1.75] font-medium" style={{ color: "rgba(242, 243, 247, 0.65)" }}>
+            <p className="max-w-[44ch] text-[calc(14px*var(--fz))] leading-[1.75] font-medium" style={{ color: "rgba(242, 243, 247, 0.65)" }}>
               面向 AI 合成语音新威胁的毫秒级反诈平台。
               来电溯源 × 声纹取证 × 话术语义三重引擎并联，
               在通话接通的第一秒完成判决。
@@ -32,10 +32,10 @@ export default function Footer() {
           </div>
 
           <div className="col-span-6 md:col-span-2">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
               产品
             </div>
-            <ul className="mt-4 space-y-2.5 text-[13px] font-medium">
+            <ul className="mt-4 space-y-2.5 text-[calc(13px*var(--fz))] font-medium">
               {["功能概览", "三层防御", "API 文档", "指挥中心"].map((x) => (
                 <li key={x}>
                   <a href="#" className="hover:opacity-100 transition-opacity" style={{ color: "rgba(242, 243, 247, 0.85)" }}>
@@ -47,10 +47,10 @@ export default function Footer() {
           </div>
 
           <div className="col-span-6 md:col-span-2">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
               生态
             </div>
-            <ul className="mt-4 space-y-2.5 text-[13px] font-medium">
+            <ul className="mt-4 space-y-2.5 text-[calc(13px*var(--fz))] font-medium">
               {["运营商接入", "终端厂商", "金融风控", "公安协同"].map((x) => (
                 <li key={x}>
                   <a href="#" className="hover:opacity-100 transition-opacity" style={{ color: "rgba(242, 243, 247, 0.85)" }}>
@@ -62,23 +62,23 @@ export default function Footer() {
           </div>
 
           <div className="col-span-12 md:col-span-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
               联系
             </div>
             <Link
               href="/warroom"
-              className="mt-4 inline-flex items-center gap-2 text-[18px] font-display font-extrabold transition-colors"
+              className="mt-4 inline-flex items-center gap-2 text-[calc(18px*var(--fz))] font-display font-extrabold transition-colors"
               style={{ color: "var(--mint)" }}
             >
               进入指挥中心
               <ArrowUpRight size={18} />
             </Link>
             <div className="mt-6 p-5 rounded-2xl border border-white/15">
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
                 紧急举报
               </div>
-              <div className="mt-1 numplate text-[28px] text-white">96110</div>
-              <div className="mt-1 font-mono text-[11px] font-medium" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+              <div className="mt-1 numplate text-[calc(28px*var(--fz))] text-white">96110</div>
+              <div className="mt-1 font-mono text-[calc(11px*var(--fz))] font-medium" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
                 全国反诈专线 · 24h
               </div>
             </div>
@@ -86,10 +86,10 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
-          <div className="font-mono text-[11px] font-medium" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+          <div className="font-mono text-[calc(11px*var(--fz))] font-medium" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
             © 2026 SENTINEL · 本页面为公益科普与作品展示，不对外提供商业服务
           </div>
-          <div className="flex items-center gap-4 font-mono text-[11px] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+          <div className="flex items-center gap-4 font-mono text-[calc(11px*var(--fz))] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
             <span className="flex items-center gap-2">
               <span className="signal-dot" style={{ color: "var(--mint)" }} /> BEIJING · OPERATIONAL
             </span>

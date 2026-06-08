@@ -55,7 +55,7 @@ export default function GlobalView() {
               防御也<span className="mega-italic">不能</span>。
             </h2>
           </div>
-          <div className="col-span-12 md:col-span-5 text-[15px] leading-[1.75] text-ink-2 font-medium">
+          <div className="col-span-12 md:col-span-5 text-[calc(15px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
             跨境电信诈骗正成为全球共性问题。各国主管部门披露的损失数字，构成 SENTINEL 能力设计的基线——
             我们从第一行代码开始，就把跨境链路溯源当做必选项。
           </div>
@@ -68,11 +68,11 @@ export default function GlobalView() {
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
                   <Globe2 size={16} />
                 </div>
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink font-bold">
+                <span className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink font-bold">
                   Global Threat Map · 2024-25
                 </span>
               </div>
-              <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+              <div className="flex items-center gap-3 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                 <span>Natural Earth 110m</span>
                 <span className="hidden md:inline">·</span>
                 <span className="hidden md:inline">Equirectangular WGS84</span>
@@ -203,7 +203,7 @@ export default function GlobalView() {
                       />
                       {/* 标签 */}
                       <span
-                        className="ml-3 font-mono text-[10px] font-extrabold uppercase tracking-[0.12em] px-2 py-1 rounded-lg shadow-sm whitespace-nowrap"
+                        className="ml-3 font-mono text-[calc(10px*var(--fz))] font-extrabold uppercase tracking-[0.12em] px-2 py-1 rounded-lg shadow-sm whitespace-nowrap"
                         style={{
                           background: "var(--surface)",
                           color: deep,
@@ -218,14 +218,14 @@ export default function GlobalView() {
               })}
 
               {/* 地图图例 */}
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] font-extrabold bg-surface/85 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-sm">
+              <div className="absolute bottom-3 left-3 flex items-center gap-2 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] font-extrabold bg-surface/85 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-sm">
                 <span className="w-2 h-2 rounded-full" style={{ background: "var(--mint)" }} />
                 <span style={{ color: "var(--mint-deep)" }}>HOME</span>
                 <span className="w-px h-3 bg-border mx-1" />
                 <span className="w-2 h-2 rounded-full" style={{ background: "var(--coral)" }} />
                 <span style={{ color: "var(--coral-deep)" }}>HOSTILE</span>
               </div>
-              <div className="absolute bottom-3 right-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-extrabold bg-surface/85 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-sm">
+              <div className="absolute bottom-3 right-3 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-extrabold bg-surface/85 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-sm">
                 {PINS.length} REGIONS · LIVE
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function GlobalView() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span
-                          className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 rounded-md font-extrabold"
+                          className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] px-2 py-0.5 rounded-md font-extrabold"
                           style={{
                             background: isHome ? "var(--mint-soft)" : "rgba(242, 243, 247, 0.12)",
                             color: isHome ? "var(--mint-deep)" : "rgba(242, 243, 247, 0.85)",
@@ -253,15 +253,15 @@ export default function GlobalView() {
                         >
                           {r.flag}
                         </span>
-                        <span className="font-display text-[15px] font-extrabold text-white">
+                        <span className="font-display text-[calc(15px*var(--fz))] font-extrabold text-white">
                           {r.country}
                         </span>
                       </div>
-                      <div className="mt-1 font-mono text-[11px] text-white/55 font-medium">
+                      <div className="mt-1 font-mono text-[calc(11px*var(--fz))] text-white/55 font-medium">
                         {r.region} · {r.note}
                       </div>
                     </div>
-                    <div className="numplate text-[20px] text-white shrink-0">{r.loss}</div>
+                    <div className="numplate text-[calc(20px*var(--fz))] text-white shrink-0">{r.loss}</div>
                   </div>
                 );
               })}

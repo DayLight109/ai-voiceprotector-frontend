@@ -6,6 +6,7 @@ import DataTable from "@/components/shared/DataTable";
 import UploadZone from "@/components/shared/UploadZone";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
+import { useConfirm } from "@/components/shared/Confirm";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
 import { type BlackEntry } from "@/lib/mock";
 import { downloadBlob } from "@/lib/storage";
@@ -16,6 +17,7 @@ import { Plus, Trash2, Edit3, Database, FileSpreadsheet, Download, Cloud, Send }
 export default function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" }) {
   const isFam = role === "family-admin";
   const toast = useToast();
+  const confirm = useConfirm();
   const list = useHybridBlacklist();
   const [editing, setEditing] = useState<BlackEntry | null>(null);
   const [open, setOpen] = useState(false);
@@ -75,11 +77,33 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
   };
 
   const onDispatch = async (r: BlackEntry) => {
+    const ok = await confirm({
+      title: "下发该条目？",
+      desc: `「${r.number}」将在本组织正式生效，所辖设备的来电拦截将据此执行。`,
+      confirmText: "下发",
+    });
+    if (!ok) return;
     try {
       await list.dispatch(r.id);
       toast("success", "已下发", `${r.number} 已在本组织生效`);
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "下发失败");
+    }
+  };
+
+  const onRemove = async (r: BlackEntry) => {
+    const ok = await confirm({
+      title: "删除黑名单条目？",
+      desc: `将从本组织黑名单库移除「${r.number}」。`,
+      tone: "danger",
+      confirmText: "删除",
+    });
+    if (!ok) return;
+    try {
+      await list.remove(r.id);
+      toast("success", "已删除");
+    } catch (e) {
+      toast("error", e instanceof APIError ? e.message : "删除失败");
     }
   };
 
@@ -96,8 +120,8 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
         desc="支持手动 CRUD 与 XLS / XLSX / CSV 批量导入，所有数据落入本组织专属命名空间。"
         actions={
           <>
-            <button onClick={exportCsv} className="btn-ghost py-2.5 px-4 text-[13px]"><Download size={14} /> 导出 CSV</button>
-            <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[13px]"><Plus size={14} /> 新增条目</button>
+            <button onClick={exportCsv} className="btn-ghost py-2.5 px-4 text-[calc(13px*var(--fz))]"><Download size={14} /> 导出 CSV</button>
+            <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]"><Plus size={14} /> 新增条目</button>
           </>
         }
       />
@@ -109,7 +133,7 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--canvas-2)", color: "var(--ink)" }}>
                 <Database size={14} />
               </div>
-              <div className="font-display text-[15px] font-extrabold">本地缓存（本组织私有，{list.tenant.length} 条）</div>
+              <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">本地缓存（本组织私有，{list.tenant.length} 条）</div>
             </div>
             <DataTable<BlackEntry>
               rows={list.tenant}
@@ -123,9 +147,9 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
                   key: "source", label: "来源",
                   render: (r) => (
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="font-mono text-[11px] text-ink-soft font-bold">{r.source}</span>
+                      <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.source}</span>
                       {r.dispatched === false && (
-                        <span className="font-mono text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded font-bold" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>待下发</span>
+                        <span className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded font-bold" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>待下发</span>
                       )}
                     </span>
                   ),
@@ -134,10 +158,10 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
               actions={(r) => (
                 <div className="flex items-center gap-1 justify-end">
                   {r.dispatched === false && (
-                    <button onClick={() => onDispatch(r)} className="px-2.5 h-8 rounded-lg font-mono text-[10px] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ background: "var(--mint-soft)", color: "var(--mint-deep)" }}><Send size={11} /> 下发</button>
+                    <button onClick={() => onDispatch(r)} className="px-2.5 h-8 rounded-lg font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ background: "var(--mint-soft)", color: "var(--mint-deep)" }}><Send size={11} /> 下发</button>
                   )}
                   <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
-                  <button onClick={async () => { try { await list.remove(r.id); toast("success", "已删除"); } catch (e) { toast("error", e instanceof APIError ? e.message : "删除失败"); } }} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+                  <button onClick={() => onRemove(r)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
                 </div>
               )}
             />
@@ -149,9 +173,9 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
                   <Cloud size={14} />
                 </div>
-                <div className="font-display text-[15px] font-extrabold">云端同步（系统管理员下发，{list.global.length} 条）</div>
+                <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">云端同步（系统管理员下发，{list.global.length} 条）</div>
               </div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3 ml-11">READ ONLY · 由平台统一维护，不可编辑</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3 ml-11">READ ONLY · 由平台统一维护，不可编辑</div>
               <DataTable<BlackEntry>
                 rows={list.global}
                 searchKeys={["number", "reason", "category"]}
@@ -172,18 +196,18 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
                 <FileSpreadsheet size={14} />
               </div>
-              <div className="font-display text-[15px] font-extrabold">上传附件</div>
+              <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">上传附件</div>
             </div>
             <UploadZone onFiles={onUpload} />
             {uploads.length > 0 && (
               <div className="mt-4 space-y-2">
                 {uploads.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-canvas-2 text-[12px]">
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-canvas-2 text-[calc(12px*var(--fz))]">
                     <div className="flex items-center gap-2 min-w-0">
                       <FileSpreadsheet size={14} className="text-ink-soft shrink-0" />
                       <span className="truncate font-mono font-bold">{f.name}</span>
                     </div>
-                    <span className="font-mono text-[11px] font-bold text-mint-deep">解析 {f.lines} 行</span>
+                    <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-mint-deep">解析 {f.lines} 行</span>
                   </div>
                 ))}
               </div>
@@ -191,8 +215,8 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
           </div>
 
           <div className="panel p-6" style={{ background: "var(--amber-soft)" }}>
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-amber-deep mb-1">FORMAT</div>
-            <div className="text-[12px] font-semibold text-amber-deep leading-[1.7]">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-amber-deep mb-1">FORMAT</div>
+            <div className="text-[calc(12px*var(--fz))] font-semibold text-amber-deep leading-[1.7]">
               文件头要求：<code className="font-mono">号码 | 类别 | 原因 | 风险分</code>，单文件 ≤ 5MB。
             </div>
           </div>
@@ -205,8 +229,8 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
         title={editing ? "编辑黑名单" : "新增黑名单"}
         footer={
           <>
-            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
-            <button onClick={() => (document.getElementById("bl-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[13px]">保存</button>
+            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
+            <button onClick={() => (document.getElementById("bl-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]">保存</button>
           </>
         }
       >
@@ -236,7 +260,7 @@ function BLForm({ editing, onSubmit }: { editing: BlackEntry | null; onSubmit: (
 function Field({ label, children }: any) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

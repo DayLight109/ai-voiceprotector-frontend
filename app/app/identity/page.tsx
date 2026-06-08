@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import FormRow from "@/components/shared/FormRow";
@@ -9,16 +9,17 @@ import { FAMILY_NAV } from "@/lib/nav";
 import { useLocalStorage } from "@/lib/storage";
 import { api, APIError } from "@/lib/api";
 import { useSingle } from "@/lib/use-resource";
+import { MiniCardGridSkeleton, FieldsSkeleton } from "@/components/shared/Skeleton";
 import { Smartphone, IdCard, BookOpen, ShieldCheck, Plane, CheckCircle2, ScanFace, Users, Heart, X, Image as ImageIcon } from "lucide-react";
 
-type CredKey = "phone" | "id" | "passport" | "military" | "hkmo";
+type CredKey = "phone" | "id_card" | "passport" | "military" | "hk_mo";
 
 const CREDS: { k: CredKey; label: string; icon: any; example: string }[] = [
   { k: "phone", label: "手机号", icon: Smartphone, example: "138 0013 4921" },
-  { k: "id", label: "身份证", icon: IdCard, example: "110101 ···· 1234" },
+  { k: "id_card", label: "身份证", icon: IdCard, example: "110101 ···· 1234" },
   { k: "passport", label: "护照", icon: BookOpen, example: "E12345678" },
   { k: "military", label: "军人证", icon: ShieldCheck, example: "军 / 武警证号" },
-  { k: "hkmo", label: "港澳台居民证", icon: Plane, example: "港澳台居民居住证号" },
+  { k: "hk_mo", label: "港澳台居民证", icon: Plane, example: "港澳台居民居住证号" },
 ];
 
 type StoredPhoto = { slot: string; name: string; size: number; mime: string; dataUrl: string; updatedAt: string };
@@ -43,6 +44,34 @@ export default function IdentityPage() {
   // 证件图片：File 持有 + dataUrl 预览，提交时通过 multipart 上送
   type Pic = { file: File; dataUrl: string };
   const [pics, setPics] = useState<Record<string, Pic>>({});
+
+  // 滑动指示条：测量当前 tab 按钮的位置/宽度，让背景胶囊平滑滑过去
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [pill, setPill] = useState<{ left: number; width: number; ready: boolean }>({
+    left: 0,
+    width: 0,
+    ready: false,
+  });
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const bar = tabBarRef.current;
+      const btn = tabRefs.current[tab];
+      if (!bar || !btn) return;
+      const barBox = bar.getBoundingClientRect();
+      const btnBox = btn.getBoundingClientRect();
+      setPill({
+        left: btnBox.left - barBox.left + bar.scrollLeft,
+        width: btnBox.width,
+        ready: true,
+      });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [tab]);
+
 
   const acceptPic = (slot: string, file: File | null | undefined) => {
     if (!file) return;
@@ -97,7 +126,7 @@ export default function IdentityPage() {
 
   const verified = useMemo<Record<CredKey, boolean>>(() => {
     const m: Record<CredKey, boolean> = {
-      phone: false, id: false, passport: false, military: false, hkmo: false,
+      phone: false, id_card: false, passport: false, military: false, hk_mo: false,
     };
     for (const c of (credsRes.data as StoredCredential[] | null) || []) {
       if (c?.kind && c.kind in m) m[c.kind] = !!c.verified;
@@ -143,12 +172,12 @@ export default function IdentityPage() {
       return;
     }
     const requiredSlots: ("face" | "emblem" | "main")[] =
-      k === "id" ? ["face", "emblem"]
+      k === "id_card" ? ["face", "emblem"]
       : k === "phone" ? []
       : ["main"];
     const missing = requiredSlots.filter(s => !pics[s]);
     if (missing.length > 0) {
-      toast("error", k === "id" ? "请上传人像面与国徽面照片" : "请上传证件照片");
+      toast("error", k === "id_card" ? "请上传人像面与国徽面照片" : "请上传证件照片");
       return;
     }
     try {
@@ -183,6 +212,11 @@ export default function IdentityPage() {
       />
 
       {/* 状态卡片 */}
+      {credsRes.loading && !credsRes.data ? (
+        <div className="mb-6">
+          <MiniCardGridSkeleton count={5} cols="grid-cols-2 lg:grid-cols-5" />
+        </div>
+      ) : (
       <div className="stagger grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         {CREDS.map((c) => {
           const stored = credByKind[c.k];
@@ -202,29 +236,48 @@ export default function IdentityPage() {
               >
                 <c.icon size={14} />
               </div>
-              <div className="font-display text-[13px] font-extrabold truncate">{c.label}</div>
-              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: palette.fg }}>
+              <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{c.label}</div>
+              <div className="mt-1 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: palette.fg }}>
                 {palette.label}
               </div>
             </div>
           );
         })}
       </div>
+      )}
 
       <div className="grid grid-cols-12 gap-5">
         <section className="col-span-12 lg:col-span-7 panel p-6">
-          <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-6 overflow-x-auto">
+          <div
+            ref={tabBarRef}
+            className="relative flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-6 overflow-x-auto"
+          >
+            {/* 滑动胶囊：随选中 tab 平滑滑动 */}
+            <span
+              aria-hidden
+              className="absolute top-1 bottom-1 rounded-full pointer-events-none"
+              style={{
+                left: pill.left,
+                width: pill.width,
+                background: "var(--surface)",
+                boxShadow: "var(--shadow-sm)",
+                opacity: pill.ready ? 1 : 0,
+                transition: pill.ready
+                  ? "left 0.42s cubic-bezier(0.22, 1, 0.36, 1), width 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+                  : "none",
+              }}
+            />
             {CREDS.map((c) => {
               const active = c.k === tab;
               return (
                 <button
                   key={c.k}
+                  ref={(el) => { tabRefs.current[c.k] = el; }}
                   onClick={() => setTab(c.k)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-bold transition-colors whitespace-nowrap"
+                  className="relative z-[1] flex items-center gap-2 px-4 py-2 rounded-full text-[calc(12px*var(--fz))] font-bold whitespace-nowrap"
                   style={{
-                    background: active ? "var(--surface)" : "transparent",
                     color: active ? "var(--ink)" : "var(--ink-soft)",
-                    boxShadow: active ? "var(--shadow-sm)" : "none",
+                    transition: "color 0.32s ease",
                   }}
                 >
                   <c.icon size={12} />
@@ -238,8 +291,8 @@ export default function IdentityPage() {
             const cur = CREDS.find((c) => c.k === tab)!;
             return (
               <div key={tab} className="fade-in">
-                <div className="font-display text-[18px] font-extrabold mb-1">{cur.label} 认证</div>
-                <p className="text-[13px] text-ink-soft font-medium mb-5">
+                <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">{cur.label} 认证</div>
+                <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
                   填写或拍照上传后，调用公安身份信息核验接口异步比对。
                 </p>
 
@@ -250,7 +303,7 @@ export default function IdentityPage() {
                   <Field label={cur.label + " 号"}>
                     <input className="ipt" placeholder={cur.example} value={valueInput} onChange={(e) => setValueInput(e.target.value)} />
                   </Field>
-                  {tab === "id" && (
+                  {tab === "id_card" && (
                     <div className="grid grid-cols-2 gap-3">
                       <PicSlot
                         slot="face"
@@ -268,7 +321,7 @@ export default function IdentityPage() {
                       />
                     </div>
                   )}
-                  {(tab === "passport" || tab === "military" || tab === "hkmo") && (
+                  {(tab === "passport" || tab === "military" || tab === "hk_mo") && (
                     <Field label="证件照片">
                       <PicSlot
                         slot="main"
@@ -299,7 +352,7 @@ export default function IdentityPage() {
                     />
                   )}
 
-                  <button type="button" onClick={() => verifyOne(cur.k)} className="btn-indigo w-full justify-center py-3 text-[14px]" style={{ width: "100%" }}>
+                  <button type="button" onClick={() => verifyOne(cur.k)} className="btn-indigo w-full justify-center py-3 text-[calc(14px*var(--fz))]" style={{ width: "100%" }}>
                     {verified[cur.k] ? <CheckCircle2 size={14} /> : <ScanFace size={14} />}
                     {verified[cur.k] ? "重新提交认证" : "提交认证"}
                   </button>
@@ -311,8 +364,12 @@ export default function IdentityPage() {
 
         <section className="col-span-12 lg:col-span-5 space-y-3 stagger">
           <div className="panel p-6">
-            <div className="font-display text-[16px] font-extrabold mb-1">认证模式</div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">VERIFICATION MODE</div>
+            <div className="font-display text-[calc(16px*var(--fz))] font-extrabold mb-1">认证模式</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">VERIFICATION MODE</div>
+            {modesRes.loading && !modesRes.data ? (
+              <FieldsSkeleton rows={3} />
+            ) : (
+            <>
             <FormRow label="线下认证" desc="对接公安政务大厅人工核验，72 小时内回执">
               <Toggle checked={offline} onChange={(v) => updateMode("offline", v)} />
             </FormRow>
@@ -322,6 +379,8 @@ export default function IdentityPage() {
             <FormRow label="关怀模式" desc="放大字体、简化操作、亲属同步重要告警">
               <Toggle checked={care} onChange={(v) => updateMode("care", v)} />
             </FormRow>
+            </>
+            )}
           </div>
 
           <div className="panel p-6" style={{ background: "linear-gradient(135deg, var(--indigo-soft), var(--mint-soft))" }}>
@@ -330,11 +389,11 @@ export default function IdentityPage() {
                 <Heart size={16} style={{ color: "var(--coral)" }} />
               </div>
               <div>
-                <div className="font-display text-[14px] font-extrabold">关怀模式特性</div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">FOR ELDERS</div>
+                <div className="font-display text-[calc(14px*var(--fz))] font-extrabold">关怀模式特性</div>
+                <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">FOR ELDERS</div>
               </div>
             </div>
-            <ul className="space-y-2 text-[13px] font-medium text-ink-2">
+            <ul className="space-y-2 text-[calc(13px*var(--fz))] font-medium text-ink-2">
               <li className="flex items-center gap-2"><Users size={12} style={{ color: "var(--indigo)" }} /> 来电警示自动同步儿女</li>
               <li className="flex items-center gap-2"><ShieldCheck size={12} style={{ color: "var(--mint-deep)" }} /> 转账类话术自动挂断 + 弹屏</li>
               <li className="flex items-center gap-2"><BookOpen size={12} style={{ color: "var(--amber-deep)" }} /> 大字模式 + 反诈语音助手</li>
@@ -354,7 +413,7 @@ export default function IdentityPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -376,23 +435,23 @@ function SubmittedRecord({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 min-w-0">
           <span
-            className="px-2.5 py-1 rounded-full font-mono text-[10px] uppercase tracking-[0.14em] font-extrabold"
+            className="px-2.5 py-1 rounded-full font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-extrabold"
             style={{ background: tone.bg, color: tone.fg }}
           >
             {tone.label}
           </span>
           {record.masked && (
-            <span className="font-mono text-[12px] font-extrabold truncate">{record.masked}</span>
+            <span className="font-mono text-[calc(12px*var(--fz))] font-extrabold truncate">{record.masked}</span>
           )}
         </div>
         <button
           onClick={onRemoveAll}
-          className="text-[11px] font-bold text-ink-soft hover:text-ink"
+          className="text-[calc(11px*var(--fz))] font-bold text-ink-soft hover:text-ink"
         >
           删除该认证
         </button>
       </div>
-      <div className="mt-1 font-mono text-[10px] text-ink-soft font-bold">最近更新 {tsLabel}</div>
+      <div className="mt-1 font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">最近更新 {tsLabel}</div>
       {record.photos && record.photos.length > 0 && (
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
           {record.photos.map((p) => (
@@ -404,7 +463,7 @@ function SubmittedRecord({
                 style={{ aspectRatio: "16 / 10" }}
               />
               <div className="px-2 py-1.5 border-t border-border">
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft truncate">
+                <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft truncate">
                   {p.slot}
                 </span>
               </div>
@@ -443,14 +502,14 @@ function PicSlot({
         />
         <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border bg-surface">
           <div className="min-w-0">
-            <div className="font-display text-[12px] font-extrabold truncate">{label}</div>
-            <div className="font-mono text-[10px] text-ink-soft font-bold truncate">{pic.file.name} · {sizeKB} KB</div>
+            <div className="font-display text-[calc(12px*var(--fz))] font-extrabold truncate">{label}</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold truncate">{pic.file.name} · {sizeKB} KB</div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="px-2.5 py-1 rounded-full text-[11px] font-bold border border-border hover:bg-canvas-2"
+              className="px-2.5 py-1 rounded-full text-[calc(11px*var(--fz))] font-bold border border-border hover:bg-canvas-2"
             >
               替换
             </button>
@@ -494,10 +553,10 @@ function PicSlot({
       }}
     >
       <ImageIcon size={large ? 26 : 22} className="mx-auto text-ink-soft mb-1" />
-      <div className={`font-display ${large ? "text-[13px]" : "text-[12px]"} font-extrabold`}>
+      <div className={`font-display ${large ? "text-[calc(13px*var(--fz))]" : "text-[calc(12px*var(--fz))]"} font-extrabold`}>
         上传{label}
       </div>
-      <div className="font-mono text-[10px] text-ink-soft font-bold">JPG / PNG · ≤ 5MB</div>
+      <div className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">JPG / PNG · ≤ 5MB</div>
       <input
         ref={inputRef}
         id={inputId}

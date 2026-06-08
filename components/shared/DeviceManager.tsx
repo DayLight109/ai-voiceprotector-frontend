@@ -1,10 +1,11 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
+import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
 import { SEED, type Device, type AuditLog } from "@/lib/mock";
 import { useLocalStorage, uid } from "@/lib/storage";
@@ -14,6 +15,7 @@ export type DeviceType = "企业端" | "家庭端";
 
 export default function DeviceManager({ deviceType }: { deviceType: DeviceType }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const isEnt = deviceType === "企业端";
   const [all, setAll] = useLocalStorage<Device[]>("sys.devices", SEED.devices);
   const [audit] = useLocalStorage<AuditLog[]>("sys.audit", SEED.audit);
@@ -22,6 +24,25 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
   const [tab, setTab] = useState<"list" | "audit">("list");
 
   const view = useMemo(() => all.filter((d) => d.type === deviceType), [all, deviceType]);
+
+  // 滑动指示条：设备列表 / 行为日志审计 切换时背景胶囊平滑滑过去
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [pill, setPill] = useState<{ left: number; width: number; ready: boolean }>({ left: 0, width: 0, ready: false });
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const bar = tabBarRef.current;
+      const btn = tabRefs.current[tab];
+      if (!bar || !btn) return;
+      const barBox = bar.getBoundingClientRect();
+      const btnBox = btn.getBoundingClientRect();
+      setPill({ left: btnBox.left - barBox.left + bar.scrollLeft, width: btnBox.width, ready: true });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [tab]);
 
   const onSubmit = (f: any) => {
     if (editing) {
@@ -45,6 +66,18 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
     setEditing(null);
   };
 
+  const onDelete = async (r: Device) => {
+    const ok = await confirm({
+      title: `删除${isEnt ? "企业" : "家庭"}设备？`,
+      desc: `将移除「${r.name}」，该设备的接入与心跳记录将一并删除。`,
+      tone: "danger",
+      confirmText: "删除",
+    });
+    if (!ok) return;
+    setAll((p) => p.filter((x) => x.id !== r.id));
+    toast("success", "已删除");
+  };
+
   const breadcrumb = ["SENTINEL", "系统管理员", "设备管理", isEnt ? "企业端" : "家庭端"];
 
   return (
@@ -54,7 +87,7 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
         title={isEnt ? "企业端设备管理" : "家庭端设备管理"}
         desc={isEnt ? "管理接入企业（运营商 / 银行 / 反诈中心）及其检测探针。" : "管理接入家庭端及其智能盒子 / 手机端探针。"}
         actions={
-          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[13px]">
+          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <Plus size={14} /> 新增{isEnt ? "企业" : "家庭"}
           </button>
         }
@@ -67,14 +100,35 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
         <KPI label="离线" v={view.filter((d) => d.status === "offline").length} c="var(--coral-deep)" Icon={Server} />
       </div>
 
-      <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-5 inline-flex">
+      <div ref={tabBarRef} className="relative flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-5 w-fit">
+        {/* 滑动胶囊：随选中项平滑滑动 */}
+        <span
+          aria-hidden
+          className="absolute top-1 bottom-1 rounded-full pointer-events-none"
+          style={{
+            left: pill.left,
+            width: pill.width,
+            background: "var(--surface)",
+            boxShadow: "var(--shadow-sm)",
+            opacity: pill.ready ? 1 : 0,
+            transition: pill.ready
+              ? "left 0.42s cubic-bezier(0.22, 1, 0.36, 1), width 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+              : "none",
+          }}
+        />
         {[
           { k: "list", label: "设备列表", icon: Server },
           { k: "audit", label: "行为日志审计", icon: FileLock2 },
         ].map((t) => {
           const active = t.k === tab;
           return (
-            <button key={t.k} onClick={() => setTab(t.k as any)} className="flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
+            <button
+              key={t.k}
+              ref={(el) => { tabRefs.current[t.k] = el; }}
+              onClick={() => setTab(t.k as any)}
+              className="relative z-[1] flex items-center gap-2 px-4 py-2 rounded-full text-[calc(12px*var(--fz))] font-bold whitespace-nowrap"
+              style={{ color: active ? "var(--ink)" : "var(--ink-soft)", transition: "color 0.32s ease" }}
+            >
               <t.icon size={12} />
               {t.label}
             </button>
@@ -94,21 +148,21 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
                 key: "status", label: "运行状态", render: (r) => {
                   const m: any = { online: { bg: "var(--mint-soft)", fg: "var(--mint-deep)", l: "在线" }, offline: { bg: "var(--canvas-2)", fg: "var(--ink-soft)", l: "离线" }, warn: { bg: "var(--amber-soft)", fg: "var(--amber-deep)", l: "告警" } };
                   return (
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold inline-flex items-center gap-1.5" style={{ background: m[r.status].bg, color: m[r.status].fg }}>
+                    <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold inline-flex items-center gap-1.5" style={{ background: m[r.status].bg, color: m[r.status].fg }}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: m[r.status].fg }} />
                       {m[r.status].l}
                     </span>
                   );
                 }
               },
-              { key: "version", label: "版本", render: (r) => <span className="font-mono text-[11px] font-bold">{r.version}</span> },
+              { key: "version", label: "版本", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] font-bold">{r.version}</span> },
               { key: "contact", label: "联系人" },
-              { key: "lastSeen", label: "最近心跳", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.lastSeen}</span> },
+              { key: "lastSeen", label: "最近心跳", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.lastSeen}</span> },
             ]}
             actions={(r) => (
               <div className="flex items-center gap-1 justify-end">
                 <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
-                <button onClick={() => { setAll((p) => p.filter((x) => x.id !== r.id)); toast("success", "已删除"); }} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+                <button onClick={() => onDelete(r)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
               </div>
             )}
           />
@@ -119,13 +173,13 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
             rows={audit}
             searchKeys={["actor", "action", "target"]}
             columns={[
-              { key: "ts", label: "时间", render: (r) => <span className="font-mono text-[11px] font-bold">{r.ts}</span> },
+              { key: "ts", label: "时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] font-bold">{r.ts}</span> },
               { key: "actor", label: "操作人" },
               { key: "action", label: "动作", render: (r) => <span className="tag-chip" data-tone="indigo">{r.action}</span> },
-              { key: "target", label: "目标", render: (r) => <span className="font-mono text-[12px] text-ink-soft font-bold">{r.target}</span> },
+              { key: "target", label: "目标", render: (r) => <span className="font-mono text-[calc(12px*var(--fz))] text-ink-soft font-bold">{r.target}</span> },
               {
                 key: "result", label: "结果", render: (r) => (
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold" style={{ background: r.result === "成功" ? "var(--mint-soft)" : "var(--coral-soft)", color: r.result === "成功" ? "var(--mint-deep)" : "var(--coral-deep)" }}>
+                  <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold" style={{ background: r.result === "成功" ? "var(--mint-soft)" : "var(--coral-soft)", color: r.result === "成功" ? "var(--mint-deep)" : "var(--coral-deep)" }}>
                     {r.result}
                   </span>
                 )
@@ -141,8 +195,8 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
         title={editing ? `编辑${isEnt ? "企业" : "家庭"}` : `新增${isEnt ? "企业" : "家庭"}`}
         footer={
           <>
-            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
-            <button onClick={() => (document.getElementById("dev-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[13px]">保存</button>
+            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
+            <button onClick={() => (document.getElementById("dev-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]">保存</button>
           </>
         }
       >
@@ -156,10 +210,10 @@ function KPI({ label, v, c, Icon }: any) {
   return (
     <div className="panel p-5">
       <div className="flex items-center justify-between mb-3">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{label}</div>
+        <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{label}</div>
         <Icon size={14} style={{ color: c }} />
       </div>
-      <div className="numplate text-[32px]" style={{ color: c }}>{v}</div>
+      <div className="numplate text-[calc(32px*var(--fz))]" style={{ color: c }}>{v}</div>
     </div>
   );
 }
@@ -185,7 +239,7 @@ function DevForm({ editing, onSubmit, isEnt }: { editing: Device | null; onSubmi
 function Field({ label, children }: any) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

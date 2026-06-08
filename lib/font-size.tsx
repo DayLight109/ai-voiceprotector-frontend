@@ -5,7 +5,8 @@
 // - zoom：A- / A+ 按钮可逐级微调（步进 0.04，范围 0.88 ~ 1.08）；A 重置为 1.0
 // - care：关怀模式开关；启用时强制 zoom = 1.12（覆盖 zoom 值）
 // - 持久化到 localStorage：sentinel.v1.fontZoom / sentinel.v1.fontCare
-// - 实际效果通过 document.documentElement.style.zoom 应用，整页缩放
+// - 实际效果通过 CSS 变量 --fz 应用：全站字号写作 text-[calc(Npx*var(--fz))]，
+//   只缩放文字，不动间距/图标/圆角 —— 与界面密度（--spacing）完全正交。
 // - 首屏闪烁通过 layout.tsx 里的 inline 引导脚本预先设置避免
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
@@ -54,7 +55,7 @@ function readCare(): boolean {
 
 function applyZoom(zoom: number, care: boolean) {
   const v = care ? FONT_CARE : clamp(zoom);
-  (document.documentElement.style as any).zoom = String(v);
+  document.documentElement.style.setProperty("--fz", String(v));
 }
 
 export function FontSizeProvider({ children }: { children: ReactNode }) {
@@ -143,7 +144,7 @@ export const fontSizeBootScript = `
     z = Math.min(${FONT_MAX}, Math.max(${FONT_MIN}, z));
     var care = localStorage.getItem('${KEY_CARE}') === '1';
     var v = care ? ${FONT_CARE} : z;
-    document.documentElement.style.zoom = String(v);
+    document.documentElement.style.setProperty('--fz', String(v));
   } catch (_) {}
 })();
 `;

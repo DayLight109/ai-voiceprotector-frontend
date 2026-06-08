@@ -39,7 +39,7 @@ export default function Policy() {
               <span className="mega-italic" style={{ color: "var(--indigo)" }}>是法定动作</span>。
             </h2>
           </div>
-          <div className="col-span-12 md:col-span-4 text-[14px] leading-[1.75] text-ink-2 font-medium">
+          <div className="col-span-12 md:col-span-4 text-[calc(14px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
             2022 年 12 月 1 日起施行的《反电信网络诈骗法》对运营商、平台、金融机构提出了实时监测、协同共享的强制要求。
           </div>
         </div>
@@ -58,20 +58,20 @@ export default function Policy() {
                     <c.icon size={20} strokeWidth={2} />
                   </div>
                   <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                    <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                       {c.act}
                     </div>
-                    <div className="font-display text-[20px] font-extrabold mt-0.5">
+                    <div className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-0.5">
                       第 {c.code} 条
                     </div>
                   </div>
                 </div>
-                <div className="font-mono text-[11px] font-bold text-ink-soft">0{i + 1}</div>
+                <div className="font-mono text-[calc(11px*var(--fz))] font-bold text-ink-soft">0{i + 1}</div>
               </div>
-              <h3 className="relative font-display text-[22px] md:text-[26px] font-extrabold tracking-tight leading-[1.25]">
+              <h3 className="relative font-display text-[calc(22px*var(--fz))] md:text-[calc(26px*var(--fz))] font-extrabold tracking-tight leading-[1.25]">
                 {c.title}
               </h3>
-              <p className="relative mt-4 text-[14px] leading-[1.75] text-ink-2 font-medium">
+              <p className="relative mt-4 text-[calc(14px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
                 {c.body}
               </p>
             </div>

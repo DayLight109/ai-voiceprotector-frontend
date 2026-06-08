@@ -87,7 +87,7 @@ export default function AgentsPage() {
         ].map((t) => {
           const active = t.k === tab;
           return (
-            <button key={t.k} onClick={() => setTab(t.k as any)} className="flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
+            <button key={t.k} onClick={() => setTab(t.k as any)} className="flex items-center gap-2 px-4 py-2 rounded-full text-[calc(12px*var(--fz))] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
               <t.icon size={12} />
               {t.label}
             </button>
@@ -99,9 +99,9 @@ export default function AgentsPage() {
         <div className="panel p-6 max-w-3xl">
           <div className="flex items-center gap-2 mb-4">
             <Bot size={16} style={{ color: "var(--indigo)" }} />
-            <h3 className="font-display text-[16px] font-extrabold">屏幕显示词</h3>
+            <h3 className="font-display text-[calc(16px*var(--fz))] font-extrabold">屏幕显示词</h3>
           </div>
-          <p className="text-[13px] text-ink-soft font-medium mb-4">
+          <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-4">
             命中判定后，端侧 App 将以下列文案展示给用户。最多可配置 12 条。
           </p>
           <div className="space-y-2 mb-4">
@@ -110,7 +110,7 @@ export default function AgentsPage() {
                 <input
                   value={w}
                   onChange={(e) => setDisplayWords(displayWords.map((x, j) => (j === i ? e.target.value : x)))}
-                  className="flex-1 px-3 py-2.5 rounded-xl bg-surface border border-border text-[13px] font-medium focus:outline-none focus:border-indigo"
+                  className="flex-1 px-3 py-2.5 rounded-xl bg-surface border border-border text-[calc(13px*var(--fz))] font-medium focus:outline-none focus:border-indigo"
                 />
                 <button onClick={() => setDisplayWords(displayWords.filter((_, j) => j !== i))} className="w-9 h-9 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center">
                   <Trash2 size={13} />
@@ -118,11 +118,11 @@ export default function AgentsPage() {
               </div>
             ))}
           </div>
-          <button onClick={() => setDisplayWords([...displayWords, "新提示词"])} disabled={displayWords.length >= 12} className="btn-ghost py-2 px-3 text-[12px] disabled:opacity-50">
+          <button onClick={() => setDisplayWords([...displayWords, "新提示词"])} disabled={displayWords.length >= 12} className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))] disabled:opacity-50">
             <Plus size={12} /> 添加词条 · {displayWords.length} / 12
           </button>
           <div className="mt-5 text-right">
-            <button onClick={saveDisplay} className="btn-indigo py-2.5 px-5 text-[13px]"><Save size={14} /> 保存</button>
+            <button onClick={saveDisplay} className="btn-indigo py-2.5 px-5 text-[calc(13px*var(--fz))]"><Save size={14} /> 保存</button>
           </div>
         </div>
       )}
@@ -131,7 +131,7 @@ export default function AgentsPage() {
         <div className="panel p-6 max-w-3xl">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare size={16} style={{ color: "var(--indigo)" }} />
-            <h3 className="font-display text-[16px] font-extrabold">Whisper 语音转写</h3>
+            <h3 className="font-display text-[calc(16px*var(--fz))] font-extrabold">Whisper 语音转写</h3>
           </div>
           <Field label="模型版本">
             <select value={w.model} onChange={(e) => setW({ ...w, model: e.target.value as any })} className="ipt">
@@ -155,7 +155,7 @@ export default function AgentsPage() {
             <Toggle checked={w.vadFilter} onChange={(v) => setW({ ...w, vadFilter: v })} />
           </FormRow>
           <div className="mt-5 text-right">
-            <button onClick={saveWhisper} className="btn-indigo py-2.5 px-5 text-[13px]"><Save size={14} /> 保存</button>
+            <button onClick={saveWhisper} className="btn-indigo py-2.5 px-5 text-[calc(13px*var(--fz))]"><Save size={14} /> 保存</button>
           </div>
           <Style />
         </div>
@@ -165,7 +165,7 @@ export default function AgentsPage() {
         <div className="panel p-6 max-w-3xl">
           <div className="flex items-center gap-2 mb-4">
             <Cpu size={16} style={{ color: "var(--indigo)" }} />
-            <h3 className="font-display text-[16px] font-extrabold">千问 LLM 参数</h3>
+            <h3 className="font-display text-[calc(16px*var(--fz))] font-extrabold">千问 LLM 参数</h3>
           </div>
           <Field label="模型">
             <select value={q.model} onChange={(e) => setQ({ ...q, model: e.target.value })} className="ipt">
@@ -173,10 +173,10 @@ export default function AgentsPage() {
             </select>
           </Field>
           <Field label="Endpoint">
-            <input value={q.endpoint} onChange={(e) => setQ({ ...q, endpoint: e.target.value })} className="ipt font-mono text-[12px]" />
+            <input value={q.endpoint} onChange={(e) => setQ({ ...q, endpoint: e.target.value })} className="ipt font-mono text-[calc(12px*var(--fz))]" />
           </Field>
           <Field label="API Key">
-            <input value={q.apiKey} onChange={(e) => setQ({ ...q, apiKey: e.target.value })} className="ipt font-mono text-[12px]" />
+            <input value={q.apiKey} onChange={(e) => setQ({ ...q, apiKey: e.target.value })} className="ipt font-mono text-[calc(12px*var(--fz))]" />
           </Field>
           <Field label={`Temperature · ${q.temperature.toFixed(2)}`}>
             <input type="range" min={0} max={1} step={0.05} value={q.temperature} onChange={(e) => setQ({ ...q, temperature: Number(e.target.value) })} className="w-full" />
@@ -191,7 +191,7 @@ export default function AgentsPage() {
             <textarea value={q.systemPrompt} onChange={(e) => setQ({ ...q, systemPrompt: e.target.value })} rows={4} className="ipt" />
           </Field>
           <div className="mt-5 text-right">
-            <button onClick={saveQwen} className="btn-indigo py-2.5 px-5 text-[13px]"><Save size={14} /> 保存</button>
+            <button onClick={saveQwen} className="btn-indigo py-2.5 px-5 text-[calc(13px*var(--fz))]"><Save size={14} /> 保存</button>
           </div>
           <Style />
         </div>
@@ -203,7 +203,7 @@ export default function AgentsPage() {
 function Field({ label, children }: any) {
   return (
     <div className="mb-4">
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

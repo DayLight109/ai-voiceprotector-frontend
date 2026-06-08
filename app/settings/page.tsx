@@ -6,7 +6,9 @@ import { useToast } from "@/components/shared/Toast";
 import { api, APIError, getAccessToken, type EmergencyContact, type SessionView } from "@/lib/api";
 import { useTheme } from "@/lib/theme";
 import { useFontSize } from "@/lib/font-size";
+import { useAppearance, type Density } from "@/lib/appearance";
 import { useLang, type Lang } from "@/lib/i18n";
+import { useLocalStorage } from "@/lib/storage";
 
 type TabKey = "profile" | "security" | "notify" | "appearance";
 
@@ -35,8 +37,8 @@ export default function SettingsPage() {
       breadcrumb={["SENTINEL", t("设置"), TABS.find((x) => x.k === tab)!.label]}
     >
       <div className="mb-8">
-        <h1 className="font-display text-[32px] md:text-[40px] font-extrabold tracking-tight">{t("系统设置")}</h1>
-        <p className="mt-2 text-[14px] text-ink-soft font-medium">{t("管理账户、安全、通知与外观偏好。")}</p>
+        <h1 className="font-display text-[calc(32px*var(--fz))] md:text-[calc(40px*var(--fz))] font-extrabold tracking-tight">{t("系统设置")}</h1>
+        <p className="mt-2 text-[calc(14px*var(--fz))] text-ink-soft font-medium">{t("管理账户、安全、通知与外观偏好。")}</p>
       </div>
 
       <div className="grid grid-cols-12 gap-5">
@@ -64,8 +66,8 @@ export default function SettingsPage() {
                   <t.icon size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-display text-[14px] font-extrabold" style={{ color: active ? "var(--ink)" : "var(--ink-2)" }}>{t.label}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold truncate">{t.desc}</div>
+                  <div className="font-display text-[calc(14px*var(--fz))] font-extrabold" style={{ color: active ? "var(--ink)" : "var(--ink-2)" }}>{t.label}</div>
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold truncate">{t.desc}</div>
                 </div>
                 {active && <ChevronRight size={14} className="text-ink-soft" />}
               </button>
@@ -88,19 +90,21 @@ function Row({ label, desc, children }: any) {
   return (
     <div className="flex items-start justify-between gap-6 py-5 border-b border-border last:border-b-0">
       <div className="flex-1 min-w-0">
-        <div className="font-display text-[14px] font-extrabold">{label}</div>
-        {desc && <div className="mt-1 text-[12px] text-ink-soft font-medium">{desc}</div>}
+        <div className="font-display text-[calc(14px*var(--fz))] font-extrabold">{label}</div>
+        {desc && <div className="mt-1 text-[calc(12px*var(--fz))] text-ink-soft font-medium">{desc}</div>}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
   );
 }
 
-function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
-  const [on, setOn] = useState(defaultChecked);
+function Toggle({ storageKey, defaultChecked = false, onToggle }: { storageKey: string; defaultChecked?: boolean; onToggle?: (v: boolean) => void }) {
+  const [on, setOn] = useLocalStorage<boolean>(`settings.toggle.${storageKey}`, defaultChecked);
   return (
     <button
-      onClick={() => setOn(!on)}
+      onClick={() => { const next = !on; setOn(next); onToggle?.(next); }}
+      role="switch"
+      aria-checked={on}
       className="relative w-11 h-6 rounded-full transition-colors"
       style={{ background: on ? "var(--indigo)" : "var(--canvas-3)" }}
     >
@@ -233,7 +237,7 @@ function Profile() {
             />
           ) : (
             <div
-              className="w-20 h-20 rounded-3xl flex items-center justify-center font-display text-white font-extrabold text-[28px] shadow-md select-none"
+              className="w-20 h-20 rounded-3xl flex items-center justify-center font-display text-white font-extrabold text-[calc(28px*var(--fz))] shadow-md select-none"
               style={{ background: "linear-gradient(135deg, var(--indigo), var(--coral))" }}
               onDoubleClick={() => fileRef.current?.click()}
               title="双击上传头像"
@@ -242,17 +246,17 @@ function Profile() {
             </div>
           )}
           <div className="flex-1">
-            <div className="font-display text-[22px] font-extrabold">{userName}</div>
-            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-soft font-bold">{roleLabel} · UID {uid}</div>
+            <div className="font-display text-[calc(22px*var(--fz))] font-extrabold">{userName}</div>
+            <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{roleLabel} · UID {uid}</div>
             <div className="mt-3 flex items-center gap-2">
               <button
-                className="btn-ghost py-2 px-3 text-[12px]"
+                className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]"
                 onClick={() => fileRef.current?.click()}
               >
                 更换头像
               </button>
               <button
-                className="btn-ghost py-2 px-3 text-[12px]"
+                className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]"
                 style={{ color: "var(--coral-deep)", borderColor: "var(--coral-soft)" }}
                 onClick={async () => {
                   if (!me?.hasAvatar) return;
@@ -286,37 +290,37 @@ function Profile() {
       <Row label="昵称" desc="家属同步告警中显示的名称">
         <button
           type="button"
-          className="px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[13px] hover:bg-surface transition-colors w-56 text-left flex items-center justify-between gap-2"
+          className="px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(13px*var(--fz))] hover:bg-surface transition-colors w-56 text-left flex items-center justify-between gap-2"
           onClick={() => setEditingName(me?.name ?? "")}
         >
           <span className="truncate">{me?.name ?? "—"}</span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold shrink-0">编辑</span>
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold shrink-0">编辑</span>
         </button>
       </Row>
       <Row label="手机号" desc="用于登录与重要告警短信">
         <button
           type="button"
-          className="px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[13px] hover:bg-surface transition-colors w-56 text-left flex items-center justify-between gap-2"
+          className="px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(13px*var(--fz))] hover:bg-surface transition-colors w-56 text-left flex items-center justify-between gap-2"
           onClick={() => setEditingPhone(me?.phone ?? "")}
         >
           <span className="truncate">{me?.phone || "—"}</span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold shrink-0">编辑</span>
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold shrink-0">编辑</span>
         </button>
       </Row>
       <Row label="紧急联系人" desc="发生拦截时一并推送">
         <button
           type="button"
-          className="px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[13px] hover:bg-surface transition-colors w-56 text-left flex items-center justify-between gap-2"
+          className="px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(13px*var(--fz))] hover:bg-surface transition-colors w-56 text-left flex items-center justify-between gap-2"
           onClick={() => setContactsOpen(true)}
         >
           <span className="truncate">
             {contacts.length === 0 ? "未添加" : `${contacts.length} 人`}
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold shrink-0">管理</span>
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold shrink-0">管理</span>
         </button>
       </Row>
       <Row label="常用地址" desc="用于号段归属对比">
-        <span className="font-mono text-[12px] text-ink-soft font-bold">北京 · 海淀区</span>
+        <span className="font-mono text-[calc(12px*var(--fz))] text-ink-soft font-bold">北京 · 海淀区</span>
       </Row>
 
       {viewing && avatarUrl && (
@@ -336,7 +340,7 @@ function Profile() {
           <button
             type="button"
             onClick={() => setViewing(false)}
-            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur text-white flex items-center justify-center font-mono text-[14px] font-extrabold"
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur text-white flex items-center justify-center font-mono text-[calc(14px*var(--fz))] font-extrabold"
             aria-label="关闭"
           >
             ×
@@ -462,12 +466,12 @@ function FieldEditor({
         className="bg-surface rounded-2xl shadow-2xl p-6 w-[92vw] max-w-[400px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="font-display text-[16px] font-extrabold mb-1">修改{label}</div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-4">
+        <div className="font-display text-[calc(16px*var(--fz))] font-extrabold mb-1">修改{label}</div>
+        <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-4">
           {eyebrow}
         </div>
 
-        <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-2">{label}</label>
+        <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-2">{label}</label>
         <input
           ref={inputRef}
           value={initial}
@@ -475,15 +479,15 @@ function FieldEditor({
           inputMode={field === "phone" ? "tel" : undefined}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") onSave(initial); }}
-          className="w-full px-4 py-3 rounded-xl bg-canvas-2 border border-border font-medium text-[14px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+          className="w-full px-4 py-3 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(14px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
           placeholder={currentValue || "—"}
         />
-        <div className="mt-1 font-mono text-[10px] text-ink-soft font-bold">当前：{currentValue || "—"}</div>
+        <div className="mt-1 font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">当前：{currentValue || "—"}</div>
 
         <div className="mt-5 flex items-center justify-end gap-2">
-          <button className="btn-ghost py-2 px-4 text-[12px]" onClick={onCancel}>取消</button>
+          <button className="btn-ghost py-2 px-4 text-[calc(12px*var(--fz))]" onClick={onCancel}>取消</button>
           <button
-            className="btn-indigo py-2 px-4 text-[12px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-indigo py-2 px-4 text-[calc(12px*var(--fz))] disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!dirty}
             onClick={() => onSave(initial)}
           >
@@ -602,7 +606,7 @@ function CropOverlay({
       onClick={onCancel}
     >
       <div
-        className="font-mono text-[11px] uppercase tracking-[0.18em] font-bold text-white/70 select-none"
+        className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.18em] font-bold text-white/70 select-none"
         onClick={(e) => e.stopPropagation()}
       >
         滚轮缩放 · 拖动定位 · {zoom.toFixed(2)}×
@@ -652,13 +656,13 @@ function CropOverlay({
 
       <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
         <button
-          className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-[13px] backdrop-blur"
+          className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-[calc(13px*var(--fz))] backdrop-blur"
           onClick={onCancel}
         >
           取消
         </button>
         <button
-          className="px-5 py-2 rounded-full text-white font-bold text-[13px] shadow-md"
+          className="px-5 py-2 rounded-full text-white font-bold text-[calc(13px*var(--fz))] shadow-md"
           style={{ background: "var(--indigo)" }}
           onClick={confirm}
         >
@@ -691,10 +695,10 @@ function Security() {
   return (
     <div>
       <div className="mb-6 p-4 rounded-2xl" style={{ background: "var(--mint-soft)" }}>
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-mint-deep mb-1">
+        <div className="flex items-center gap-2 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-mint-deep mb-1">
           <CheckCircle2 size={13} /> 账户安全等级：高
         </div>
-        <div className="text-[12px] text-mint-deep font-semibold">
+        <div className="text-[calc(12px*var(--fz))] text-mint-deep font-semibold">
           已启用指纹登录 + 短信二次验证，近期无异常登录。
         </div>
       </div>
@@ -702,7 +706,7 @@ function Security() {
       <Row label="登录密码" desc="点击修改你的登录密码">
         <button
           type="button"
-          className="btn-ghost py-2 px-3 text-[12px]"
+          className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]"
           onClick={() => setPwOpen(true)}
         >
           <Key size={12} /> 修改密码
@@ -710,27 +714,27 @@ function Security() {
       </Row>
       <Row label="指纹登录" desc="在支持的设备上快速登录">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-mint-deep flex items-center gap-1">
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-mint-deep flex items-center gap-1">
             <Fingerprint size={12} /> 已启用
           </span>
-          <Toggle defaultChecked />
+          <Toggle storageKey="security.fingerprint" defaultChecked />
         </div>
       </Row>
       <Row label="活体人脸" desc="高危操作前自动触发">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft flex items-center gap-1">
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft flex items-center gap-1">
             <ScanFace size={12} /> 可选
           </span>
-          <Toggle />
+          <Toggle storageKey="security.faceLiveness" />
         </div>
       </Row>
       <Row label="二次验证" desc="登录时向手机发送动态码">
-        <Toggle defaultChecked />
+        <Toggle storageKey="security.twoFactor" defaultChecked />
       </Row>
       <Row label="信任的设备" desc="查看并管理已登录的设备">
         <button
           type="button"
-          className="btn-ghost py-2 px-3 text-[12px]"
+          className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]"
           onClick={() => setDevOpen(true)}
         >
           <Smartphone size={12} /> 管理设备
@@ -739,7 +743,7 @@ function Security() {
       <Row label="退出全部会话" desc="立即注销除当前外的所有设备">
         <button
           type="button"
-          className="btn-ghost py-2 px-3 text-[12px] disabled:opacity-50"
+          className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))] disabled:opacity-50"
           style={{ color: "var(--coral-deep)", borderColor: "var(--coral-soft)" }}
           onClick={handleRevokeOthers}
           disabled={revokingAll}
@@ -759,19 +763,19 @@ function Notify() {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         {[
-          { k: "APP 推送", icon: Bell, on: true, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-          { k: "短信", icon: Smartphone, on: true, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-          { k: "邮件", icon: User, on: false, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+          { k: "APP 推送", sk: "push", icon: Bell, on: true, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+          { k: "短信", sk: "sms", icon: Smartphone, on: true, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+          { k: "邮件", sk: "email", icon: User, on: false, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
         ].map((c) => (
           <div key={c.k} className="p-4 rounded-2xl border border-border">
             <div className="flex items-center justify-between">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: c.soft, color: c.tint }}>
                 <c.icon size={15} />
               </div>
-              <Toggle defaultChecked={c.on} />
+              <Toggle storageKey={`notify.channel.${c.sk}`} defaultChecked={c.on} />
             </div>
-            <div className="mt-3 font-display text-[14px] font-extrabold">{c.k}</div>
-            <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+            <div className="mt-3 font-display text-[calc(14px*var(--fz))] font-extrabold">{c.k}</div>
+            <div className="mt-0.5 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
               {c.on ? "已启用" : "未启用"}
             </div>
           </div>
@@ -779,19 +783,19 @@ function Notify() {
       </div>
 
       <Row label="高危拦截" desc="AI 合成 / 话术命中 / 信令伪冒">
-        <Toggle defaultChecked />
+        <Toggle storageKey="notify.highRisk" defaultChecked />
       </Row>
       <Row label="家属同步" desc="同时推送给紧急联系人">
-        <Toggle defaultChecked />
+        <Toggle storageKey="notify.familySync" defaultChecked />
       </Row>
       <Row label="白名单变动" desc="新增或移除时通知">
-        <Toggle />
+        <Toggle storageKey="notify.whitelistChange" />
       </Row>
       <Row label="静音时段" desc="工作日 22:00 - 次日 07:00">
-        <button className="btn-ghost py-2 px-3 text-[12px]">调整</button>
+        <button className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]">调整</button>
       </Row>
       <Row label="周报邮件" desc="每周一早上 09:00 送达">
-        <Toggle defaultChecked />
+        <Toggle storageKey="notify.weeklyReport" defaultChecked />
       </Row>
     </div>
   );
@@ -800,12 +804,19 @@ function Notify() {
 function Appearance() {
   const { theme, setTheme } = useTheme();
   const { care, inc, dec, reset, setCare, canInc, canDec } = useFontSize();
+  const { density, reduceMotion, setDensity, setReduceMotion } = useAppearance();
   const { lang, setLang, t } = useLang();
+
+  const DENSITY_OPTS: { k: Density; label: string }[] = [
+    { k: "compact", label: t("紧凑") },
+    { k: "normal", label: t("标准") },
+    { k: "loose", label: t("宽松") },
+  ];
 
   return (
     <div>
       <div className="mb-6">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">{t("主题")}</div>
+        <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">{t("主题")}</div>
         <div className="grid grid-cols-3 gap-3">
           {[
             { k: "light", label: t("浅色"), grad: "linear-gradient(135deg, #F2F3F7, #FFFFFF)" },
@@ -822,7 +833,7 @@ function Appearance() {
               >
                 <div className="h-20 rounded-xl border border-border" style={{ background: opt.grad }} />
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="font-display text-[13px] font-extrabold">{opt.label}</span>
+                  <span className="font-display text-[calc(13px*var(--fz))] font-extrabold">{opt.label}</span>
                   {active && <CheckCircle2 size={14} style={{ color: "var(--indigo)" }} />}
                 </div>
               </button>
@@ -833,18 +844,24 @@ function Appearance() {
 
       <Row label={t("界面密度")} desc={t("紧凑模式可在小屏幕上显示更多")}>
         <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border">
-          {[t("紧凑"), t("标准"), t("宽松")].map((d, i) => (
-            <button
-              key={d}
-              className="px-3 py-1 rounded-full text-[12px] font-bold"
-              style={{
-                background: i === 1 ? "var(--surface)" : "transparent",
-                color: i === 1 ? "var(--ink)" : "var(--ink-soft)",
-              }}
-            >
-              {d}
-            </button>
-          ))}
+          {DENSITY_OPTS.map((opt) => {
+            const active = density === opt.k;
+            return (
+              <button
+                key={opt.k}
+                onClick={() => setDensity(opt.k)}
+                className="px-3 py-1 rounded-full text-[calc(12px*var(--fz))] font-bold transition-colors"
+                aria-pressed={active}
+                style={{
+                  background: active ? "var(--surface)" : "transparent",
+                  color: active ? "var(--ink)" : "var(--ink-soft)",
+                  boxShadow: active ? "var(--shadow-xs)" : "none",
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </Row>
 
@@ -853,7 +870,7 @@ function Appearance() {
           <button
             onClick={dec}
             disabled={!canDec}
-            className="w-9 py-1 rounded-full text-[12px] font-extrabold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-9 py-1 rounded-full text-[calc(12px*var(--fz))] font-extrabold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "transparent", color: "var(--ink-soft)" }}
             aria-label={t("缩小字号")}
           >
@@ -861,7 +878,7 @@ function Appearance() {
           </button>
           <button
             onClick={reset}
-            className="w-9 py-1 rounded-full text-[12px] font-extrabold transition-colors"
+            className="w-9 py-1 rounded-full text-[calc(12px*var(--fz))] font-extrabold transition-colors"
             style={{
               background: "var(--surface)",
               color: "var(--ink)",
@@ -874,7 +891,7 @@ function Appearance() {
           <button
             onClick={inc}
             disabled={!canInc}
-            className="w-9 py-1 rounded-full text-[12px] font-extrabold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-9 py-1 rounded-full text-[calc(12px*var(--fz))] font-extrabold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "transparent", color: "var(--ink-soft)" }}
             aria-label={t("放大字号")}
           >
@@ -905,7 +922,7 @@ function Appearance() {
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as Lang)}
-          className="px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[13px] focus:outline-none focus:border-indigo"
+          className="px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo"
         >
           <option value="zh-CN">简体中文</option>
           <option value="en">English</option>
@@ -914,7 +931,21 @@ function Appearance() {
       </Row>
 
       <Row label={t("降低动画")} desc={t("减少过渡动效，缓解晕动症")}>
-        <Toggle />
+        <button
+          onClick={() => setReduceMotion(!reduceMotion)}
+          className="relative w-11 h-6 rounded-full transition-colors"
+          style={{ background: reduceMotion ? "var(--indigo)" : "var(--canvas-3)" }}
+          aria-pressed={reduceMotion}
+          aria-label={t("降低动画开关")}
+        >
+          <span
+            className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
+            style={{
+              left: reduceMotion ? "calc(100% - 1.375rem)" : "0.125rem",
+              boxShadow: "var(--shadow-xs)",
+            }}
+          />
+        </button>
       </Row>
     </div>
   );
@@ -1018,16 +1049,16 @@ function EmergencyContactsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 pb-4 border-b border-border">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">EMERGENCY CONTACTS</div>
-          <div className="font-display text-[18px] font-extrabold mt-1">紧急联系人</div>
-          <div className="mt-1 text-[12px] text-ink-soft font-medium">
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">EMERGENCY CONTACTS</div>
+          <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mt-1">紧急联系人</div>
+          <div className="mt-1 text-[calc(12px*var(--fz))] text-ink-soft font-medium">
             发生拦截时，告警将同时推送给以下联系人。最多建议 5 位。
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 pt-4">
           {contacts.length === 0 && editingId === null && (
-            <div className="py-10 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+            <div className="py-10 text-center font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
               暂无联系人
             </div>
           )}
@@ -1042,18 +1073,18 @@ function EmergencyContactsModal({
                   <Phone size={15} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-display text-[14px] font-extrabold truncate">
+                  <div className="font-display text-[calc(14px*var(--fz))] font-extrabold truncate">
                     {c.name}
                     {c.relation && (
-                      <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+                      <span className="ml-2 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
                         {c.relation}
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-ink-soft font-bold truncate">{c.phone}</div>
+                  <div className="mt-0.5 font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold truncate">{c.phone}</div>
                 </div>
                 <button
-                  className="btn-ghost py-1.5 px-2.5 text-[12px]"
+                  className="btn-ghost py-1.5 px-2.5 text-[calc(12px*var(--fz))]"
                   onClick={() => startEdit(c)}
                   aria-label="编辑"
                   title="编辑"
@@ -1061,7 +1092,7 @@ function EmergencyContactsModal({
                   <Pencil size={12} />
                 </button>
                 <button
-                  className="btn-ghost py-1.5 px-2.5 text-[12px]"
+                  className="btn-ghost py-1.5 px-2.5 text-[calc(12px*var(--fz))]"
                   style={{ color: "var(--coral-deep)", borderColor: "var(--coral-soft)" }}
                   onClick={() => remove(c)}
                   aria-label="删除"
@@ -1075,53 +1106,53 @@ function EmergencyContactsModal({
 
           {editingId !== null && (
             <div className="mt-4 p-4 rounded-2xl bg-canvas-2 border border-border">
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">
                 {editingId === "new" ? "ADD CONTACT" : "EDIT CONTACT"}
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">姓名</label>
+                  <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">姓名</label>
                   <input
                     autoFocus
                     value={draft.name}
                     maxLength={32}
                     onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[13px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                    className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
                     placeholder="例如：母亲"
                   />
                 </div>
                 <div>
-                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">手机号</label>
+                  <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">手机号</label>
                   <input
                     value={draft.phone}
                     maxLength={20}
                     inputMode="tel"
                     onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[13px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                    className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
                     placeholder="13800001111"
                   />
                 </div>
                 <div>
-                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">关系（可选）</label>
+                  <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">关系（可选）</label>
                   <input
                     value={draft.relation}
                     maxLength={16}
                     onChange={(e) => setDraft((d) => ({ ...d, relation: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[13px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                    className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
                     placeholder="子女 / 配偶 / 朋友"
                   />
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-end gap-2">
                 <button
-                  className="btn-ghost py-2 px-4 text-[12px]"
+                  className="btn-ghost py-2 px-4 text-[calc(12px*var(--fz))]"
                   onClick={() => setEditingId(null)}
                   disabled={submitting}
                 >
                   取消
                 </button>
                 <button
-                  className="btn-indigo py-2 px-4 text-[12px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-indigo py-2 px-4 text-[calc(12px*var(--fz))] disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={save}
                   disabled={submitting}
                 >
@@ -1134,13 +1165,13 @@ function EmergencyContactsModal({
 
         <div className="p-4 border-t border-border flex items-center justify-between gap-3">
           <button
-            className="btn-ghost py-2 px-3 text-[12px]"
+            className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]"
             onClick={startNew}
             disabled={editingId === "new"}
           >
             + 添加联系人
           </button>
-          <button className="btn-indigo py-2 px-4 text-[12px]" onClick={onClose}>
+          <button className="btn-indigo py-2 px-4 text-[calc(12px*var(--fz))]" onClick={onClose}>
             完成
           </button>
         </div>
@@ -1208,29 +1239,29 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 pb-4 border-b border-border">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">CHANGE PASSWORD</div>
-          <div className="font-display text-[18px] font-extrabold mt-1">修改登录密码</div>
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">CHANGE PASSWORD</div>
+          <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mt-1">修改登录密码</div>
         </div>
         <div className="p-6 space-y-4">
           <SettingsField label="当前密码">
             <input type="password" autoFocus value={oldPw} onChange={(e) => setOldPw(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[13px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20" />
+              className="w-full px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20" />
           </SettingsField>
           <SettingsField label="新密码">
             <input type="password" value={newPw} maxLength={64} onChange={(e) => setNewPw(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[13px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20" />
-            <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: strength.color }}>
+              className="w-full px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20" />
+            <div className="mt-1.5 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: strength.color }}>
               强度：{strength.label}
             </div>
           </SettingsField>
           <SettingsField label="确认新密码">
             <input type="password" value={confirmPw} maxLength={64} onChange={(e) => setConfirmPw(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[13px] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20" />
+              className="w-full px-4 py-2.5 rounded-xl bg-canvas-2 border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20" />
           </SettingsField>
         </div>
         <div className="p-4 border-t border-border flex items-center justify-end gap-2">
-          <button className="btn-ghost py-2 px-4 text-[12px]" onClick={onClose} disabled={submitting}>取消</button>
-          <button className="btn-indigo py-2 px-4 text-[12px] disabled:opacity-50" onClick={submit} disabled={submitting}>
+          <button className="btn-ghost py-2 px-4 text-[calc(12px*var(--fz))]" onClick={onClose} disabled={submitting}>取消</button>
+          <button className="btn-indigo py-2 px-4 text-[calc(12px*var(--fz))] disabled:opacity-50" onClick={submit} disabled={submitting}>
             {submitting ? "提交中…" : "保存"}
           </button>
         </div>
@@ -1242,7 +1273,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 function SettingsField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -1306,18 +1337,18 @@ function SessionsModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 pb-4 border-b border-border">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">DEVICES &amp; SESSIONS</div>
-          <div className="font-display text-[18px] font-extrabold mt-1">登录设备</div>
-          <div className="mt-1 text-[12px] text-ink-soft font-medium">
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">DEVICES &amp; SESSIONS</div>
+          <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mt-1">登录设备</div>
+          <div className="mt-1 text-[calc(12px*var(--fz))] text-ink-soft font-medium">
             每条会话对应一次登录。注销后该设备需要重新输入密码。
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6 pt-4">
           {rows === null && (
-            <div className="py-10 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-ink-soft font-bold">加载中…</div>
+            <div className="py-10 text-center font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">加载中…</div>
           )}
           {rows && rows.length === 0 && (
-            <div className="py-10 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-ink-soft font-bold">暂无活动会话</div>
+            <div className="py-10 text-center font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">暂无活动会话</div>
           )}
           <div className="space-y-2">
             {(rows ?? []).map((s) => (
@@ -1329,19 +1360,19 @@ function SessionsModal({ onClose }: { onClose: () => void }) {
                   <Smartphone size={15} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-display text-[14px] font-extrabold truncate flex items-center gap-2">
+                  <div className="font-display text-[calc(14px*var(--fz))] font-extrabold truncate flex items-center gap-2">
                     <span className="truncate">{s.deviceLabel || "未知设备"}</span>
                     {s.current && (
-                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-mint-deep font-bold shrink-0">当前</span>
+                      <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-mint-deep font-bold shrink-0">当前</span>
                     )}
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-ink-soft font-bold truncate">
+                  <div className="mt-0.5 font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold truncate">
                     {s.ip || "未知 IP"} · 活跃于 {fmtTime(s.lastSeenAt)}
                   </div>
                 </div>
                 {!s.current && (
                   <button
-                    className="btn-ghost py-1.5 px-2.5 text-[12px] disabled:opacity-50"
+                    className="btn-ghost py-1.5 px-2.5 text-[calc(12px*var(--fz))] disabled:opacity-50"
                     style={{ color: "var(--coral-deep)", borderColor: "var(--coral-soft)" }}
                     onClick={() => revokeOne(s.token, s.deviceLabel || "未知设备")}
                     disabled={busy === s.token}
@@ -1355,7 +1386,7 @@ function SessionsModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div className="p-4 border-t border-border flex items-center justify-end">
-          <button className="btn-indigo py-2 px-4 text-[12px]" onClick={onClose}>完成</button>
+          <button className="btn-indigo py-2 px-4 text-[calc(12px*var(--fz))]" onClick={onClose}>完成</button>
         </div>
       </div>
     </div>

@@ -55,23 +55,23 @@ export default function PainPoints() {
                   <p.icon size={24} strokeWidth={2} />
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className="font-mono text-[11px] font-bold text-ink-soft">破口 / {p.id}</span>
+                  <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-ink-soft">破口 / {p.id}</span>
                   <span
-                    className="font-mono text-[10px] font-bold px-2.5 py-1 rounded-full"
+                    className="font-mono text-[calc(10px*var(--fz))] font-bold px-2.5 py-1 rounded-full"
                     style={{ background: p.soft, color: p.deep }}
                   >
                     {p.tag}
                   </span>
                 </div>
               </div>
-              <h3 className="relative font-display text-[26px] md:text-[30px] font-extrabold tracking-tight leading-[1.15]">
+              <h3 className="relative font-display text-[calc(26px*var(--fz))] md:text-[calc(30px*var(--fz))] font-extrabold tracking-tight leading-[1.15]">
                 {p.title}
               </h3>
-              <p className="relative mt-4 text-[14px] leading-[1.75] text-ink-2 font-medium max-w-[46ch]">
+              <p className="relative mt-4 text-[calc(14px*var(--fz))] leading-[1.75] text-ink-2 font-medium max-w-[46ch]">
                 {p.desc}
               </p>
               <div
-                className="absolute bottom-0 right-5 numplate text-[140px] md:text-[180px] leading-none select-none pointer-events-none"
+                className="absolute bottom-0 right-5 numplate text-[calc(140px*var(--fz))] md:text-[calc(180px*var(--fz))] leading-none select-none pointer-events-none"
                 style={{ color: p.soft, opacity: 0.6 }}
               >
                 {p.id}

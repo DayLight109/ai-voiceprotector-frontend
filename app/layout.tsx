@@ -4,8 +4,10 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider, themeBootScript } from "@/lib/theme";
 import { FontSizeProvider, fontSizeBootScript } from "@/lib/font-size";
+import { AppearanceProvider, appearanceBootScript } from "@/lib/appearance";
 import { I18nProvider, i18nBootScript } from "@/lib/i18n";
 import { ToastProvider } from "@/components/shared/Toast";
+import { ConfirmProvider } from "@/components/shared/Confirm";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -49,16 +51,21 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <script dangerouslySetInnerHTML={{ __html: fontSizeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: appearanceBootScript }} />
         <script dangerouslySetInnerHTML={{ __html: i18nBootScript }} />
       </head>
       <body className="bg-canvas text-ink antialiased">
         <ThemeProvider>
           <FontSizeProvider>
-            <I18nProvider>
-              <AuthProvider>
-                <ToastProvider>{children}</ToastProvider>
-              </AuthProvider>
-            </I18nProvider>
+            <AppearanceProvider>
+              <I18nProvider>
+                <AuthProvider>
+                  <ToastProvider>
+                    <ConfirmProvider>{children}</ConfirmProvider>
+                  </ToastProvider>
+                </AuthProvider>
+              </I18nProvider>
+            </AppearanceProvider>
           </FontSizeProvider>
         </ThemeProvider>
       </body>

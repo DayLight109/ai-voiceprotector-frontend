@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Menu, X, ArrowUpRight, Activity } from "lucide-react";
 
 const NAV = [
@@ -49,7 +49,7 @@ export default function Header() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
+  const measure = useCallback(() => {
     if (!active || !navRef.current) {
       setIndicator(null);
       return;
@@ -60,6 +60,23 @@ export default function Header() {
     const itemRect = el.getBoundingClientRect();
     setIndicator({ left: itemRect.left - navRect.left, width: itemRect.width });
   }, [active]);
+
+  useEffect(() => {
+    measure();
+  }, [measure]);
+
+  // 字号 / 窗口变化会改变导航项宽度，高亮指示器需随之重测，否则错位
+  useEffect(() => {
+    const navEl = navRef.current;
+    if (!navEl || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(navEl);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
 
   return (
     <header
@@ -75,13 +92,13 @@ export default function Header() {
             className="w-9 h-9 rounded-2xl flex items-center justify-center shadow-md"
             style={{ background: "linear-gradient(135deg, var(--indigo), var(--indigo-deep))" }}
           >
-            <span className="font-display text-white text-[14px] font-extrabold">S</span>
+            <span className="font-display text-white text-[calc(14px*var(--fz))] font-extrabold">S</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-[19px] font-extrabold tracking-tight">
+            <span className="font-display text-[calc(19px*var(--fz))] font-extrabold tracking-tight">
               SENTINEL
             </span>
-            <span className="font-mono text-[11px] text-ink-soft">/ 声纹捕手</span>
+            <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft">/ 声纹捕手</span>
           </div>
         </Link>
 
@@ -110,7 +127,7 @@ export default function Header() {
                   itemRefs.current[n.href] = el;
                 }}
                 onClick={() => setActive(n.href)}
-                className={`relative z-10 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors duration-300 ${
+                className={`relative z-10 px-4 py-1.5 rounded-full text-[calc(13px*var(--fz))] font-semibold transition-colors duration-300 ${
                   isActive
                     ? "text-white"
                     : "text-ink-soft hover:text-ink"
@@ -125,16 +142,16 @@ export default function Header() {
         <div className="flex items-center gap-3">
           <Link
             href="/ops/health"
-            className="hidden md:inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors"
+            className="hidden md:inline-flex items-center gap-1.5 text-[calc(13px*var(--fz))] font-semibold text-ink-soft hover:text-ink transition-colors"
             title="服务运维监测"
           >
             <Activity size={14} />
             运维监测
           </Link>
-          <Link href="/login" className="hidden md:inline-flex text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors">
+          <Link href="/login" className="hidden md:inline-flex text-[calc(13px*var(--fz))] font-semibold text-ink-soft hover:text-ink transition-colors">
             登录
           </Link>
-          <Link href="/warroom" className="btn-primary text-[13px] py-2 px-4">
+          <Link href="/warroom" className="btn-primary text-[calc(13px*var(--fz))] py-2 px-4">
             <span className="dot" />
             指挥中心
             <ArrowUpRight size={14} />
@@ -157,7 +174,7 @@ export default function Header() {
                 key={n.href}
                 href={n.href}
                 onClick={() => setOpen(false)}
-                className="px-4 py-3 rounded-xl text-[14px] font-semibold hover:bg-canvas-2"
+                className="px-4 py-3 rounded-xl text-[calc(14px*var(--fz))] font-semibold hover:bg-canvas-2"
               >
                 {n.label}
               </a>
@@ -165,7 +182,7 @@ export default function Header() {
             <Link
               href="/ops/health"
               onClick={() => setOpen(false)}
-              className="px-4 py-3 rounded-xl text-[14px] font-semibold hover:bg-canvas-2 flex items-center gap-2"
+              className="px-4 py-3 rounded-xl text-[calc(14px*var(--fz))] font-semibold hover:bg-canvas-2 flex items-center gap-2"
             >
               <Activity size={14} />
               运维监测

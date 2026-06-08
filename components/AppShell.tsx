@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bell, Search, ChevronRight } from "lucide-react";
 import { ToastProvider } from "./shared/Toast";
 
@@ -38,7 +38,7 @@ export default function AppShell({
   const [indicator, setIndicator] = useState<{ top: number; height: number } | null>(null);
   const [primed, setPrimed] = useState(false);
 
-  useLayoutEffect(() => {
+  const measure = useCallback(() => {
     if (!navRef.current) return;
     const activeHref = nav.find((n) => pathname === n.href)?.href ?? null;
     if (!activeHref) {
@@ -51,6 +51,23 @@ export default function AppShell({
     const itemRect = el.getBoundingClientRect();
     setIndicator({ top: itemRect.top - navRect.top + navRef.current.scrollTop, height: itemRect.height });
   }, [pathname, nav]);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure]);
+
+  // 字号 / 界面密度 / 窗口变化都会改变导航项尺寸，高亮指示器需随之重测，否则错位
+  useEffect(() => {
+    const navEl = navRef.current;
+    if (!navEl || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(navEl);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
 
   useEffect(() => {
     const t = setTimeout(() => setPrimed(true), 60);
@@ -71,8 +88,8 @@ export default function AppShell({
               S
             </div>
             <div>
-              <div className="font-display text-[15px] font-extrabold">SENTINEL</div>
-              <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-ink-soft font-bold">{roleLabel}</div>
+              <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">SENTINEL</div>
+              <div className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold">{roleLabel}</div>
             </div>
           </Link>
         </div>
@@ -101,7 +118,7 @@ export default function AppShell({
                 ref={(el) => {
                   itemRefs.current[n.href] = el;
                 }}
-                className="relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-colors duration-300"
+                className="relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[calc(13px*var(--fz))] font-semibold transition-colors duration-300"
                 style={{
                   color: active ? "var(--indigo-deep)" : "var(--ink-2)",
                 }}
@@ -110,7 +127,7 @@ export default function AppShell({
                 <span className="flex-1">{n.label}</span>
                 {n.badge && (
                   <span
-                    className="px-1.5 py-0.5 rounded-full font-mono text-[10px] font-extrabold"
+                    className="px-1.5 py-0.5 rounded-full font-mono text-[calc(10px*var(--fz))] font-extrabold"
                     style={{
                       background: "var(--coral)",
                       color: "#fff",
@@ -133,8 +150,8 @@ export default function AppShell({
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-display text-[13px] font-extrabold truncate">{userName}</div>
-              <div className="font-mono text-[10px] text-ink-soft font-bold truncate">{roleLabel}</div>
+              <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{userName}</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold truncate">{roleLabel}</div>
             </div>
             <ChevronRight size={14} className="text-ink-soft" />
           </Link>
@@ -145,7 +162,7 @@ export default function AppShell({
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 bg-canvas/85 backdrop-blur-xl border-b border-border">
           <div className="px-6 md:px-8 h-16 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-soft font-bold overflow-hidden">
+            <div className="flex items-center gap-2 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold overflow-hidden">
               {breadcrumb.map((b, i) => (
                 <span key={i} className="flex items-center gap-2">
                   {i > 0 && <span className="text-ink-ghost">/</span>}
@@ -155,14 +172,14 @@ export default function AppShell({
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-full bg-canvas-2 border border-border w-72">
+              <div className="search-pill hidden md:flex items-center gap-2 px-3 py-2 rounded-full bg-canvas-2 border border-border w-72 transition-shadow">
                 <Search size={14} className="text-ink-soft" />
                 <input
                   type="text"
                   placeholder="搜索告警、策略、号码…"
-                  className="flex-1 bg-transparent text-[13px] font-medium placeholder:text-ink-ghost focus:outline-none"
+                  className="flex-1 bg-transparent text-[calc(13px*var(--fz))] font-medium placeholder:text-ink-ghost focus:outline-none"
                 />
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-surface border border-border text-ink-soft font-bold">⌘K</span>
+                <span className="font-mono text-[calc(10px*var(--fz))] px-1.5 py-0.5 rounded bg-surface border border-border text-ink-soft font-bold">⌘K</span>
               </div>
               <button className="relative w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center hover:bg-canvas-2 transition-colors">
                 <Bell size={15} />

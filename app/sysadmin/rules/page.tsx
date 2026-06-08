@@ -6,16 +6,19 @@ import DataTable from "@/components/shared/DataTable";
 import Modal from "@/components/shared/Modal";
 import Toggle from "@/components/shared/Toggle";
 import { useToast } from "@/components/shared/Toast";
+import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
 import { type ScamRule } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import { Plus, Trash2, Edit3, ScrollText } from "lucide-react";
+import { Plus, Trash2, Edit3, ScrollText, Inbox } from "lucide-react";
+import { ListRowSkeleton } from "@/components/shared/Skeleton";
 
 const CATS = ["全部", "切断外部联系", "制造紧迫感", "引导转账", "假冒权威", "索要敏感信息"] as const;
 
 export default function RulesPage() {
   const toast = useToast();
+  const confirm = useConfirm();
   const rules = useResource<ScamRule>(() => api.rules.list({ pageSize: 100 }));
   const [cat, setCat] = useState<(typeof CATS)[number]>("全部");
   const [editing, setEditing] = useState<ScamRule | null>(null);
@@ -53,9 +56,16 @@ export default function RulesPage() {
     }
   };
 
-  const onDelete = async (id: string) => {
+  const onDelete = async (r: ScamRule) => {
+    const ok = await confirm({
+      title: "删除规则？",
+      desc: `将删除关键词「${r.keyword}」，该规则会从所有租户的实时判定中移除。`,
+      tone: "danger",
+      confirmText: "删除",
+    });
+    if (!ok) return;
     try {
-      await api.rules.remove(id);
+      await api.rules.remove(r.id);
       toast("success", "已删除");
       rules.refresh();
     } catch (e) {
@@ -70,7 +80,7 @@ export default function RulesPage() {
         title="构建判定诈骗规则库"
         desc="维护 5 大类话术关键词与权重。规则下发至所有租户、家庭端实时生效。"
         actions={
-          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[13px]">
+          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <Plus size={14} /> 新增关键词
           </button>
         }
@@ -80,7 +90,7 @@ export default function RulesPage() {
         {CATS.map((c) => {
           const active = c === cat;
           return (
-            <button key={c} onClick={() => setCat(c)} className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors" style={{ background: active ? "var(--indigo)" : "var(--surface)", color: active ? "#fff" : "var(--ink-2)", border: active ? "none" : "1px solid var(--border)" }}>
+            <button key={c} onClick={() => setCat(c)} className="px-3 py-1.5 rounded-full text-[calc(12px*var(--fz))] font-bold transition-colors" style={{ background: active ? "var(--indigo)" : "var(--surface)", color: active ? "#fff" : "var(--ink-2)", border: active ? "none" : "1px solid var(--border)" }}>
               {c}
               <span className="ml-1.5 opacity-70">{c === "全部" ? rules.items.length : rules.items.filter((r) => r.category === c).length}</span>
             </button>
@@ -90,31 +100,41 @@ export default function RulesPage() {
 
       <div className="panel p-6">
         {rules.error && (
-          <div className="mb-4 px-4 py-3 rounded-2xl text-[13px] font-medium"
+          <div className="mb-4 px-4 py-3 rounded-2xl text-[calc(13px*var(--fz))] font-medium"
                style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", border: "1px solid var(--coral)" }}>
             {rules.error}
           </div>
         )}
-        <DataTable<ScamRule>
-          rows={view}
-          searchKeys={["keyword", "category"]}
-          columns={[
-            { key: "keyword", label: "关键词", render: (r) => <span className="font-mono font-bold">{r.keyword}</span> },
-            { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="indigo">{r.category}</span> },
-            { key: "weight", label: "权重", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.weight >= 85 ? "var(--coral-deep)" : "var(--ink)" }}>{r.weight}</span> },
-            {
-              key: "enabled", label: "状态", render: (r) => (
-                <Toggle checked={r.enabled} onChange={(v) => onToggle(r, v)} />
-              )
-            },
-          ]}
-          actions={(r) => (
-            <div className="flex items-center gap-1 justify-end">
-              <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
-              <button onClick={() => onDelete(r.id)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
-            </div>
-          )}
-        />
+        {rules.loading && rules.items.length === 0 ? (
+          <ListRowSkeleton count={6} />
+        ) : view.length === 0 ? (
+          <div className="panel p-12 flex flex-col items-center justify-center text-center">
+            <Inbox size={32} className="text-ink-ghost mb-3" />
+            <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">{cat === "全部" ? "还没有任何诈骗规则" : `「${cat}」分类下暂无规则`}</div>
+            <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">NO SCAM RULES YET</div>
+          </div>
+        ) : (
+          <DataTable<ScamRule>
+            rows={view}
+            searchKeys={["keyword", "category"]}
+            columns={[
+              { key: "keyword", label: "关键词", render: (r) => <span className="font-mono font-bold">{r.keyword}</span> },
+              { key: "category", label: "类别", render: (r) => <span className="tag-chip" data-tone="indigo">{r.category}</span> },
+              { key: "weight", label: "权重", align: "right", render: (r) => <span className="font-mono font-extrabold" style={{ color: r.weight >= 85 ? "var(--coral-deep)" : "var(--ink)" }}>{r.weight}</span> },
+              {
+                key: "enabled", label: "状态", render: (r) => (
+                  <Toggle checked={r.enabled} onChange={(v) => onToggle(r, v)} />
+                )
+              },
+            ]}
+            actions={(r) => (
+              <div className="flex items-center gap-1 justify-end">
+                <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                <button onClick={() => onDelete(r)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
+              </div>
+            )}
+          />
+        )}
       </div>
 
       <Modal
@@ -123,8 +143,8 @@ export default function RulesPage() {
         title={editing ? "编辑规则" : "新增规则"}
         footer={
           <>
-            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
-            <button onClick={() => (document.getElementById("rule-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[13px]">保存</button>
+            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
+            <button onClick={() => (document.getElementById("rule-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]">保存</button>
           </>
         }
       >
@@ -153,7 +173,7 @@ function RuleForm({ editing, onSubmit }: { editing: ScamRule | null; onSubmit: (
 function Field({ label, children }: any) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

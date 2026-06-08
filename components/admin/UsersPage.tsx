@@ -5,6 +5,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
+import { useConfirm } from "@/components/shared/Confirm";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
 import { type ManagedUser } from "@/lib/mock";
 import { APIError } from "@/lib/api";
@@ -13,6 +14,7 @@ import { Plus, Trash2, Edit3, UserPlus } from "lucide-react";
 
 export default function UsersPage({ role }: { role: "family-admin" | "admin" }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const isFam = role === "family-admin";
   const list = useHybridUsers();
   const [editing, setEditing] = useState<ManagedUser | null>(null);
@@ -41,6 +43,13 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
   };
 
   const onDelete = async (r: ManagedUser) => {
+    const ok = await confirm({
+      title: isFam ? "移除成员？" : "删除用户？",
+      desc: `将${isFam ? "移除家庭成员" : "删除用户"}「${r.name}」，其账号与权限将被一并清除。`,
+      tone: "danger",
+      confirmText: isFam ? "移除" : "删除",
+    });
+    if (!ok) return;
     try {
       await list.remove(r.id);
       toast("success", "已删除", r.name);
@@ -61,7 +70,7 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
         title={isFam ? "家庭成员管理" : "员工管理"}
         desc={isFam ? "管理家庭成员账号、角色与状态。" : "管理员工账号、部门归属与状态。"}
         actions={
-          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[13px]">
+          <button onClick={() => { setEditing(null); setOpen(true); }} className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <UserPlus size={14} /> 新增成员
           </button>
         }
@@ -69,7 +78,7 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
 
       <div className="panel p-6">
         {list.error && (
-          <div className="mb-4 px-4 py-3 rounded-2xl text-[13px] font-medium"
+          <div className="mb-4 px-4 py-3 rounded-2xl text-[calc(13px*var(--fz))] font-medium"
                style={{ background: "var(--coral-soft)", color: "var(--coral-deep)", border: "1px solid var(--coral)" }}>
             {list.error}
           </div>
@@ -78,11 +87,11 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
           rows={list.items}
           searchKeys={["name", "email", "dept", "id"]}
           columns={[
-            { key: "id", label: "工号", render: (r) => <span className="font-mono text-[12px] font-bold text-ink-soft">{r.id}</span> },
+            { key: "id", label: "工号", render: (r) => <span className="font-mono text-[calc(12px*var(--fz))] font-bold text-ink-soft">{r.id}</span> },
             {
               key: "name", label: "姓名", render: (r) => (
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center font-display text-white text-[11px] font-extrabold" style={{ background: "linear-gradient(135deg, var(--indigo), var(--coral))" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center font-display text-white text-[calc(11px*var(--fz))] font-extrabold" style={{ background: "linear-gradient(135deg, var(--indigo), var(--coral))" }}>
                     {r.name.slice(0, 1)}
                   </div>
                   <span className="font-display font-extrabold">{r.name}</span>
@@ -94,10 +103,10 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
             {
               key: "status", label: "状态", render: (r) => {
                 const m = { active: { bg: "var(--mint-soft)", fg: "var(--mint-deep)", l: "正常" }, review: { bg: "var(--amber-soft)", fg: "var(--amber-deep)", l: "审核中" }, suspended: { bg: "var(--coral-soft)", fg: "var(--coral-deep)", l: "已停用" } }[r.status];
-                return <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold" style={{ background: m.bg, color: m.fg }}>{m.l}</span>;
+                return <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold" style={{ background: m.bg, color: m.fg }}>{m.l}</span>;
               }
             },
-            { key: "last", label: "活动", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.last}</span> },
+            { key: "last", label: "活动", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.last}</span> },
           ]}
           actions={(r) => (
             <div className="flex items-center gap-1 justify-end">
@@ -114,8 +123,8 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
         title={editing ? "编辑成员" : "新增成员"}
         footer={
           <>
-            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
-            <button onClick={() => (document.getElementById("user-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[13px]">保存</button>
+            <button onClick={() => { setOpen(false); setEditing(null); }} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
+            <button onClick={() => (document.getElementById("user-form") as HTMLFormElement)?.requestSubmit()} className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]">保存</button>
           </>
         }
       >
@@ -142,7 +151,7 @@ function UserForm({ editing, onSubmit, isFam }: { editing: ManagedUser | null; o
 function Field({ label, children }: any) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

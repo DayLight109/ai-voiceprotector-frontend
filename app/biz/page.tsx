@@ -23,22 +23,22 @@ export default function BizHome() {
     <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "首页"]}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft font-bold mb-2">
+          <div className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold mb-2">
             BUSINESS PORTAL · 95533 客服中心
           </div>
-          <h1 className="font-display text-[32px] md:text-[40px] font-extrabold tracking-tight">
+          <h1 className="font-display text-[calc(32px*var(--fz))] md:text-[calc(40px*var(--fz))] font-extrabold tracking-tight">
             欢迎回来，周珩
           </h1>
-          <p className="mt-2 text-[14px] text-ink-soft font-medium">
+          <p className="mt-2 text-[calc(14px*var(--fz))] text-ink-soft font-medium">
             本月已拦截冒充话术 <CountUp to={2318} duration={1200} className="font-extrabold text-coral-deep" /> 起，
             申诉 <CountUp to={12} duration={900} className="font-extrabold text-indigo-deep" /> 起处理中。
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/biz/appeal" className="btn-ghost py-2.5 px-4 text-[13px]">
+          <a href="/biz/appeal" className="btn-ghost py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <MessageSquareWarning size={14} /> 提交申诉
           </a>
-          <a href="/biz/calls" className="btn-indigo py-2.5 px-4 text-[13px]">
+          <a href="/biz/calls" className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <Radio size={14} /> 查看通话记录 <ArrowUpRight size={14} />
           </a>
         </div>
@@ -57,16 +57,16 @@ export default function BizHome() {
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: k.soft, color: k.tint }}>
                 <k.icon size={18} />
               </div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</span>
+              <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</span>
             </div>
             <CountUp
               to={k.num}
               decimals={k.decimals}
               suffix={k.suffix}
               duration={1100}
-              className="relative numplate text-[36px] leading-none"
+              className="relative numplate text-[calc(36px*var(--fz))] leading-none"
             />
-            <div className="relative mt-2 text-[12px] text-ink-soft font-semibold">{k.sub}</div>
+            <div className="relative mt-2 text-[calc(12px*var(--fz))] text-ink-soft font-semibold">{k.sub}</div>
           </div>
         ))}
       </div>
@@ -75,10 +75,10 @@ export default function BizHome() {
         <section className="col-span-12 lg:col-span-8 panel p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">RECENT ALERTS</div>
-              <h2 className="font-display text-[22px] font-extrabold mt-1">近期拦截</h2>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">RECENT ALERTS</div>
+              <h2 className="font-display text-[calc(22px*var(--fz))] font-extrabold mt-1">近期拦截</h2>
             </div>
-            <a href="/biz/calls" className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.14em] text-indigo-deep font-bold hover:underline">
+            <a href="/biz/calls" className="flex items-center gap-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-indigo-deep font-bold hover:underline">
               全部 <ArrowUpRight size={12} />
             </a>
           </div>
@@ -93,16 +93,16 @@ export default function BizHome() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-display text-[14px] font-extrabold truncate">{a.phone}</span>
-                      <span className="font-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full font-bold" style={{ background: `var(--${tone}-soft)`, color: `var(--${tone}-deep)` }}>
+                      <span className="font-display text-[calc(14px*var(--fz))] font-extrabold truncate">{a.phone}</span>
+                      <span className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full font-bold" style={{ background: `var(--${tone}-soft)`, color: `var(--${tone}-deep)` }}>
                         {label}
                       </span>
                     </div>
-                    <div className="mt-0.5 text-[12px] text-ink-soft font-medium truncate">{a.loc} · {a.reason}</div>
+                    <div className="mt-0.5 text-[calc(12px*var(--fz))] text-ink-soft font-medium truncate">{a.loc} · {a.reason}</div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{a.t}</div>
-                    <a href="/biz/calls" className="font-mono text-[11px] text-indigo-deep font-bold hover:underline">详情</a>
+                    <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{a.t}</div>
+                    <a href="/biz/calls" className="font-mono text-[calc(11px*var(--fz))] text-indigo-deep font-bold hover:underline">详情</a>
                   </div>
                 </div>
               );
@@ -112,8 +112,8 @@ export default function BizHome() {
 
         <section className="col-span-12 lg:col-span-4 panel p-6">
           <div className="mb-5">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">ENGINE STATUS</div>
-            <h2 className="font-display text-[22px] font-extrabold mt-1">引擎实况</h2>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">ENGINE STATUS</div>
+            <h2 className="font-display text-[calc(22px*var(--fz))] font-extrabold mt-1">引擎实况</h2>
           </div>
           <div className="space-y-3">
             {[
@@ -127,9 +127,9 @@ export default function BizHome() {
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: l.soft, color: l.tint }}>
                       <l.icon size={13} />
                     </div>
-                    <span className="font-display text-[13px] font-extrabold">{l.name}</span>
+                    <span className="font-display text-[calc(13px*var(--fz))] font-extrabold">{l.name}</span>
                   </div>
-                  <span className="font-mono text-[11px] font-bold" style={{ color: l.tint }}>
+                  <span className="font-mono text-[calc(11px*var(--fz))] font-bold" style={{ color: l.tint }}>
                     <CountUp to={l.lat} duration={1000} suffix="ms" />
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export default function BizHome() {
                     }}
                   />
                 </div>
-                <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+                <div className="mt-1.5 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
                   负载 <CountUp to={l.load} duration={1000} suffix="%" />
                 </div>
               </div>
@@ -152,9 +152,9 @@ export default function BizHome() {
           <div className="mt-5 p-4 rounded-2xl" style={{ background: "var(--mint-soft)" }}>
             <div className="flex items-center gap-2">
               <Circle size={8} className="fill-mint-deep text-mint-deep animate-pulse" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-mint-deep">系统运转正常</span>
+              <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-mint-deep">系统运转正常</span>
             </div>
-            <div className="mt-1 text-[12px] text-mint-deep font-semibold">三层引擎已就绪，企业级 SLA 99.9%。</div>
+            <div className="mt-1 text-[calc(12px*var(--fz))] text-mint-deep font-semibold">三层引擎已就绪，企业级 SLA 99.9%。</div>
           </div>
         </section>
       </div>

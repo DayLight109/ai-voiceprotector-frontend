@@ -225,8 +225,8 @@ export default function OpsHealthPage() {
               S
             </div>
             <div className="min-w-0">
-              <div className="font-display text-[15px] font-extrabold truncate">服务运维监测</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft font-bold truncate">
+              <div className="font-display text-[calc(15px*var(--fz))] font-extrabold truncate">服务运维监测</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold truncate">
                 OPS · HEALTH DASHBOARD
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function OpsHealthPage() {
             {pingMs != null && (
               <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-full bg-surface border border-border">
                 <SignalHigh size={14} className="text-ink-soft" />
-                <span className="font-mono text-[11px] font-bold">RTT {pingMs} ms</span>
+                <span className="font-mono text-[calc(11px*var(--fz))] font-bold">RTT {pingMs} ms</span>
               </div>
             )}
             <button
@@ -251,7 +251,7 @@ export default function OpsHealthPage() {
             <button
               type="button"
               onClick={load}
-              className="btn-ghost py-2 px-3 text-[12px] flex items-center gap-2"
+              className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))] flex items-center gap-2"
               disabled={loading}
             >
               <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
@@ -274,7 +274,7 @@ export default function OpsHealthPage() {
           )}
           <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft font-bold">
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold">
                 OVERALL STATUS
               </div>
               <div className="mt-2 flex items-center gap-3">
@@ -292,10 +292,10 @@ export default function OpsHealthPage() {
                   )}
                 </div>
                 <div>
-                  <div className="font-display text-[26px] font-extrabold leading-none">
+                  <div className="font-display text-[calc(26px*var(--fz))] font-extrabold leading-none">
                     {report ? overallTint.label : error ? "无法连接" : "加载中"}
                   </div>
-                  <div className="mt-1 text-[12px] text-ink-soft font-semibold">
+                  <div className="mt-1 text-[calc(12px*var(--fz))] text-ink-soft font-semibold">
                     {report
                       ? `${report.service} · ${report.version}`
                       : error ?? "正在请求 /api/v1/ops/health"}
@@ -328,7 +328,7 @@ export default function OpsHealthPage() {
             style={{ borderColor: "var(--coral)", background: "var(--coral-soft)" }}
           >
             <AlertTriangle size={16} style={{ color: "var(--coral)" }} className="mt-0.5" />
-            <div className="text-[13px] font-semibold" style={{ color: "var(--coral)" }}>
+            <div className="text-[calc(13px*var(--fz))] font-semibold" style={{ color: "var(--coral)" }}>
               {error}。请确认后端运行于 {API}，或通过 NEXT_PUBLIC_API_URL 调整地址。
             </div>
           </div>
@@ -338,10 +338,10 @@ export default function OpsHealthPage() {
 
         <div className="mt-10 mb-4 flex items-end justify-between gap-3 flex-wrap">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft font-bold">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold">
               CHECKS
             </div>
-            <h2 className="font-display text-[22px] font-extrabold mt-1">检查项明细</h2>
+            <h2 className="font-display text-[calc(22px*var(--fz))] font-extrabold mt-1">检查项明细</h2>
           </div>
           {report && (
             <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function OpsHealthPage() {
                 return (
                   <span
                     key={s}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[11px] font-extrabold"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[calc(11px*var(--fz))] font-extrabold"
                     style={{ background: tint.soft, color: tint.color }}
                   >
                     <span
@@ -372,7 +372,7 @@ export default function OpsHealthPage() {
           )}
         </div>
 
-        <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft font-bold">
+        <p className="mt-8 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold">
           外部依赖通过环境变量 OPS_DEPENDENCIES 配置（格式：name=url,name=url）。
         </p>
       </main>
@@ -395,7 +395,7 @@ function SystemInfoStrip({ info }: { info: Info }) {
   ];
   return (
     <section className="panel p-5 mb-5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft font-bold mb-3">
+      <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold mb-3">
         SYSTEM INFO
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
@@ -404,11 +404,11 @@ function SystemInfoStrip({ info }: { info: Info }) {
             key={it.label}
             className={`rounded-2xl bg-canvas-2 p-3 min-w-0 ${it.wide ? "md:col-span-2" : ""}`}
           >
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
               {it.label}
             </div>
             <div
-              className="mt-1 font-display text-[13px] font-extrabold leading-snug break-words"
+              className="mt-1 font-display text-[calc(13px*var(--fz))] font-extrabold leading-snug break-words"
               title={it.value}
             >
               {it.value}
@@ -520,14 +520,14 @@ function NetworkChartCard({
             <Network size={15} />
           </div>
           <div className="min-w-0">
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-soft font-bold">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] text-ink-soft font-bold">
               {title}
             </div>
             <div className="flex items-baseline gap-3 mt-1">
-              <span className="numplate text-[20px] leading-none truncate" style={{ color: rxColor }}>
+              <span className="numplate text-[calc(20px*var(--fz))] leading-none truncate" style={{ color: rxColor }}>
                 ↓ {lastRx != null ? humanRate(lastRx) : "—"}
               </span>
-              <span className="numplate text-[20px] leading-none truncate" style={{ color: txColor }}>
+              <span className="numplate text-[calc(20px*var(--fz))] leading-none truncate" style={{ color: txColor }}>
                 ↑ {lastTx != null ? humanRate(lastTx) : "—"}
               </span>
             </div>
@@ -551,7 +551,7 @@ function NetworkChartCard({
       </div>
 
       {lastTs && (
-        <div className="relative mt-3 pt-2 border-t border-border font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold flex items-center gap-1.5">
+        <div className="relative mt-3 pt-2 border-t border-border font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold flex items-center gap-1.5">
           <Activity size={11} />
           采样于 {formatTime(lastTs)}
         </div>
@@ -562,7 +562,7 @@ function NetworkChartCard({
 
 function Legend({ color, label }: { color: string; label: string }) {
   return (
-    <span className="flex items-center gap-1 font-mono text-[10px] font-bold text-ink-soft">
+    <span className="flex items-center gap-1 font-mono text-[calc(10px*var(--fz))] font-bold text-ink-soft">
       <span aria-hidden className="w-2 h-2 rounded-full" style={{ background: color }} />
       {label}
     </span>
@@ -574,7 +574,7 @@ function NetSummary({ label, data, color }: { label: string; data: number[]; col
   return (
     <div>
       <div
-        className="font-mono text-[10px] uppercase tracking-[0.14em] font-extrabold"
+        className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-extrabold"
         style={{ color }}
       >
         {label}
@@ -638,15 +638,15 @@ function ChartCard({
             <Icon size={15} />
           </div>
           <div className="min-w-0">
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-soft font-bold">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] text-ink-soft font-bold">
               {title}
             </div>
-            <div className="numplate text-[22px] leading-none mt-1 truncate">{subtitle}</div>
+            <div className="numplate text-[calc(22px*var(--fz))] leading-none mt-1 truncate">{subtitle}</div>
           </div>
         </div>
         {trend && (
           <div
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[10px] font-extrabold shrink-0"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[calc(10px*var(--fz))] font-extrabold shrink-0"
             style={{ background: trend.up ? "var(--coral-soft)" : "var(--mint-soft)", color: trend.up ? "var(--coral)" : "var(--mint-deep)" }}
             title={`相对前段 ${trend.up ? "上升" : "下降"} ${trend.delta}`}
           >
@@ -675,7 +675,7 @@ function ChartCard({
       )}
 
       {lastTs && (
-        <div className="relative mt-3 pt-2 border-t border-border font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold flex items-center gap-1.5">
+        <div className="relative mt-3 pt-2 border-t border-border font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold flex items-center gap-1.5">
           <Activity size={11} />
           采样于 {formatTime(lastTs)}
         </div>
@@ -687,10 +687,10 @@ function ChartCard({
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+      <div className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
         {label}
       </div>
-      <div className="font-mono text-[12px] font-extrabold mt-0.5 truncate">{value}</div>
+      <div className="font-mono text-[calc(12px*var(--fz))] font-extrabold mt-0.5 truncate">{value}</div>
     </div>
   );
 }
@@ -915,11 +915,11 @@ function DualSparkline({
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-2xl bg-canvas-2 p-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+      <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
         {label}
       </div>
-      <div className="mt-1 numplate text-[18px] leading-tight">{value}</div>
-      {sub && <div className="mt-1 text-[11px] text-ink-soft font-semibold">{sub}</div>}
+      <div className="mt-1 numplate text-[calc(18px*var(--fz))] leading-tight">{value}</div>
+      {sub && <div className="mt-1 text-[calc(11px*var(--fz))] text-ink-soft font-semibold">{sub}</div>}
     </div>
   );
 }
@@ -958,16 +958,16 @@ function CheckCard({ check }: { check: Check }) {
             <Icon size={18} />
           </div>
           <div className="min-w-0">
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-soft font-bold">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] text-ink-soft font-bold">
               {check.name}
             </div>
-            <div className="font-display text-[20px] font-extrabold leading-tight truncate">
+            <div className="font-display text-[calc(20px*var(--fz))] font-extrabold leading-tight truncate">
               {title}
             </div>
           </div>
         </div>
         <span
-          className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-extrabold px-2.5 py-1 rounded-full shrink-0"
+          className="flex items-center gap-1.5 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] font-extrabold px-2.5 py-1 rounded-full shrink-0"
           style={{ background: tint.soft, color: tint.color }}
         >
           <span
@@ -982,12 +982,12 @@ function CheckCard({ check }: { check: Check }) {
       {(check.message || check.latencyMs != null) && (
         <div className="relative mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
           {check.message && (
-            <span className="text-[13px] font-semibold" style={{ color: tint.color }}>
+            <span className="text-[calc(13px*var(--fz))] font-semibold" style={{ color: tint.color }}>
               {check.message}
             </span>
           )}
           {check.latencyMs != null && (
-            <span className="font-mono text-[12px] text-ink-soft font-bold">
+            <span className="font-mono text-[calc(12px*var(--fz))] text-ink-soft font-bold">
               {check.latencyMs} ms
             </span>
           )}
@@ -1003,11 +1003,11 @@ function CheckCard({ check }: { check: Check }) {
                 i > 0 ? "border-t border-border" : ""
               }`}
             >
-              <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-soft font-bold shrink-0">
+              <dt className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.1em] text-ink-soft font-bold shrink-0">
                 {k}
               </dt>
               <dd
-                className="font-mono text-[13px] font-extrabold text-right break-all"
+                className="font-mono text-[calc(13px*var(--fz))] font-extrabold text-right break-all"
                 title={typeof v === "string" ? v : undefined}
               >
                 {formatDetail(v)}

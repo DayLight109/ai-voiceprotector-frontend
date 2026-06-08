@@ -46,7 +46,7 @@ export default function Sources() {
               <span className="underline-soft">公开、可复核</span>的渠道。
             </h2>
           </div>
-          <div className="col-span-12 md:col-span-4 text-[14px] text-ink-2 leading-[1.75] font-medium">
+          <div className="col-span-12 md:col-span-4 text-[calc(14px*var(--fz))] text-ink-2 leading-[1.75] font-medium">
             我们不编造数据。展示中的每一个数字都对应真实的政府公告、法规条文或国际权威机构披露。
           </div>
         </div>
@@ -55,14 +55,14 @@ export default function Sources() {
           {SOURCES.map((s) => (
             <div key={s.cat} className="panel panel-lift p-6">
               <div
-                className="font-mono text-[20px] uppercase tracking-[0.14em] font-bold mb-5 pb-3 border-b border-border inline-flex items-center gap-2"
+                className="font-mono text-[calc(20px*var(--fz))] uppercase tracking-[0.14em] font-bold mb-5 pb-3 border-b border-border inline-flex items-center gap-2"
               >
                 <span className="w-2 h-2 rounded-full" style={{ background: s.tint }} />
                 <span style={{ color: "var(--ink-soft)" }}>{s.cat}</span>
               </div>
               <ul className="space-y-3">
                 {s.items.map((it) => (
-                  <li key={it} className="flex items-start gap-2.5 text-[15px] leading-[1.7] font-medium">
+                  <li key={it} className="flex items-start gap-2.5 text-[calc(15px*var(--fz))] leading-[1.7] font-medium">
                     <span className="mt-[8px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.tint }} />
                     <span className="text-ink-2">{it}</span>
                   </li>

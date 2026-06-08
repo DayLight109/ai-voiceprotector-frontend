@@ -112,7 +112,7 @@ export default function CallSimulator() {
               <span className="underline-soft">拦截</span>，只走 9 秒。
             </h2>
           </div>
-          <div className="col-span-12 md:col-span-5 text-[14px] leading-[1.75] text-ink-2 font-medium">
+          <div className="col-span-12 md:col-span-5 text-[calc(14px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
             按下播放，跟随时间轴看三条引擎如何并行工作。每一条新证据到来时，
             右侧判决器会立刻重算风险分数——从绿色的 SAFE，跃迁到红色的 BLOCK。
           </div>
@@ -141,11 +141,11 @@ export default function CallSimulator() {
                     <RotateCcw size={14} />
                   </button>
                   <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                    <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                       TIMELINE · {phase}
                     </div>
-                    <div className="font-display text-[20px] font-extrabold">
-                      {t.toFixed(1)}s <span className="text-ink-soft text-[14px] font-semibold">/ {DURATION}s</span>
+                    <div className="font-display text-[calc(20px*var(--fz))] font-extrabold">
+                      {t.toFixed(1)}s <span className="text-ink-soft text-[calc(14px*var(--fz))] font-semibold">/ {DURATION}s</span>
                     </div>
                   </div>
                 </div>
@@ -175,7 +175,7 @@ export default function CallSimulator() {
                   }}
                 />
               </div>
-              <div className="relative mt-3 h-4 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+              <div className="relative mt-3 h-4 font-mono text-[calc(10px*var(--fz))] font-bold uppercase tracking-wider text-ink-soft">
                 {PHASE_MARKS.map((m, i) => {
                   const last = i === PHASE_MARKS.length - 1;
                   return (
@@ -226,7 +226,7 @@ function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }
         }}
       >
         <div
-          className="flex w-full items-center justify-between font-mono text-[10px] mt-2 font-bold"
+          className="flex w-full items-center justify-between font-mono text-[calc(10px*var(--fz))] mt-2 font-bold"
           style={{ color: blocked ? "rgba(255,255,255,0.9)" : "var(--ink-soft)" }}
         >
           <span>{new Date().toTimeString().slice(0, 5)}</span>
@@ -247,19 +247,19 @@ function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }
             )}
           </div>
           <div
-            className="font-display text-[22px] font-extrabold"
+            className="font-display text-[calc(22px*var(--fz))] font-extrabold"
             style={{ color: blocked ? "#FFFFFF" : "var(--ink)" }}
           >
             +86 138 ···· 4921
           </div>
           <div
-            className="font-mono text-[11px] font-bold"
+            className="font-mono text-[calc(11px*var(--fz))] font-bold"
             style={{ color: blocked ? "rgba(255,255,255,0.75)" : "var(--ink-soft)" }}
           >
             显示：北京联通 · 实际：金边
           </div>
           <div
-            className="mt-2 px-3 py-1.5 rounded-full font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
+            className="mt-2 px-3 py-1.5 rounded-full font-mono text-[calc(11px*var(--fz))] font-bold uppercase tracking-[0.12em]"
             style={{
               background: blocked ? "#FFFFFF" : meta.bg,
               color: blocked ? "var(--coral-deep)" : meta.color,
@@ -272,17 +272,17 @@ function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }
         <div className="w-full space-y-2">
           {blocked ? (
             <>
-              <div className="text-center text-[14px] font-bold text-white flex items-center justify-center gap-2">
+              <div className="text-center text-[calc(14px*var(--fz))] font-bold text-white flex items-center justify-center gap-2">
                 <ShieldAlert size={18} />
                 已拦截 AI 合成通话
               </div>
-              <div className="text-center font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-white/75">
+              <div className="text-center font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-white/75">
                 证据留存 · 紧急联系人已通知
               </div>
             </>
           ) : (
             <>
-              <div className="flex items-center justify-between font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+              <div className="flex items-center justify-between font-mono text-[calc(10px*var(--fz))] font-bold uppercase tracking-[0.12em] text-ink-soft">
                 <span>RISK</span>
                 <span>{Math.round(risk)} / 100</span>
               </div>
@@ -295,7 +295,7 @@ function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }
                   }}
                 />
               </div>
-              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-center text-ink-soft">
+              <div className="font-mono text-[calc(10px*var(--fz))] font-bold uppercase tracking-[0.12em] text-center text-ink-soft">
                 T+{t.toFixed(2)}s · 三路并行分析中
               </div>
             </>
@@ -313,11 +313,11 @@ function RiskMeter({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-3">
       <div className="text-right">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">风险</div>
-        <div className="numplate text-[24px]" style={{ color: fg }}>{Math.round(value)}</div>
+        <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">风险</div>
+        <div className="numplate text-[calc(24px*var(--fz))]" style={{ color: fg }}>{Math.round(value)}</div>
       </div>
       <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center font-mono text-[11px] font-extrabold tracking-wider shadow-md"
+        className="w-14 h-14 rounded-2xl flex items-center justify-center font-mono text-[calc(11px*var(--fz))] font-extrabold tracking-wider shadow-md"
         style={{ background: bg, color: fg }}
       >
         {tone}
@@ -334,14 +334,14 @@ function LanePanel({ icon: Icon, title, color, soft, events }: any) {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: soft, color }}>
             <Icon size={13} />
           </div>
-          <span className="font-display text-[13px] font-extrabold">{title}</span>
+          <span className="font-display text-[calc(13px*var(--fz))] font-extrabold">{title}</span>
         </div>
-        <span className="font-mono text-[10px] font-bold text-ink-soft">{events.length} evt</span>
+        <span className="font-mono text-[calc(10px*var(--fz))] font-bold text-ink-soft">{events.length} evt</span>
       </div>
       <div className="flex-1 overflow-hidden relative">
-        <div className="space-y-2 font-mono text-[11px] leading-tight absolute inset-0 overflow-y-auto pr-1">
+        <div className="space-y-2 font-mono text-[calc(11px*var(--fz))] leading-tight absolute inset-0 overflow-y-auto pr-1">
           {events.length === 0 && (
-            <div className="text-ink-soft italic text-[11px] font-medium">等待事件…</div>
+            <div className="text-ink-soft italic text-[calc(11px*var(--fz))] font-medium">等待事件…</div>
           )}
           {events.map((e: any, i: number) => (
             <div key={i} className="flex items-start gap-2 text-ink-2 font-medium">

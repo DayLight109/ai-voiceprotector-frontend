@@ -133,7 +133,7 @@ export default function RegisterPage() {
                     {done ? <CheckCircle2 size={14} /> : <s.icon size={14} />}
                   </div>
                   <span
-                    className="font-mono text-[9px] uppercase tracking-[0.1em] font-bold hidden sm:block"
+                    className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.1em] font-bold hidden sm:block"
                     style={{ color: curr ? "var(--ink)" : "var(--ink-soft)" }}
                   >
                     {s.label}
@@ -171,7 +171,7 @@ export default function RegisterPage() {
 
       <div className="mt-8 flex items-center justify-between gap-3">
         {step > 0 && step < 4 ? (
-          <button onClick={goPrev} className="btn-ghost py-3 px-5 text-[13px]">
+          <button onClick={goPrev} className="btn-ghost py-3 px-5 text-[calc(13px*var(--fz))]">
             <ArrowLeft size={14} />
             上一步
           </button>
@@ -179,19 +179,19 @@ export default function RegisterPage() {
           <div />
         )}
         {step < 4 ? (
-          <button onClick={goNext} className="btn-indigo py-3 px-6 text-[14px]">
+          <button onClick={goNext} className="btn-indigo py-3 px-6 text-[calc(14px*var(--fz))]">
             {step === 0 ? "开始认证" : step === 3 ? "完成录入" : "下一步"}
             <ArrowRight size={14} />
           </button>
         ) : (
-          <Link href="/app" className="btn-indigo py-3 px-6 text-[14px]">
+          <Link href="/app" className="btn-indigo py-3 px-6 text-[calc(14px*var(--fz))]">
             进入工作台
             <ArrowRight size={14} />
           </Link>
         )}
       </div>
 
-      <div className="mt-6 text-center text-[13px] text-ink-soft font-medium">
+      <div className="mt-6 text-center text-[calc(13px*var(--fz))] text-ink-soft font-medium">
         已有账号？
         <Link href="/login" className="ml-1 text-indigo-deep font-bold hover:underline">
           直接登录
@@ -204,7 +204,7 @@ export default function RegisterPage() {
 function StepRole({ role, setRole }: { role: Role; setRole: (r: Role) => void }) {
   return (
     <div>
-      <div className="font-display text-[18px] font-extrabold mb-4">选择你的身份</div>
+      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-4">选择你的身份</div>
       <div className="grid grid-cols-1 gap-3">
         {[
           {
@@ -242,8 +242,8 @@ function StepRole({ role, setRole }: { role: Role; setRole: (r: Role) => void })
                 <r.icon size={20} />
               </div>
               <div className="flex-1">
-                <div className="font-display text-[16px] font-extrabold">{r.title}</div>
-                <div className="mt-1 text-[13px] leading-[1.6] text-ink-soft font-medium">{r.desc}</div>
+                <div className="font-display text-[calc(16px*var(--fz))] font-extrabold">{r.title}</div>
+                <div className="mt-1 text-[calc(13px*var(--fz))] leading-[1.6] text-ink-soft font-medium">{r.desc}</div>
               </div>
               <div
                 className="w-5 h-5 rounded-full border-2 shrink-0 mt-1"
@@ -279,8 +279,8 @@ function StepIdCard({
 }) {
   return (
     <div>
-      <div className="font-display text-[18px] font-extrabold mb-1">身份证核验</div>
-      <p className="text-[13px] text-ink-soft font-medium mb-5">
+      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">身份证核验</div>
+      <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
         从电脑文件夹选择身份证人像面和国徽面图片，系统会在当前流程中保留预览与校验状态。
       </p>
 
@@ -313,8 +313,8 @@ function StepIdCard({
 function StepLiveness() {
   return (
     <div>
-      <div className="font-display text-[18px] font-extrabold mb-1">活体检测</div>
-      <p className="text-[13px] text-ink-soft font-medium mb-5">
+      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">活体检测</div>
+      <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
         请正面对准摄像头，按屏幕提示完成眨眼、张嘴、摇头动作。
       </p>
 
@@ -327,24 +327,24 @@ function StepLiveness() {
         <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
       </div>
 
-      <div className="mt-5 flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] font-bold text-ink-soft">
+      <div className="mt-5 flex items-center justify-center gap-2 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft">
         <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--mint)" }} />
         摄像头已就绪，请看向镜头
       </div>
 
       <div className="mt-6 p-4 rounded-2xl bg-canvas-2 border border-border">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft mb-2">动作指令</div>
-        <ol className="space-y-2 text-[13px] font-medium text-ink-2">
+        <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft mb-2">动作指令</div>
+        <ol className="space-y-2 text-[calc(13px*var(--fz))] font-medium text-ink-2">
           <li className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-mint text-white flex items-center justify-center text-[10px] font-bold">1</span>
+            <span className="w-5 h-5 rounded-full bg-mint text-white flex items-center justify-center text-[calc(10px*var(--fz))] font-bold">1</span>
             请眨眼两次
           </li>
           <li className="flex items-center gap-2 opacity-50">
-            <span className="w-5 h-5 rounded-full bg-canvas-3 text-ink-soft flex items-center justify-center text-[10px] font-bold">2</span>
+            <span className="w-5 h-5 rounded-full bg-canvas-3 text-ink-soft flex items-center justify-center text-[calc(10px*var(--fz))] font-bold">2</span>
             张嘴
           </li>
           <li className="flex items-center gap-2 opacity-50">
-            <span className="w-5 h-5 rounded-full bg-canvas-3 text-ink-soft flex items-center justify-center text-[10px] font-bold">3</span>
+            <span className="w-5 h-5 rounded-full bg-canvas-3 text-ink-soft flex items-center justify-center text-[calc(10px*var(--fz))] font-bold">3</span>
             左右摇头
           </li>
         </ol>
@@ -356,8 +356,8 @@ function StepLiveness() {
 function StepFingerprint() {
   return (
     <div>
-      <div className="font-display text-[18px] font-extrabold mb-1">指纹录入</div>
-      <p className="text-[13px] text-ink-soft font-medium mb-5">
+      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">指纹录入</div>
+      <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
         把手指放在指纹传感器上，重复按压 5 次以建立本地模板。
       </p>
 
@@ -373,8 +373,8 @@ function StepFingerprint() {
 
       <div className="mt-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft">进度</span>
-          <span className="font-mono text-[11px] font-bold text-mint-deep">3 / 5 次</span>
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft">进度</span>
+          <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-mint-deep">3 / 5 次</span>
         </div>
         <div className="h-2 rounded-full bg-canvas-2 overflow-hidden">
           <div
@@ -385,8 +385,8 @@ function StepFingerprint() {
       </div>
 
       <div className="mt-6 p-4 rounded-2xl bg-amber-soft border border-amber/30">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-amber-deep mb-1">注意</div>
-        <p className="text-[12px] text-amber-deep font-medium leading-[1.6]">
+        <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-amber-deep mb-1">注意</div>
+        <p className="text-[calc(12px*var(--fz))] text-amber-deep font-medium leading-[1.6]">
           指纹模板仅保存在本机安全芯片，服务端不存储任何生物原图。更换设备后需要重新录入。
         </p>
       </div>
@@ -400,14 +400,14 @@ function StepDone({ role, name }: { role: Role; name: string }) {
       <div className="mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-5" style={{ background: "var(--mint-soft)" }}>
         <CheckCircle2 size={56} style={{ color: "var(--mint-deep)" }} strokeWidth={2} />
       </div>
-      <h3 className="font-display text-[24px] font-extrabold mb-2">认证完成</h3>
-      <p className="text-[14px] text-ink-soft font-medium max-w-xs mx-auto">
+      <h3 className="font-display text-[calc(24px*var(--fz))] font-extrabold mb-2">认证完成</h3>
+      <p className="text-[calc(14px*var(--fz))] text-ink-soft font-medium max-w-xs mx-auto">
         {name ? `${name} 的` : ""}账号资料已建档，身份证正反面图片已经完成本地选择与预览流程。
         {role === "enterprise"
           ? " 后续可由企业管理员继续分配角色权限。"
           : " 接下来可以继续为家人绑定设备。"}
       </p>
-      <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-canvas-2 border border-border font-mono text-[11px] font-bold">
+      <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-canvas-2 border border-border font-mono text-[calc(11px*var(--fz))] font-bold">
         <CheckCircle2 size={12} style={{ color: "var(--mint-deep)" }} />
         身份证核验、活体、指纹三项流程已通过演示校验
       </div>
@@ -428,13 +428,13 @@ function Input({
 }) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{label}</label>
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full px-4 py-3.5 rounded-2xl bg-surface border border-border font-body text-[14px] font-medium placeholder:text-ink-ghost focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20 transition-all"
+        className="mt-2 w-full px-4 py-3.5 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium placeholder:text-ink-ghost focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20 transition-all"
       />
     </div>
   );
@@ -469,8 +469,8 @@ function IdUploadCard({
         <img src={value.dataUrl} alt={`${label}预览`} className="block w-full object-cover" style={{ aspectRatio: "16 / 10" }} />
         <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-border bg-canvas-2">
           <div className="min-w-0">
-            <div className="font-display text-[13px] font-extrabold truncate">{label}</div>
-            <div className="font-mono text-[10px] text-ink-soft font-bold truncate">
+            <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{label}</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold truncate">
               {value.file.name} · {Math.max(1, Math.round(value.file.size / 1024))} KB
             </div>
           </div>
@@ -478,7 +478,7 @@ function IdUploadCard({
             <button
               type="button"
               onClick={openPicker}
-              className="px-2.5 py-1 rounded-full text-[11px] font-bold border border-border hover:bg-surface"
+              className="px-2.5 py-1 rounded-full text-[calc(11px*var(--fz))] font-bold border border-border hover:bg-surface"
             >
               替换
             </button>
@@ -533,11 +533,11 @@ function IdUploadCard({
       }}
     >
       <ImageIcon size={28} className="mx-auto mb-2 text-ink-soft" />
-      <div className="font-display text-[14px] font-extrabold">上传{label}</div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft font-bold mt-1">
+      <div className="font-display text-[calc(14px*var(--fz))] font-extrabold">上传{label}</div>
+      <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold mt-1">
         可从电脑文件夹选择 JPG / PNG
       </div>
-      <div className="mt-3 text-[12px] font-medium text-ink-soft">支持点击选择，也支持拖拽到这里</div>
+      <div className="mt-3 text-[calc(12px*var(--fz))] font-medium text-ink-soft">支持点击选择，也支持拖拽到这里</div>
       <input
         ref={inputRef}
         id={inputId}

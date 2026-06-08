@@ -51,7 +51,7 @@ export default function Hero() {
             </h1>
 
             <p
-              className="mt-8 max-w-[56ch] text-[17px] md:text-[18px] leading-[1.7] text-ink-2 rise font-medium"
+              className="mt-8 max-w-[56ch] text-[calc(17px*var(--fz))] md:text-[calc(18px*var(--fz))] leading-[1.7] text-ink-2 rise font-medium"
               style={{ animationDelay: "0.25s" }}
             >
               SENTINEL 在通话接通前的毫秒里，完成来电溯源、声纹取证与话术语义三重比对。
@@ -78,8 +78,8 @@ export default function Hero() {
               ].map((s) => (
                 <div key={s.v} className="relative pl-4">
                   <span className="absolute left-0 top-1 bottom-1 w-1 rounded-full" style={{ background: s.c }} />
-                  <div className="numplate text-[26px] md:text-[32px] leading-none">{s.k}</div>
-                  <div className="font-body text-[12px] font-semibold text-ink-soft mt-1.5">
+                  <div className="numplate text-[calc(26px*var(--fz))] md:text-[calc(32px*var(--fz))] leading-none">{s.k}</div>
+                  <div className="font-body text-[calc(12px*var(--fz))] font-semibold text-ink-soft mt-1.5">
                     {s.v}
                   </div>
                 </div>
@@ -94,7 +94,7 @@ export default function Hero() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="signal-dot text-coral" />
-                    <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
+                    <span className="font-mono text-[calc(11px*var(--fz))] font-bold uppercase tracking-[0.14em] text-ink">
                       LIVE · 实时审计
                     </span>
                   </div>
@@ -102,20 +102,20 @@ export default function Hero() {
                 </div>
 
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft">
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft">
                     CALL ID · 0x4F82A1
                   </div>
-                  <div className="mt-1 font-display text-[26px] font-extrabold tracking-tight">
+                  <div className="mt-1 font-display text-[calc(26px*var(--fz))] font-extrabold tracking-tight">
                     +86 138 ···· 4921
                   </div>
-                  <div className="mt-1 text-[13px] text-ink-soft font-medium">
+                  <div className="mt-1 text-[calc(13px*var(--fz))] text-ink-soft font-medium">
                     显示归属：北京 · 联通 → 实际信令：柬埔寨 · 金边
                   </div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-canvas-2 border border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft">
+                    <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft">
                       声纹频谱 · 合成概率
                     </span>
                     <span className="pill pill-coral">0.94 SYNTH</span>
@@ -148,10 +148,10 @@ export default function Hero() {
                       style={{ background: `var(--${l.tone})` }}
                     >
                       <l.icon size={14} style={{ color: l.color }} />
-                      <div className="font-mono text-[10px] uppercase tracking-[0.12em] mt-2 opacity-75" style={{ color: l.color }}>
+                      <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] mt-2 opacity-75" style={{ color: l.color }}>
                         {l.label}
                       </div>
-                      <div className="font-display text-[13px] font-extrabold mt-0.5" style={{ color: l.color }}>
+                      <div className="font-display text-[calc(13px*var(--fz))] font-extrabold mt-0.5" style={{ color: l.color }}>
                         {l.val}
                       </div>
                     </div>
@@ -160,14 +160,14 @@ export default function Hero() {
 
                 <div className="flex items-center gap-3 pt-3 border-t border-border">
                   <Shield size={16} style={{ color: "var(--mint-deep)" }} />
-                  <div className="text-[12px] text-ink-soft font-medium">
+                  <div className="text-[calc(12px*var(--fz))] text-ink-soft font-medium">
                     已推送通知至紧急联系人 · 证据已本地加密留存
                   </div>
                 </div>
               </div>
 
               <div
-                className="absolute -bottom-4 -left-4 px-3 py-2 rounded-2xl shadow-lg rotate-[-3deg] font-mono text-[11px] font-bold uppercase tracking-[0.14em]"
+                className="absolute -bottom-4 -left-4 px-3 py-2 rounded-2xl shadow-lg rotate-[-3deg] font-mono text-[calc(11px*var(--fz))] font-bold uppercase tracking-[0.14em]"
                 style={{ background: "var(--mint)", color: "var(--deep)" }}
               >
                 耗时 · 94ms

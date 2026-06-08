@@ -52,12 +52,12 @@ export default function SocialValue() {
                 >
                   <v.icon size={22} strokeWidth={2} />
                 </div>
-                <span className="numplate text-[22px]" style={{ color: v.deep }}>{v.num}</span>
+                <span className="numplate text-[calc(22px*var(--fz))]" style={{ color: v.deep }}>{v.num}</span>
               </div>
-              <h3 className="relative font-display text-[22px] md:text-[24px] font-extrabold tracking-tight leading-[1.25]">
+              <h3 className="relative font-display text-[calc(22px*var(--fz))] md:text-[calc(24px*var(--fz))] font-extrabold tracking-tight leading-[1.25]">
                 {v.title}
               </h3>
-              <p className="relative mt-4 text-[14px] leading-[1.75] text-ink-2 font-medium">
+              <p className="relative mt-4 text-[calc(14px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
                 {v.body}
               </p>
             </article>
@@ -75,7 +75,7 @@ export default function SocialValue() {
                 <br />
                 我们用更快的 AI <span className="italic" style={{ color: "var(--mint)" }}>挡在前面</span>。
               </h3>
-              <p className="mt-5 text-[15px] leading-[1.75] text-white/75 max-w-[58ch] font-medium">
+              <p className="mt-5 text-[calc(15px*var(--fz))] leading-[1.75] text-white/75 max-w-[58ch] font-medium">
                 欢迎运营商、终端厂商、金融机构、公安反诈中心接入 SENTINEL，
                 共建一条从信令层到语义层的全栈防线。
               </p>

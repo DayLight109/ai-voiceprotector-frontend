@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
@@ -8,7 +8,8 @@ import { BIZ_NAV } from "@/lib/nav";
 import { type Appeal } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import { MessageSquareWarning, Flag, Clock, CheckCircle2, XCircle, Send, Cloud, HardDrive, Mic2, Paperclip, X } from "lucide-react";
+import { MessageSquareWarning, Flag, Clock, CheckCircle2, XCircle, Send, Cloud, HardDrive, Mic2, Paperclip, X, Inbox } from "lucide-react";
+import { ListRowSkeleton, SkeletonBar } from "@/components/shared/Skeleton";
 
 type FormType = "误判申诉" | "号码举报";
 type Scope = "local" | "cloud";
@@ -23,6 +24,33 @@ export default function BizAppealPage() {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // 滑动指示条：申诉/举报切换时背景胶囊平滑滑过去
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [pill, setPill] = useState<{ left: number; width: number; ready: boolean }>({
+    left: 0,
+    width: 0,
+    ready: false,
+  });
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const bar = tabBarRef.current;
+      const btn = tabRefs.current[type];
+      if (!bar || !btn) return;
+      const barBox = bar.getBoundingClientRect();
+      const btnBox = btn.getBoundingClientRect();
+      setPill({
+        left: btnBox.left - barBox.left + bar.scrollLeft,
+        width: btnBox.width,
+        ready: true,
+      });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [type]);
 
   // 云端号码举报必须带录音附件；本地选填。
   const recordingRequired = type === "号码举报" && scope === "cloud";
@@ -105,19 +133,47 @@ export default function BizAppealPage() {
           { k: "已驳回", v: stats.rejected, soft: "var(--coral-soft)", fg: "var(--coral-deep)" },
         ].map((s) => (
           <div key={s.k} className="panel p-5">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold mb-2" style={{ color: s.fg }}>{s.k}</div>
-            <div className="numplate text-[32px]" style={{ color: s.fg }}>{s.v}</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold mb-2" style={{ color: s.fg }}>{s.k}</div>
+            {list.loading && list.items.length === 0 ? (
+              <SkeletonBar className="h-9 w-16" />
+            ) : (
+              <div className="numplate text-[calc(32px*var(--fz))]" style={{ color: s.fg }}>{s.v}</div>
+            )}
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-12 gap-5">
         <section className="col-span-12 lg:col-span-5 panel p-6">
-          <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-5">
+          <div
+            ref={tabBarRef}
+            className="relative flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-5"
+          >
+            {/* 滑动胶囊：随选中项平滑滑动 */}
+            <span
+              aria-hidden
+              className="absolute top-1 bottom-1 rounded-full pointer-events-none"
+              style={{
+                left: pill.left,
+                width: pill.width,
+                background: "var(--surface)",
+                boxShadow: "var(--shadow-sm)",
+                opacity: pill.ready ? 1 : 0,
+                transition: pill.ready
+                  ? "left 0.42s cubic-bezier(0.22, 1, 0.36, 1), width 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+                  : "none",
+              }}
+            />
             {(["误判申诉", "号码举报"] as FormType[]).map((t) => {
               const active = type === t;
               return (
-                <button key={t} onClick={() => setType(t)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[12px] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
+                <button
+                  key={t}
+                  ref={(el) => { tabRefs.current[t] = el; }}
+                  onClick={() => setType(t)}
+                  className="relative z-[1] flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[calc(12px*var(--fz))] font-bold"
+                  style={{ color: active ? "var(--ink)" : "var(--ink-soft)", transition: "color 0.32s ease" }}
+                >
                   {t === "误判申诉" ? <MessageSquareWarning size={12} /> : <Flag size={12} />}
                   {t}
                 </button>
@@ -157,8 +213,8 @@ export default function BizAppealPage() {
                         >
                           <o.Icon size={16} className="mt-0.5 shrink-0" />
                           <span>
-                            <span className="block text-[13px] font-bold" style={{ color: active ? "var(--indigo-deep)" : "var(--ink)" }}>{o.title}</span>
-                            <span className="block text-[11px] font-medium mt-0.5">{o.desc}</span>
+                            <span className="block text-[calc(13px*var(--fz))] font-bold" style={{ color: active ? "var(--indigo-deep)" : "var(--ink)" }}>{o.title}</span>
+                            <span className="block text-[calc(11px*var(--fz))] font-medium mt-0.5">{o.desc}</span>
                           </span>
                         </button>
                       );
@@ -175,7 +231,7 @@ export default function BizAppealPage() {
                     onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   />
                   {file ? (
-                    <div className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-canvas-2 border border-border text-[12px]">
+                    <div className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-canvas-2 border border-border text-[calc(12px*var(--fz))]">
                       <span className="flex items-center gap-2 min-w-0">
                         <Mic2 size={14} className="text-indigo-deep shrink-0" />
                         <span className="truncate font-mono font-bold">{file.name}</span>
@@ -187,14 +243,14 @@ export default function BizAppealPage() {
                     <button
                       type="button"
                       onClick={() => fileRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border border-dashed text-[12px] font-bold text-ink-soft hover:border-indigo"
+                      className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border border-dashed text-[calc(12px*var(--fz))] font-bold text-ink-soft hover:border-indigo"
                       style={{ borderColor: recordingRequired ? "var(--amber)" : "var(--border)" }}
                     >
                       <Paperclip size={14} /> 选择录音文件
                     </button>
                   )}
                   {recordingRequired && (
-                    <p className="mt-1.5 font-mono text-[10px] text-amber-deep font-bold">
+                    <p className="mt-1.5 font-mono text-[calc(10px*var(--fz))] text-amber-deep font-bold">
                       若对象存储未就绪，云端举报将暂时无法提交，可改为本地提交。
                     </p>
                   )}
@@ -203,11 +259,11 @@ export default function BizAppealPage() {
             )}
 
             {type === "号码举报" && (
-              <div className="p-3 rounded-2xl text-[12px]" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>
+              <div className="p-3 rounded-2xl text-[calc(12px*var(--fz))]" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>
                 若已造成损失，请同时拨打反诈专线 96110。
               </div>
             )}
-            <button type="submit" disabled={submitting} className="btn-indigo w-full justify-center py-3 text-[14px]" style={{ width: "100%", opacity: submitting ? 0.6 : 1 }}>
+            <button type="submit" disabled={submitting} className="btn-indigo w-full justify-center py-3 text-[calc(14px*var(--fz))]" style={{ width: "100%", opacity: submitting ? 0.6 : 1 }}>
               <Send size={14} /> {submitting ? "提交中…" : `提交${type}`}
             </button>
           </form>
@@ -220,29 +276,39 @@ export default function BizAppealPage() {
 
         <section className="col-span-12 lg:col-span-7 panel p-6">
           <div className="mb-4">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">HISTORY</div>
-            <h2 className="font-display text-[20px] font-extrabold mt-1">历史申诉与举报</h2>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">HISTORY</div>
+            <h2 className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">历史申诉与举报</h2>
           </div>
-          <DataTable<Appeal>
-            rows={list.items}
-            searchKeys={["number", "reason", "type"]}
-            columns={[
-              { key: "type", label: "类型", render: (r) => <span className="tag-chip" data-tone={r.type === "误判申诉" ? "indigo" : "coral"}>{r.type}</span> },
-              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
-              {
-                key: "scope", label: "去向",
-                render: (r) => r.type === "号码举报"
-                  ? <span className="font-mono text-[10px] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ color: r.scope === "cloud" ? "var(--indigo-deep)" : "var(--ink-soft)" }}>
-                      {r.scope === "cloud" ? <Cloud size={10} /> : <HardDrive size={10} />}
-                      {r.scope === "cloud" ? "云端" : "本地"}
-                    </span>
-                  : <span className="text-ink-ghost">—</span>,
-              },
-              { key: "reason", label: "说明", render: (r) => <span className="text-ink-2 line-clamp-1">{r.reason}</span> },
-              { key: "status", label: "状态", render: (r) => <StatusPill status={r.status} /> },
-              { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[11px] text-ink-soft font-bold">{r.createdAt}</span> },
-            ]}
-          />
+          {list.loading && list.items.length === 0 ? (
+            <ListRowSkeleton count={5} />
+          ) : list.items.length === 0 ? (
+            <div className="panel p-12 flex flex-col items-center justify-center text-center">
+              <Inbox size={32} className="text-ink-ghost mb-3" />
+              <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">暂无申诉或举报记录</div>
+              <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">NO APPEALS OR REPORTS YET</div>
+            </div>
+          ) : (
+            <DataTable<Appeal>
+              rows={list.items}
+              searchKeys={["number", "reason", "type"]}
+              columns={[
+                { key: "type", label: "类型", render: (r) => <span className="tag-chip" data-tone={r.type === "误判申诉" ? "indigo" : "coral"}>{r.type}</span> },
+                { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+                {
+                  key: "scope", label: "去向",
+                  render: (r) => r.type === "号码举报"
+                    ? <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ color: r.scope === "cloud" ? "var(--indigo-deep)" : "var(--ink-soft)" }}>
+                        {r.scope === "cloud" ? <Cloud size={10} /> : <HardDrive size={10} />}
+                        {r.scope === "cloud" ? "云端" : "本地"}
+                      </span>
+                    : <span className="text-ink-ghost">—</span>,
+                },
+                { key: "reason", label: "说明", render: (r) => <span className="text-ink-2 line-clamp-1">{r.reason}</span> },
+                { key: "status", label: "状态", render: (r) => <StatusPill status={r.status} /> },
+                { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.createdAt}</span> },
+              ]}
+            />
+          )}
         </section>
       </div>
     </AppShell>
@@ -257,7 +323,7 @@ function StatusPill({ status }: { status: Appeal["status"] }) {
   } as const;
   const m = map[status];
   return (
-    <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold inline-flex items-center gap-1" style={{ background: m.soft, color: m.fg }}>
+    <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold inline-flex items-center gap-1" style={{ background: m.soft, color: m.fg }}>
       <m.Icon size={10} />
       {status}
     </span>
@@ -267,7 +333,7 @@ function StatusPill({ status }: { status: Appeal["status"] }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

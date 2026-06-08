@@ -9,6 +9,7 @@ import { FAMILY_NAV } from "@/lib/nav";
 import { api, APIError } from "@/lib/api";
 import { useSingle } from "@/lib/use-resource";
 import { useAuth } from "@/lib/auth";
+import { FieldsSkeleton } from "@/components/shared/Skeleton";
 import { Bell, Smartphone, Mic, PhoneOff, ListChecks, Users, ShieldAlert, Eye } from "lucide-react";
 
 type Perms = {
@@ -72,6 +73,18 @@ export default function PermissionsPage() {
         desc="控制告警推送渠道、家属同步范围与本机自动处置策略。"
       />
 
+      {permsRes.loading && !permsRes.data ? (
+        <div className="grid grid-cols-12 gap-5">
+          <div className="col-span-12 lg:col-span-7 space-y-4">
+            <div className="panel p-6"><FieldsSkeleton rows={3} /></div>
+            <div className="panel p-6"><FieldsSkeleton rows={3} /></div>
+          </div>
+          <div className="col-span-12 lg:col-span-5 space-y-4">
+            <div className="panel p-6"><FieldsSkeleton rows={2} /></div>
+            <div className="panel p-6"><FieldsSkeleton rows={2} /></div>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-12 gap-5">
         <div className="col-span-12 lg:col-span-7 space-y-4 stagger">
           <div className="panel p-6">
@@ -102,15 +115,16 @@ export default function PermissionsPage() {
           </div>
 
           <div className="panel p-6" style={{ background: "var(--mint-soft)" }}>
-            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-mint-deep mb-2">
+            <div className="flex items-center gap-2 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-mint-deep mb-2">
               <ShieldAlert size={12} /> 隐私守则
             </div>
-            <div className="text-[12px] text-mint-deep font-semibold leading-[1.7]">
+            <div className="text-[calc(12px*var(--fz))] text-mint-deep font-semibold leading-[1.7]">
               SENTINEL 不上传通话原始音频。开关云端录音后，仅波形特征会进入云端用于跨设备审计。
             </div>
           </div>
         </div>
       </div>
+      )}
     </AppShell>
   );
 }
@@ -121,7 +135,7 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
       <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
         <Icon size={14} />
       </div>
-      <div className="font-display text-[15px] font-extrabold">{label}</div>
+      <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">{label}</div>
     </div>
   );
 }

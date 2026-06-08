@@ -29,11 +29,11 @@ export default function AuthShell({
               S
             </div>
             <div>
-              <div className="font-display text-[18px] font-extrabold">SENTINEL</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-soft font-bold">声纹捕手</div>
+              <div className="font-display text-[calc(18px*var(--fz))] font-extrabold">SENTINEL</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.2em] text-ink-soft font-bold">声纹捕手</div>
             </div>
           </Link>
-          <Link href="/" className="text-[13px] font-semibold text-ink-soft hover:text-ink transition-colors">
+          <Link href="/" className="text-[calc(13px*var(--fz))] font-semibold text-ink-soft hover:text-ink transition-colors">
             ← 返回主页
           </Link>
         </div>
@@ -41,10 +41,10 @@ export default function AuthShell({
         <div className="flex-1 flex items-center justify-center px-6 md:px-10 pb-10">
           <div className="w-full max-w-[440px] popup" style={{ animationDelay: "60ms" }}>
             <div className="tag-chip mb-5" data-tone="indigo">{eyebrow}</div>
-            <h1 className="font-display text-[40px] md:text-[44px] font-extrabold tracking-tight leading-[1.05]">
+            <h1 className="font-display text-[calc(40px*var(--fz))] md:text-[calc(44px*var(--fz))] font-extrabold tracking-tight leading-[1.05]">
               {title}
             </h1>
-            <p className="mt-3 text-[14px] leading-[1.65] text-ink-soft font-medium">
+            <p className="mt-3 text-[calc(14px*var(--fz))] leading-[1.65] text-ink-soft font-medium">
               {subtitle}
             </p>
 
@@ -70,7 +70,7 @@ export default function AuthShell({
             <span className="tag-chip" data-live="true" style={{ background: "rgba(255,255,255,0.08)", color: "var(--mint)", borderColor: "rgba(255,255,255,0.15)" }}>
               SECURE GATEWAY · TLS 1.3
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+            <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.2em]" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
               v1.0.0
             </span>
           </div>
@@ -80,16 +80,16 @@ export default function AuthShell({
               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
                 <ShieldCheck size={22} style={{ color: "var(--mint)" }} />
               </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.18em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
+              <div className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.18em] font-bold" style={{ color: "rgba(242, 243, 247, 0.55)" }}>
                 TRUST PILLARS
               </div>
             </div>
-            <h2 className="font-display text-[36px] font-extrabold tracking-tight leading-[1.1] text-white">
+            <h2 className="font-display text-[calc(36px*var(--fz))] font-extrabold tracking-tight leading-[1.1] text-white">
               {sideTitle}
             </h2>
             <ul className="mt-8 space-y-3">
               {bullets.map((b) => (
-                <li key={b} className="flex items-start gap-3 text-[14px] font-medium" style={{ color: "rgba(242, 243, 247, 0.88)" }}>
+                <li key={b} className="flex items-start gap-3 text-[calc(14px*var(--fz))] font-medium" style={{ color: "rgba(242, 243, 247, 0.88)" }}>
                   <CheckCircle2 size={18} style={{ color: "var(--mint)" }} className="shrink-0 mt-0.5" />
                   <span>{b}</span>
                 </li>
@@ -99,16 +99,16 @@ export default function AuthShell({
 
           <div className="relative grid grid-cols-3 gap-4 pt-8 border-t border-white/10">
             <div>
-              <div className="numplate text-[22px]" style={{ color: "#fff" }}>36 亿</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>日均拦截</div>
+              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>36 亿</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>日均拦截</div>
             </div>
             <div>
-              <div className="numplate text-[22px]" style={{ color: "#fff" }}>99.2%</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>召回率</div>
+              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>99.2%</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>召回率</div>
             </div>
             <div>
-              <div className="numplate text-[22px]" style={{ color: "#fff" }}>&lt;120ms</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>判决延迟</div>
+              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>&lt;120ms</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>判决延迟</div>
             </div>
           </div>
         </div>

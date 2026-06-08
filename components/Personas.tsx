@@ -47,7 +47,7 @@ export default function Personas() {
               <span className="underline-soft">需要</span>。
             </h2>
           </div>
-          <div className="col-span-12 md:col-span-5 text-[15px] leading-[1.75] text-ink-2 font-medium">
+          <div className="col-span-12 md:col-span-5 text-[calc(15px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
             老年人、忙碌的白领、金融机构——三种使用场景对警示力度、推送时机、证据留存方式有截然不同的要求。
           </div>
         </div>
@@ -67,25 +67,25 @@ export default function Personas() {
                   <p.icon size={22} strokeWidth={2} />
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                     Persona / 0{i + 1}
                   </div>
-                  <div className="numplate text-[20px] mt-1" style={{ color: p.deep }}>{p.age}</div>
+                  <div className="numplate text-[calc(20px*var(--fz))] mt-1" style={{ color: p.deep }}>{p.age}</div>
                 </div>
               </div>
 
               <div
-                className="relative inline-block font-mono text-[13px] font-bold px-2.5 py-1 rounded-full mb-3"
+                className="relative inline-block font-mono text-[calc(13px*var(--fz))] font-bold px-2.5 py-1 rounded-full mb-3"
                 style={{ background: p.soft, color: p.deep }}
               >
                 {p.tag}
               </div>
-              <div className="relative font-display text-[26px] font-extrabold tracking-tight">
+              <div className="relative font-display text-[calc(26px*var(--fz))] font-extrabold tracking-tight">
                 {p.name}
               </div>
 
               <blockquote
-                className="relative mt-4 pl-4 border-l-[3px] text-[14px] italic text-ink-2 leading-[1.7] font-medium"
+                className="relative mt-4 pl-4 border-l-[3px] text-[calc(14px*var(--fz))] italic text-ink-2 leading-[1.7] font-medium"
                 style={{ borderColor: p.tint }}
               >
                 &ldquo;{p.quote}&rdquo;
@@ -93,7 +93,7 @@ export default function Personas() {
 
               <ul className="relative mt-5 space-y-2.5">
                 {p.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2.5 text-[13px] text-ink-2 font-medium">
+                  <li key={b} className="flex items-start gap-2.5 text-[calc(13px*var(--fz))] text-ink-2 font-medium">
                     <span className="mt-[6px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.tint }} />
                     <span>{b}</span>
                   </li>

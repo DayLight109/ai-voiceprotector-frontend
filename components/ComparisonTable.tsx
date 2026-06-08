@@ -31,7 +31,7 @@ function Cell({ v, highlight }: { v: string; highlight?: boolean }) {
         >
           <Check size={14} strokeWidth={3} />
         </div>
-        <span className="font-mono text-[11px] font-bold" style={{ color: highlight ? "var(--mint-deep)" : "var(--ink-soft)" }}>
+        <span className="font-mono text-[calc(11px*var(--fz))] font-bold" style={{ color: highlight ? "var(--mint-deep)" : "var(--ink-soft)" }}>
           全面
         </span>
       </div>
@@ -45,7 +45,7 @@ function Cell({ v, highlight }: { v: string; highlight?: boolean }) {
         >
           <Minus size={14} strokeWidth={3} />
         </div>
-        <span className="font-mono text-[11px] font-bold text-ink-soft">部分</span>
+        <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-ink-soft">部分</span>
       </div>
     );
   return (
@@ -56,7 +56,7 @@ function Cell({ v, highlight }: { v: string; highlight?: boolean }) {
       >
         <X size={14} strokeWidth={3} />
       </div>
-      <span className="font-mono text-[11px] font-bold" style={{ color: "var(--ink-ghost)" }}>无</span>
+      <span className="font-mono text-[calc(11px*var(--fz))] font-bold" style={{ color: "var(--ink-ghost)" }}>无</span>
     </div>
   );
 }
@@ -78,7 +78,7 @@ export default function ComparisonTable() {
           <div className="min-w-[760px] px-5 md:px-0">
             <div className="panel overflow-hidden" style={{ boxShadow: "var(--shadow-lg)" }}>
               <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
-                <div className="p-5 md:p-6 border-b border-border bg-canvas-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                <div className="p-5 md:p-6 border-b border-border bg-canvas-2 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                   能力 / 方案
                 </div>
                 {HEAD.map((h) => (
@@ -90,14 +90,14 @@ export default function ComparisonTable() {
                     style={h.highlight ? { background: "linear-gradient(135deg, var(--indigo), var(--indigo-deep))" } : {}}
                   >
                     <div
-                      className={`font-display text-[18px] md:text-[20px] font-extrabold tracking-tight ${
+                      className={`font-display text-[calc(18px*var(--fz))] md:text-[calc(20px*var(--fz))] font-extrabold tracking-tight ${
                         h.highlight ? "text-white" : "text-ink"
                       }`}
                     >
                       {h.name}
                     </div>
                     <div
-                      className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] font-bold"
+                      className="mt-1 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold"
                       style={{ color: h.highlight ? "rgba(255,255,255,0.75)" : "var(--ink-soft)" }}
                     >
                       {h.tag}
@@ -108,7 +108,7 @@ export default function ComparisonTable() {
                 {ROWS.map((r, i) => (
                   <div key={r.f} className="contents group">
                     <div
-                      className={`p-5 border-b border-border/60 font-display text-[15px] font-bold group-hover:bg-canvas-2/60 transition-colors ${
+                      className={`p-5 border-b border-border/60 font-display text-[calc(15px*var(--fz))] font-bold group-hover:bg-canvas-2/60 transition-colors ${
                         i === ROWS.length - 1 ? "border-b-0" : ""
                       }`}
                     >
@@ -132,7 +132,7 @@ export default function ComparisonTable() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] text-ink-soft font-bold">
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ background: "var(--mint)" }} />
             全面 · 端到端实现

@@ -6,6 +6,7 @@ import { useToast } from "@/components/shared/Toast";
 import { FAMILY_NAV } from "@/lib/nav";
 import { api, APIError } from "@/lib/api";
 import { useSingle } from "@/lib/use-resource";
+import { SkeletonBar } from "@/components/shared/Skeleton";
 import { UserPlus, ShieldCheck, Building2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 
 type Status = "none" | "pending" | "approved" | "rejected";
@@ -76,7 +77,7 @@ export default function AdminApplyPage() {
         <section className="col-span-12 lg:col-span-7 panel p-6 md:p-8 rise-soft" style={{ animationDelay: "60ms" }}>
           <form onSubmit={submit} className="space-y-5">
             <div>
-              <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-2">
+              <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-2">
                 申请范围
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -97,9 +98,9 @@ export default function AdminApplyPage() {
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white" style={{ background: s.tint }}>
                           <s.icon size={15} />
                         </div>
-                        <span className="font-display text-[14px] font-extrabold">{s.label}</span>
+                        <span className="font-display text-[calc(14px*var(--fz))] font-extrabold">{s.label}</span>
                       </div>
-                      <div className="text-[12px] text-ink-soft font-medium leading-[1.6]">{s.desc}</div>
+                      <div className="text-[calc(12px*var(--fz))] text-ink-soft font-medium leading-[1.6]">{s.desc}</div>
                     </button>
                   );
                 })}
@@ -107,37 +108,37 @@ export default function AdminApplyPage() {
             </div>
 
             <div>
-              <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">
+              <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">
                 申请理由
               </label>
               <textarea
                 value={form.reason}
                 onChange={(e) => setForm({ ...form, reason: e.target.value })}
                 rows={5}
-                className="w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[14px] font-medium focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                className="w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
                 placeholder="请说明你将管理的家庭成员或机构、当前负责的工作以及为何需要管理员权限……"
               />
             </div>
 
             <div>
-              <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">
+              <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">
                 可联系到的方式
               </label>
               <input
                 value={form.contact}
                 onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                className="w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[14px] font-medium focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                className="w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
                 placeholder="手机号 / 邮箱 / 单位办公电话"
               />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               {status === "pending" && (
-                <button type="button" onClick={withdraw} className="btn-ghost py-2.5 px-4 text-[13px]">
+                <button type="button" onClick={withdraw} className="btn-ghost py-2.5 px-4 text-[calc(13px*var(--fz))]">
                   撤回申请
                 </button>
               )}
-              <button type="submit" disabled={status === "pending" || submitting} className="btn-indigo py-2.5 px-5 text-[13px] disabled:opacity-60">
+              <button type="submit" disabled={status === "pending" || submitting} className="btn-indigo py-2.5 px-5 text-[calc(13px*var(--fz))] disabled:opacity-60">
                 <UserPlus size={14} />
                 {status === "pending" ? "审核中" : submitting ? "提交中" : "提交申请"}
               </button>
@@ -147,17 +148,30 @@ export default function AdminApplyPage() {
 
         <section className="col-span-12 lg:col-span-5 space-y-4 stagger">
           <div className="panel p-6">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">CURRENT STATUS</div>
-            <div key={status} className="fade-in">
-              <StatusBlock status={status} />
-            </div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">CURRENT STATUS</div>
+            {statusRes.loading && !statusRes.data ? (
+              <div aria-hidden>
+                <div className="flex items-center gap-2 mb-2">
+                  <SkeletonBar className="w-10 h-10 rounded-xl shrink-0" />
+                  <SkeletonBar className="h-5 w-24" />
+                </div>
+                <div className="space-y-2 mt-1">
+                  <SkeletonBar className="h-3 w-full" />
+                  <SkeletonBar className="h-3 w-2/3" />
+                </div>
+              </div>
+            ) : (
+              <div key={status} className="fade-in">
+                <StatusBlock status={status} />
+              </div>
+            )}
           </div>
 
           <div className="panel p-6" style={{ background: "var(--indigo-soft)" }}>
-            <div className="font-display text-[14px] font-extrabold mb-2" style={{ color: "var(--indigo-deep)" }}>
+            <div className="font-display text-[calc(14px*var(--fz))] font-extrabold mb-2" style={{ color: "var(--indigo-deep)" }}>
               管理员权限范围
             </div>
-            <ul className="text-[13px] font-medium space-y-2" style={{ color: "var(--indigo-deep)" }}>
+            <ul className="text-[calc(13px*var(--fz))] font-medium space-y-2" style={{ color: "var(--indigo-deep)" }}>
               <li>· 添加 / 移除 / 编辑下辖用户</li>
               <li>· 查看 / 删除所辖通话录音</li>
               <li>· 调整 L1–L5 风控等级与自定义规则</li>
@@ -166,8 +180,8 @@ export default function AdminApplyPage() {
           </div>
 
           <div className="panel p-6">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">SLA</div>
-            <div className="space-y-3 text-[13px] text-ink-2 font-medium">
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">SLA</div>
+            <div className="space-y-3 text-[calc(13px*var(--fz))] text-ink-2 font-medium">
               <div className="flex items-center justify-between"><span>初审反馈</span><span className="font-mono font-bold">≤ 24 小时</span></div>
               <div className="flex items-center justify-between"><span>复核与开通</span><span className="font-mono font-bold">≤ 72 小时</span></div>
               <div className="flex items-center justify-between"><span>客服</span><span className="font-mono font-bold">96110</span></div>
@@ -187,9 +201,9 @@ function StatusBlock({ status }: { status: Status }) {
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--amber-soft)", color: "var(--amber-deep)" }}>
             <Clock size={16} />
           </div>
-          <span className="font-display text-[16px] font-extrabold">审核中</span>
+          <span className="font-display text-[calc(16px*var(--fz))] font-extrabold">审核中</span>
         </div>
-        <div className="text-[13px] text-ink-soft font-medium">申请已进入审核队列，预计 24 小时内完成初审，请保持联系方式畅通。</div>
+        <div className="text-[calc(13px*var(--fz))] text-ink-soft font-medium">申请已进入审核队列，预计 24 小时内完成初审，请保持联系方式畅通。</div>
       </div>
     );
   }
@@ -200,9 +214,9 @@ function StatusBlock({ status }: { status: Status }) {
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--mint-soft)", color: "var(--mint-deep)" }}>
             <CheckCircle2 size={16} />
           </div>
-          <span className="font-display text-[16px] font-extrabold">已通过</span>
+          <span className="font-display text-[calc(16px*var(--fz))] font-extrabold">已通过</span>
         </div>
-        <div className="text-[13px] text-ink-soft font-medium">恭喜！你已被授予管理员权限，可前往对应控制台开始管理。</div>
+        <div className="text-[calc(13px*var(--fz))] text-ink-soft font-medium">恭喜！你已被授予管理员权限，可前往对应控制台开始管理。</div>
       </div>
     );
   }
@@ -213,9 +227,9 @@ function StatusBlock({ status }: { status: Status }) {
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>
             <AlertTriangle size={16} />
           </div>
-          <span className="font-display text-[16px] font-extrabold">未通过</span>
+          <span className="font-display text-[calc(16px*var(--fz))] font-extrabold">未通过</span>
         </div>
-        <div className="text-[13px] text-ink-soft font-medium">本次申请未通过。请完善申请理由或联系当前管理员后再次提交。</div>
+        <div className="text-[calc(13px*var(--fz))] text-ink-soft font-medium">本次申请未通过。请完善申请理由或联系当前管理员后再次提交。</div>
       </div>
     );
   }
@@ -225,9 +239,9 @@ function StatusBlock({ status }: { status: Status }) {
         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-canvas-2 text-ink-soft">
           <UserPlus size={16} />
         </div>
-        <span className="font-display text-[16px] font-extrabold">尚未申请</span>
+        <span className="font-display text-[calc(16px*var(--fz))] font-extrabold">尚未申请</span>
       </div>
-      <div className="text-[13px] text-ink-soft font-medium">填写左侧表单后提交，管理员将在 24 小时内审核。</div>
+      <div className="text-[calc(13px*var(--fz))] text-ink-soft font-medium">填写左侧表单后提交，管理员将在 24 小时内审核。</div>
     </div>
   );
 }

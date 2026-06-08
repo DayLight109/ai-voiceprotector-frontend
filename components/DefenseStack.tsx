@@ -43,7 +43,7 @@ export default function DefenseStack() {
               <span className="mega-italic" style={{ color: "var(--coral)" }}>同时</span> 落下。
             </h2>
           </div>
-          <div className="col-span-12 md:col-span-4 text-[15px] leading-[1.75] text-ink-2 font-medium">
+          <div className="col-span-12 md:col-span-4 text-[calc(15px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
             单层引擎必然存在漏判。SENTINEL 把溯源、声纹、话术并联执行——
             取三路中最差两路加权融合，单路误报不会升级为拦截。
           </div>
@@ -69,20 +69,20 @@ export default function DefenseStack() {
                     <l.icon size={20} />
                   </div>
                   <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+                    <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                       Layer · {l.id}
                     </div>
-                    <div className="font-display text-[22px] font-extrabold tracking-tight">{l.title}</div>
+                    <div className="font-display text-[calc(22px*var(--fz))] font-extrabold tracking-tight">{l.title}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">延迟</div>
-                  <div className="numplate text-[20px]" style={{ color: l.deep }}>{l.latency}</div>
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">延迟</div>
+                  <div className="numplate text-[calc(20px*var(--fz))]" style={{ color: l.deep }}>{l.latency}</div>
                 </div>
               </div>
 
               <div
-                className="relative inline-block font-mono text-[11px] font-bold px-2.5 py-1 rounded-full mb-4"
+                className="relative inline-block font-mono text-[calc(11px*var(--fz))] font-bold px-2.5 py-1 rounded-full mb-4"
                 style={{ background: l.soft, color: l.deep }}
               >
                 {l.en}
@@ -90,7 +90,7 @@ export default function DefenseStack() {
 
               <ul className="relative space-y-2.5 mb-6">
                 {l.checks.map((c) => (
-                  <li key={c} className="flex items-start gap-2.5 text-[13px] font-medium text-ink-2">
+                  <li key={c} className="flex items-start gap-2.5 text-[calc(13px*var(--fz))] font-medium text-ink-2">
                     <span
                       className="mt-[6px] w-1.5 h-1.5 rounded-full shrink-0"
                       style={{ background: l.tint }}
@@ -102,14 +102,14 @@ export default function DefenseStack() {
 
               <div className="relative p-3.5 rounded-2xl bg-canvas-2 space-y-1.5">
                 {Object.entries(l.sample).map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between gap-3 font-mono text-[12px]">
-                    <span className="text-ink-soft uppercase text-[10px] font-bold">{k}</span>
+                  <div key={k} className="flex items-center justify-between gap-3 font-mono text-[calc(12px*var(--fz))]">
+                    <span className="text-ink-soft uppercase text-[calc(10px*var(--fz))] font-bold">{k}</span>
                     <span className="text-ink font-semibold truncate">{v}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="absolute top-3 right-3 numplate text-[13px] text-ink-soft">
+              <div className="absolute top-3 right-3 numplate text-[calc(13px*var(--fz))] text-ink-soft">
                 0{i + 1}
               </div>
             </div>
@@ -121,7 +121,7 @@ export default function DefenseStack() {
           <div className="relative flex flex-wrap items-center justify-between gap-6">
             <div>
               <span className="pill pill-mint mb-3">Fusion · 风险融合判决</span>
-              <div className="font-display text-[26px] md:text-[32px] font-extrabold tracking-tight leading-[1.15] text-white">
+              <div className="font-display text-[calc(26px*var(--fz))] md:text-[calc(32px*var(--fz))] font-extrabold tracking-tight leading-[1.15] text-white">
                 三路并联 → 最差两路 7:3 加权 → SAFE / WATCH / BLOCK
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function DefenseStack() {
                     <s.icon size={12} />
                     {s.label}
                   </span>
-                  <span className="text-[12px] text-white/75 font-medium">{s.desc}</span>
+                  <span className="text-[calc(12px*var(--fz))] text-white/75 font-medium">{s.desc}</span>
                 </div>
               ))}
             </div>

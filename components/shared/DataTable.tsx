@@ -43,7 +43,7 @@ export default function DataTable<T extends { id: string }>({
   return (
     <div className="space-y-3">
       {searchKeys && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-canvas-2 border border-border w-72">
+        <div className="search-pill flex items-center gap-2 px-3 py-2 rounded-full bg-canvas-2 border border-border w-72 transition-shadow">
           <Search size={14} className="text-ink-soft" />
           <input
             value={q}
@@ -52,10 +52,10 @@ export default function DataTable<T extends { id: string }>({
               setPage(0);
             }}
             placeholder="搜索…"
-            className="flex-1 bg-transparent text-[13px] font-medium placeholder:text-ink-ghost focus:outline-none"
+            className="flex-1 bg-transparent text-[calc(13px*var(--fz))] font-medium placeholder:text-ink-ghost focus:outline-none"
           />
           {q && (
-            <button onClick={() => setQ("")} className="text-ink-soft text-[11px] font-bold">
+            <button onClick={() => setQ("")} className="text-ink-soft text-[calc(11px*var(--fz))] font-bold">
               清除
             </button>
           )}
@@ -63,9 +63,9 @@ export default function DataTable<T extends { id: string }>({
       )}
 
       <div className="overflow-x-auto -mx-2">
-        <table className="w-full text-[13px]">
+        <table className="w-full text-[calc(13px*var(--fz))]">
           <thead>
-            <tr className="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+            <tr className="text-left font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
               {columns.map((c) => (
                 <th
                   key={c.key}
@@ -106,7 +106,7 @@ export default function DataTable<T extends { id: string }>({
 
       {pages > 1 && (
         <div className="flex items-center justify-between pt-2">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
             共 {filtered.length} 条 · 第 {curPage + 1} / {pages} 页
           </div>
           <div className="flex items-center gap-1">

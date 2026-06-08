@@ -464,10 +464,10 @@ export default function WarroomPage() {
                 <Shield size={22} />
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-[0.44em] text-cyan-100/60">
+                <div className="text-[calc(11px*var(--fz))] uppercase tracking-[0.44em] text-cyan-100/60">
                   Sentinel Tactical Screen
                 </div>
-                <h1 className="text-[32px] font-black tracking-[0.18em] text-white">
+                <h1 className="text-[calc(32px*var(--fz))] font-black tracking-[0.18em] text-white">
                   指挥中心
                 </h1>
               </div>
@@ -495,7 +495,7 @@ export default function WarroomPage() {
 
             {/* DEFCON 调级条:点击切换真实防御等级(后端要求 sysadmin)*/}
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-[9px] uppercase tracking-[0.3em] text-cyan-100/45">Set Defcon</span>
+              <span className="text-[calc(9px*var(--fz))] uppercase tracking-[0.3em] text-cyan-100/45">Set Defcon</span>
               <div className="flex gap-1">
                 {[5, 4, 3, 2, 1].map((n) => {
                   const active = n === defcon;
@@ -504,7 +504,7 @@ export default function WarroomPage() {
                       key={n}
                       type="button"
                       onClick={() => pickDefcon(n)}
-                      className="h-6 w-6 text-[11px] font-bold transition duration-200 hover:scale-110"
+                      className="h-6 w-6 text-[calc(11px*var(--fz))] font-bold transition duration-200 hover:scale-110"
                       style={{
                         clipPath: cutCorner,
                         color: active ? "#08101f" : defconTone(n),
@@ -519,7 +519,7 @@ export default function WarroomPage() {
                 })}
               </div>
               {defconWarn ? (
-                <span className="text-[10px] tracking-[0.1em]" style={{ color: "#ffb347" }}>
+                <span className="text-[calc(10px*var(--fz))] tracking-[0.1em]" style={{ color: "#ffb347" }}>
                   {defconWarn}
                 </span>
               ) : null}
@@ -534,11 +534,11 @@ export default function WarroomPage() {
                 boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 32px rgba(100,130,255,0.09)",
               }}
             >
-              <div className="text-[10px] uppercase tracking-[0.36em] text-cyan-100/55">
+              <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.36em] text-cyan-100/55">
                 Tactical Time
               </div>
               <div
-                className="mt-1 text-[20px] font-bold tracking-[0.14em] text-cyan-50"
+                className="mt-1 text-[calc(20px*var(--fz))] font-bold tracking-[0.14em] text-cyan-50"
                 style={{ fontFamily: monoFont }}
               >
                 {clock}
@@ -667,7 +667,7 @@ export default function WarroomPage() {
                 {logs.map((log, index) => (
                   <div
                     key={`${log}-${index}`}
-                    className="group bg-black/18 px-3 py-2.5 text-[11px] uppercase tracking-[0.24em] text-cyan-100/72 transition duration-300 hover:text-white"
+                    className="group bg-black/18 px-3 py-2.5 text-[calc(11px*var(--fz))] uppercase tracking-[0.24em] text-cyan-100/72 transition duration-300 hover:text-white"
                     style={{
                       clipPath: cutCorner,
                       boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
@@ -798,8 +798,8 @@ function GlassPanel({
               <Icon size={17} />
             </div>
             <div>
-              <div className="text-[16px] font-bold tracking-[0.12em] text-white">{title}</div>
-              <div className="text-[10px] uppercase tracking-[0.36em] text-cyan-100/52">{subtitle}</div>
+              <div className="text-[calc(16px*var(--fz))] font-bold tracking-[0.12em] text-white">{title}</div>
+              <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.36em] text-cyan-100/52">{subtitle}</div>
             </div>
           </div>
           <div className="h-px flex-1 bg-[linear-gradient(90deg,rgba(125,246,255,0.35),transparent)]" />
@@ -822,9 +822,9 @@ function HeadStat({
 }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-100/55">{label}</div>
+      <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/55">{label}</div>
       <div
-        className="mt-1 text-[18px] font-bold tracking-[0.12em]"
+        className="mt-1 text-[calc(18px*var(--fz))] font-bold tracking-[0.12em]"
         style={{ color: tone, fontFamily: monoFont }}
       >
         {value}
@@ -854,20 +854,20 @@ function MetricStrip({ metric }: { metric: Metric }) {
             <Icon size={16} />
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-[0.34em] text-cyan-100/60">{metric.label}</div>
-            <div className="mt-1 text-[11px] tracking-[0.18em] text-white/78">
+            <div className="text-[calc(11px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/60">{metric.label}</div>
+            <div className="mt-1 text-[calc(11px*var(--fz))] tracking-[0.18em] text-white/78">
               {warn ? "警戒波动" : "稳定运行"}
             </div>
           </div>
         </div>
         <div className="text-right">
           <div
-            className="text-[28px] font-black tracking-[0.12em]"
+            className="text-[calc(28px*var(--fz))] font-black tracking-[0.12em]"
             style={{ color: warn ? "#ffb347" : "#7df6ff", fontFamily: monoFont }}
           >
             <AnimatedNumber value={metric.value} />
           </div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-cyan-100/48">percent</div>
+          <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.3em] text-cyan-100/48">percent</div>
         </div>
       </div>
 
@@ -902,9 +902,9 @@ function SmallStat({
       className="bg-black/18 px-3 py-3"
       style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
     >
-      <div className="text-[10px] uppercase tracking-[0.32em] text-cyan-100/48">{label}</div>
+      <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.32em] text-cyan-100/48">{label}</div>
       <div
-        className="mt-2 text-[22px] font-bold tracking-[0.12em]"
+        className="mt-2 text-[calc(22px*var(--fz))] font-bold tracking-[0.12em]"
         style={{ color: tone, fontFamily: monoFont }}
       >
         <AnimatedNumber value={value} decimals={suffix ? 1 : 0} />
@@ -923,17 +923,17 @@ function DeviceRow({ device }: { device: Device }) {
       style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
     >
       <div>
-        <div className="text-[12px] font-semibold tracking-[0.16em] text-white">{device.name}</div>
-        <div className="mt-1 text-[10px] uppercase tracking-[0.32em] text-cyan-100/48">{device.zone}</div>
+        <div className="text-[calc(12px*var(--fz))] font-semibold tracking-[0.16em] text-white">{device.name}</div>
+        <div className="mt-1 text-[calc(10px*var(--fz))] uppercase tracking-[0.32em] text-cyan-100/48">{device.zone}</div>
       </div>
       <div className="text-right">
         <div
-          className="text-[20px] font-bold tracking-[0.12em]"
+          className="text-[calc(20px*var(--fz))] font-bold tracking-[0.12em]"
           style={{ color: tone, fontFamily: monoFont }}
         >
           <AnimatedNumber value={device.health} />
         </div>
-        <div className="mt-1 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.24em]" style={{ color: tone }}>
+        <div className="mt-1 inline-flex items-center gap-2 text-[calc(10px*var(--fz))] uppercase tracking-[0.24em]" style={{ color: tone }}>
           <span className="h-[6px] w-[6px] rounded-full" style={{ backgroundColor: tone, boxShadow: `0 0 12px ${tone}` }} />
           {device.state}
         </div>
@@ -952,7 +952,7 @@ function ActionChip({
   return (
     <button
       type="button"
-      className="group flex items-center justify-center gap-2 bg-black/18 px-3 py-3 text-[11px] uppercase tracking-[0.26em] text-cyan-100/75 transition duration-300 hover:text-white"
+      className="group flex items-center justify-center gap-2 bg-black/18 px-3 py-3 text-[calc(11px*var(--fz))] uppercase tracking-[0.26em] text-cyan-100/75 transition duration-300 hover:text-white"
       style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
     >
       <Icon size={14} className="transition duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_rgba(125,246,255,0.45)]" />
@@ -1010,19 +1010,19 @@ function RadarDisplay({
         style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
       >
         <div>
-          <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-100/50">Target Lock</div>
-          <div className="mt-2 text-[18px] font-bold tracking-[0.16em] text-white">{primaryTarget.label}</div>
-          <div className="mt-1 text-[11px] tracking-[0.18em] text-cyan-100/70">高亮目标已进入动态跟踪与取证链。</div>
+          <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">Target Lock</div>
+          <div className="mt-2 text-[calc(18px*var(--fz))] font-bold tracking-[0.16em] text-white">{primaryTarget.label}</div>
+          <div className="mt-1 text-[calc(11px*var(--fz))] tracking-[0.18em] text-cyan-100/70">高亮目标已进入动态跟踪与取证链。</div>
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-100/50">Coordinates</div>
-          <div className="mt-2 text-[16px] font-bold tracking-[0.14em] text-cyan-50" style={{ fontFamily: monoFont }}>
+          <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">Coordinates</div>
+          <div className="mt-2 text-[calc(16px*var(--fz))] font-bold tracking-[0.14em] text-cyan-50" style={{ fontFamily: monoFont }}>
             X {primaryTarget.x.toFixed(1)} / Y {primaryTarget.y.toFixed(1)}
           </div>
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-[0.34em] text-cyan-100/50">Vector</div>
-          <div className="mt-2 text-[16px] font-bold tracking-[0.14em] text-fuchsia-100" style={{ fontFamily: monoFont }}>
+          <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">Vector</div>
+          <div className="mt-2 text-[calc(16px*var(--fz))] font-bold tracking-[0.14em] text-fuchsia-100" style={{ fontFamily: monoFont }}>
             HDG {primaryTarget.heading} / {primaryTarget.speed.toFixed(1)} km
           </div>
         </div>
@@ -1045,8 +1045,8 @@ function RadarBadge({
       className="bg-black/22 px-3 py-2.5 backdrop-blur-md"
       style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
     >
-      <div className="text-[9px] uppercase tracking-[0.34em] text-cyan-100/50">{label}</div>
-      <div className="mt-1 text-[18px] font-bold tracking-[0.14em]" style={{ color: tone, fontFamily: monoFont }}>
+      <div className="text-[calc(9px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">{label}</div>
+      <div className="mt-1 text-[calc(18px*var(--fz))] font-bold tracking-[0.14em]" style={{ color: tone, fontFamily: monoFont }}>
         <AnimatedNumber value={value} />
       </div>
     </div>
@@ -1072,7 +1072,7 @@ function RadarTarget({ target }: { target: Target }) {
           boxShadow: `0 0 18px ${tone}`,
         }}
       />
-      <div className="absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] uppercase tracking-[0.24em] text-white/88">
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap text-[calc(10px*var(--fz))] uppercase tracking-[0.24em] text-white/88">
         {target.label}
       </div>
     </div>
@@ -1138,8 +1138,8 @@ function TinyValue({
 }) {
   return (
     <div className="bg-black/18 px-2 py-2" style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}>
-      <div className="text-[9px] uppercase tracking-[0.28em] text-cyan-100/48">{label}</div>
-      <div className="mt-1 text-[16px] font-bold tracking-[0.12em]" style={{ color: tone, fontFamily: monoFont }}>
+      <div className="text-[calc(9px*var(--fz))] uppercase tracking-[0.28em] text-cyan-100/48">{label}</div>
+      <div className="mt-1 text-[calc(16px*var(--fz))] font-bold tracking-[0.12em]" style={{ color: tone, fontFamily: monoFont }}>
         <AnimatedNumber value={value} />
       </div>
     </div>
@@ -1159,8 +1159,8 @@ function TargetInfo({ target }: { target: Target }) {
         ["Level", target.level.toUpperCase()],
       ].map(([label, value]) => (
         <div key={label} className="bg-black/18 px-3 py-3" style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}>
-          <div className="text-[9px] uppercase tracking-[0.3em] text-cyan-100/48">{label}</div>
-          <div className="mt-2 text-[14px] font-bold tracking-[0.12em]" style={{ color: tone, fontFamily: monoFont }}>
+          <div className="text-[calc(9px*var(--fz))] uppercase tracking-[0.3em] text-cyan-100/48">{label}</div>
+          <div className="mt-2 text-[calc(14px*var(--fz))] font-bold tracking-[0.12em]" style={{ color: tone, fontFamily: monoFont }}>
             {value}
           </div>
         </div>
@@ -1185,8 +1185,8 @@ function ActionLink({
       style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
     >
       <div>
-        <div className="text-[12px] font-semibold tracking-[0.16em] text-white">{label}</div>
-        <div className="mt-1 text-[10px] tracking-[0.12em] text-cyan-100/58">{desc}</div>
+        <div className="text-[calc(12px*var(--fz))] font-semibold tracking-[0.16em] text-white">{label}</div>
+        <div className="mt-1 text-[calc(10px*var(--fz))] tracking-[0.12em] text-cyan-100/58">{desc}</div>
       </div>
       <ChevronRight size={18} className="text-cyan-100/74 transition duration-300 group-hover:translate-x-1 group-hover:text-white" />
     </Link>
@@ -1214,14 +1214,14 @@ function AlertRow({
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[12px] font-semibold tracking-[0.14em] text-white">{alert.title}</span>
-            <span className="text-[9px] uppercase tracking-[0.28em]" style={{ color: tone }}>
+            <span className="text-[calc(12px*var(--fz))] font-semibold tracking-[0.14em] text-white">{alert.title}</span>
+            <span className="text-[calc(9px*var(--fz))] uppercase tracking-[0.28em]" style={{ color: tone }}>
               {alert.level}
             </span>
           </div>
-          <div className="mt-2 text-[11px] leading-5 tracking-[0.08em] text-cyan-100/66">{alert.detail}</div>
+          <div className="mt-2 text-[calc(11px*var(--fz))] leading-5 tracking-[0.08em] text-cyan-100/66">{alert.detail}</div>
         </div>
-        <div className="text-[10px] uppercase tracking-[0.28em] text-cyan-100/46" style={{ fontFamily: monoFont }}>
+        <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.28em] text-cyan-100/46" style={{ fontFamily: monoFont }}>
           {alert.time}
         </div>
       </div>

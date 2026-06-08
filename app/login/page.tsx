@@ -120,7 +120,7 @@ export default function LoginPage() {
               key={r.k}
               type="button"
               onClick={() => setRole(r.k as Role)}
-              className="relative z-10 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[14px]"
+              className="relative z-10 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[calc(14px*var(--fz))]"
               style={{
                 color: active ? "var(--ink)" : "var(--ink-soft)",
                 transition: "color 320ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -142,7 +142,7 @@ export default function LoginPage() {
       <form className="space-y-4" onSubmit={onSubmit}>
         {/* 账号 */}
         <div>
-          <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+          <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
             {content.account}
           </label>
           <div className="relative mt-2">
@@ -153,7 +153,7 @@ export default function LoginPage() {
               placeholder={content.acctPlaceholder}
               value={account}
               onChange={(e) => setAccount(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-surface border border-border font-body text-[14px] font-medium placeholder:text-ink-ghost focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20 transition-all"
+              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium placeholder:text-ink-ghost focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20 transition-all"
             />
           </div>
         </div>
@@ -161,10 +161,10 @@ export default function LoginPage() {
         {/* 密码 */}
         <div>
           <div className="flex items-center justify-between">
-            <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">
+            <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
               密码
             </label>
-            <Link href="/forgot" className="font-mono text-[10px] uppercase tracking-[0.14em] text-indigo-deep font-bold hover:underline">
+            <Link href="/forgot" className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-indigo-deep font-bold hover:underline">
               忘记密码?
             </Link>
           </div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-surface border border-border font-body text-[14px] font-medium placeholder:text-ink-ghost focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20 transition-all"
+              className="w-full pl-11 pr-12 py-3.5 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium placeholder:text-ink-ghost focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20 transition-all"
             />
             <button
               type="button"
@@ -192,7 +192,7 @@ export default function LoginPage() {
         {error && (
           <div
             role="alert"
-            className="px-4 py-3 rounded-2xl text-[13px] font-medium"
+            className="px-4 py-3 rounded-2xl text-[calc(13px*var(--fz))] font-medium"
             style={{
               background: "var(--coral-soft)",
               color: "var(--coral-deep)",
@@ -206,14 +206,14 @@ export default function LoginPage() {
         {/* 记住我 */}
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" className="w-4 h-4 rounded border-border accent-indigo" defaultChecked />
-          <span className="text-[13px] font-medium text-ink-2">在这台设备上保持登录</span>
+          <span className="text-[calc(13px*var(--fz))] font-medium text-ink-2">在这台设备上保持登录</span>
         </label>
 
         {/* 主按钮 */}
         <button
           type="submit"
           disabled={loading}
-          className="btn-indigo w-full justify-center py-3.5 text-[14px] disabled:opacity-60 disabled:cursor-not-allowed"
+          className="btn-indigo w-full justify-center py-3.5 text-[calc(14px*var(--fz))] disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ width: "100%" }}
         >
           {loading ? "登录中…" : "登录 SENTINEL"}
@@ -223,7 +223,7 @@ export default function LoginPage() {
         {/* 分隔线 */}
         <div className="flex items-center gap-3 py-2">
           <div className="flex-1 h-px bg-border" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">或使用</span>
+          <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">或使用</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
@@ -231,14 +231,14 @@ export default function LoginPage() {
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-surface font-semibold text-[13px] hover:bg-canvas-2 transition-colors"
+            className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-surface font-semibold text-[calc(13px*var(--fz))] hover:bg-canvas-2 transition-colors"
           >
             <Fingerprint size={16} style={{ color: "var(--mint-deep)" }} />
             指纹登录
           </button>
           <button
             type="button"
-            className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-surface font-semibold text-[13px] hover:bg-canvas-2 transition-colors"
+            className="flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-surface font-semibold text-[calc(13px*var(--fz))] hover:bg-canvas-2 transition-colors"
           >
             <Smartphone size={16} style={{ color: "var(--indigo-deep)" }} />
             短信验证
@@ -246,7 +246,7 @@ export default function LoginPage() {
         </div>
 
         {/* 注册入口 */}
-        <div className="pt-4 text-center text-[13px] text-ink-soft font-medium">
+        <div className="pt-4 text-center text-[calc(13px*var(--fz))] text-ink-soft font-medium">
           还没有账号？
           <Link href="/register" className="ml-1 text-indigo-deep font-bold hover:underline">
             立即注册
@@ -254,7 +254,7 @@ export default function LoginPage() {
         </div>
 
         <div className="pt-3">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold text-center mb-2">
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold text-center mb-2">
             演示直达 · DEMO SHORTCUT
           </div>
           <div className="grid grid-cols-5 gap-1.5">
@@ -270,7 +270,7 @@ export default function LoginPage() {
                 type="button"
                 disabled={loading}
                 onClick={() => demoLogin(r.account, r.href)}
-                className="px-2 py-2 rounded-xl text-center font-mono text-[10px] font-extrabold uppercase tracking-[0.06em] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 py-2 rounded-xl text-center font-mono text-[calc(10px*var(--fz))] font-extrabold uppercase tracking-[0.06em] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: "var(--canvas-2)", color: r.color, border: "1px solid var(--border)" }}
               >
                 {r.label}
@@ -279,7 +279,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="pt-2 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-ink-ghost font-bold">
+        <div className="pt-2 text-center font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-ghost font-bold">
           登录即代表同意《服务协议》与《隐私政策》
         </div>
       </form>

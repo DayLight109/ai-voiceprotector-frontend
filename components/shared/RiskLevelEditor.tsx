@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useToast } from "@/components/shared/Toast";
+import { useConfirm } from "@/components/shared/Confirm";
 import Toggle from "@/components/shared/Toggle";
 import { api, APIError } from "@/lib/api";
 import { useResource, useSingle } from "@/lib/use-resource";
+import { ListRowSkeleton, SkeletonBar } from "@/components/shared/Skeleton";
 import { Plus, Trash2, Sliders } from "lucide-react";
 
 export type RiskRule = { id: string; level: 1 | 2 | 3 | 4 | 5; keyword: string; weight: number; enabled: boolean };
@@ -18,6 +20,7 @@ const LEVELS = [
 
 export default function RiskLevelEditor({ storageKey }: { storageKey?: string }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const rules = useResource<RiskRule>(() => api.riskLevel.listRules({ pageSize: 100 }));
   const state = useSingle(() => api.riskLevel.getState());
   const active = (state.data?.activeLevel ?? 3) as 1 | 2 | 3 | 4 | 5;
@@ -51,6 +54,13 @@ export default function RiskLevelEditor({ storageKey }: { storageKey?: string })
     }
   };
   const remove = async (id: string) => {
+    const ok = await confirm({
+      title: "删除规则？",
+      desc: "将从本风控等级移除该自定义规则。",
+      tone: "danger",
+      confirmText: "删除",
+    });
+    if (!ok) return;
     try {
       await api.riskLevel.removeRule(id);
       toast("success", "已删除");
@@ -76,12 +86,16 @@ export default function RiskLevelEditor({ storageKey }: { storageKey?: string })
                 background: cur ? l.soft : "var(--surface)",
               }}
             >
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: cur ? l.color : "var(--ink-soft)" }}>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: cur ? l.color : "var(--ink-soft)" }}>
                 {l.label}
               </div>
-              <div className="mt-1 text-[12px] font-medium" style={{ color: cur ? "var(--ink)" : "var(--ink-soft)" }}>{l.desc}</div>
-              <div className="mt-3 numplate text-[20px]" style={{ color: l.color }}>
-                {rules.items.filter((r) => r.level === l.k).length}
+              <div className="mt-1 text-[calc(12px*var(--fz))] font-medium" style={{ color: cur ? "var(--ink)" : "var(--ink-soft)" }}>{l.desc}</div>
+              <div className="mt-3 numplate text-[calc(20px*var(--fz))]" style={{ color: l.color }}>
+                {rules.loading && rules.items.length === 0 ? (
+                  <SkeletonBar className="h-5 w-6" />
+                ) : (
+                  rules.items.filter((r) => r.level === l.k).length
+                )}
               </div>
             </button>
           );
@@ -91,19 +105,25 @@ export default function RiskLevelEditor({ storageKey }: { storageKey?: string })
       <div className="panel p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">CUSTOM RULES</div>
-            <h3 className="font-display text-[18px] font-extrabold mt-0.5">L{active} · 自定义规则 · {view.length} 条</h3>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">CUSTOM RULES</div>
+            {state.loading && !state.data ? (
+              <SkeletonBar className="h-5 w-48 mt-1.5" />
+            ) : (
+              <h3 className="font-display text-[calc(18px*var(--fz))] font-extrabold mt-0.5">L{active} · 自定义规则 · {view.length} 条</h3>
+            )}
           </div>
-          <button onClick={addRule} className="btn-indigo py-2 px-3 text-[12px]">
+          <button onClick={addRule} className="btn-indigo py-2 px-3 text-[calc(12px*var(--fz))]">
             <Plus size={12} /> 新增规则
           </button>
         </div>
 
-        {view.length === 0 ? (
+        {rules.loading && rules.items.length === 0 ? (
+          <ListRowSkeleton count={4} />
+        ) : view.length === 0 ? (
           <div className="py-12 text-center text-ink-soft">
             <Sliders size={28} className="mx-auto text-ink-ghost mb-2" />
-            <div className="font-display text-[14px] font-extrabold">本级别尚未配置规则</div>
-            <div className="mt-1 text-[12px]">点击右上角新增</div>
+            <div className="font-display text-[calc(14px*var(--fz))] font-extrabold">本级别尚未配置规则</div>
+            <div className="mt-1 text-[calc(12px*var(--fz))]">点击右上角新增</div>
           </div>
         ) : (
           <div className="space-y-2">
@@ -135,7 +155,7 @@ function RuleRow({
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onBlur={() => { if (keyword !== rule.keyword) onUpdate(rule.id, { keyword }); }}
-          className="w-full px-3 py-2 rounded-xl bg-surface border border-border text-[13px] font-medium focus:outline-none focus:border-indigo"
+          className="w-full px-3 py-2 rounded-xl bg-surface border border-border text-[calc(13px*var(--fz))] font-medium focus:outline-none focus:border-indigo"
         />
       </div>
       <div className="col-span-6 md:col-span-3 flex items-center gap-2">
@@ -146,13 +166,13 @@ function RuleRow({
           value={weight}
           onChange={(e) => setWeight(Number(e.target.value))}
           onBlur={() => { if (weight !== rule.weight) onUpdate(rule.id, { weight }); }}
-          className="w-20 px-3 py-2 rounded-xl bg-surface border border-border text-[13px] font-mono font-bold focus:outline-none focus:border-indigo"
+          className="w-20 px-3 py-2 rounded-xl bg-surface border border-border text-[calc(13px*var(--fz))] font-mono font-bold focus:outline-none focus:border-indigo"
         />
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">权重</span>
+        <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">权重</span>
       </div>
       <div className="col-span-3 md:col-span-2 flex items-center gap-2">
         <Toggle checked={rule.enabled} onChange={(v) => onUpdate(rule.id, { enabled: v })} />
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold" style={{ color: rule.enabled ? "var(--mint-deep)" : "var(--ink-soft)" }}>
+        <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold" style={{ color: rule.enabled ? "var(--mint-deep)" : "var(--ink-soft)" }}>
           {rule.enabled ? "启用" : "停用"}
         </span>
       </div>

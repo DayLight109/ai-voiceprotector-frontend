@@ -78,6 +78,10 @@
   --shadow-indigo: 0 20px 40px -20px rgba(91, 95, 222, 0.45);
 
   --radius: 1rem;
+
+  /* 字号缩放因子：text-[calc(Npx*var(--fz))] 全站字号乘以它。
+     由 lib/font-size.tsx 驱动，只影响文字、不动间距/图标/圆角。 */
+  --fz: 1;
 }
 
 .dark {
@@ -594,6 +598,35 @@
 /* focus */
 :focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; border-radius: 4px; }
 
+/* 表单控件聚焦：不画方框、不改形状，仅蓝色描边 + 柔光，沿用输入框自身圆角 */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[contenteditable]:focus-visible {
+  outline: none;
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent);
+}
+/* checkbox / radio 保留外框，但跟随其圆形/圆角 */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* 搜索胶囊：聚焦时整框发光（沿用胶囊自身圆角），内部 input 不单独发光 */
+.search-pill:focus-within {
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent);
+}
+.search-pill input:focus-visible {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+
 /* scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--canvas-2); }
@@ -602,6 +635,12 @@
   border-radius: 999px; border: 2px solid var(--canvas-2);
 }
 ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ink) 45%, transparent); }
+
+/* 趋势图横向滚动条：纤细，避免压住柱状图 */
+.trend-scroll { scrollbar-width: thin; }
+.trend-scroll::-webkit-scrollbar { height: 6px; }
+.trend-scroll::-webkit-scrollbar-thumb { border-width: 1px; }
+
 
 button { cursor: pointer; }
 
@@ -635,6 +674,30 @@ button { cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce) {
   .page-enter, .page-enter > * { animation: none !important; }
+}
+
+/* ============================================================
+   外观偏好 · 界面密度（手动开关，lib/appearance.tsx）
+   只覆盖 Tailwind 的 --spacing 基准 —— p/m/gap/space 等间距类都是
+   calc(var(--spacing) * N)，改它即可等比缩放留白，而 text-* 字号不走
+   这个变量，故密度与字号 zoom 完全正交、互不影响。
+   ============================================================ */
+:root { --spacing: 0.25rem; }
+[data-density="compact"] { --spacing: 0.215rem; }
+[data-density="loose"]   { --spacing: 0.29rem; }
+
+/* ============================================================
+   外观偏好 · 降低动画（手动开关，lib/appearance.tsx）
+   系统 prefers-reduced-motion 只覆盖具名动画类；手动开关需要全局兜底，
+   把所有动画与过渡压到近似 0，连带禁掉具名动画与滚动平滑。
+   ============================================================ */
+[data-reduce-motion="1"] *,
+[data-reduce-motion="1"] *::before,
+[data-reduce-motion="1"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }
 
 

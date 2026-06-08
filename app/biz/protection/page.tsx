@@ -10,12 +10,13 @@ import { type BlackEntry, type WhiteEntry } from "@/lib/mock";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { useHybridBlacklist } from "@/lib/blacklist-store";
-import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine } from "lucide-react";
+import { Plus, Trash2, Edit3, ShieldOff, ShieldCheck, ArrowDownAZ, Cloud, HardDrive, ScanLine, Inbox } from "lucide-react";
+import { ListRowSkeleton } from "@/components/shared/Skeleton";
 
 type BlackForm = { number: string; reason: string; category: BlackEntry["category"]; risk: number };
-type WhiteForm = { phone: string; name: string; relation: string };
+type WhiteForm = { number: string; name: string; relation: string };
 const emptyBlack: BlackForm = { number: "", reason: "", category: "其他", risk: 70 };
-const emptyWhite: WhiteForm = { phone: "", name: "", relation: "" };
+const emptyWhite: WhiteForm = { number: "", name: "", relation: "" };
 
 export default function BizProtectionPage() {
   const toast = useToast();
@@ -60,7 +61,7 @@ export default function BizProtectionPage() {
   const openEditWhite = (r: WhiteEntry) => {
     setEditingWhite(r);
     setEditingBlack(null);
-    setWForm({ phone: r.phone, name: r.name, relation: r.relation });
+    setWForm({ number: r.number, name: r.name, relation: r.relation });
     setOpen(true);
   };
 
@@ -84,14 +85,14 @@ export default function BizProtectionPage() {
           toast("success", "已加入本地黑名单", f.number);
         }
       } else {
-        const f = { ...wForm, phone: wForm.phone.trim(), name: wForm.name.trim(), relation: wForm.relation.trim() };
-        if (!f.phone) { toast("error", "请填写号码"); setSaving(false); return; }
+        const f = { ...wForm, number: wForm.number.trim(), name: wForm.name.trim(), relation: wForm.relation.trim() };
+        if (!f.number) { toast("error", "请填写号码"); setSaving(false); return; }
         if (editingWhite) {
           await api.whitelist.update(editingWhite.id, f);
           toast("success", "已更新白名单");
         } else {
           await api.whitelist.create(f as any);
-          toast("success", "已加入白名单", f.phone);
+          toast("success", "已加入白名单", f.number);
         }
         wlist.refresh();
       }
@@ -131,7 +132,7 @@ export default function BizProtectionPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="panel p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">扫描匹配源</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">扫描匹配源</div>
             <ScanLine size={14} className="text-ink-soft" />
           </div>
           <div className="flex items-center gap-2 p-1 rounded-full bg-canvas-2 border border-border">
@@ -141,7 +142,7 @@ export default function BizProtectionPage() {
             ].map((o) => {
               const active = scanMode === o.k;
               return (
-                <button key={o.k} onClick={() => setScanMode(o.k as any)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[12px] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
+                <button key={o.k} onClick={() => setScanMode(o.k as any)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[calc(12px*var(--fz))] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? "var(--ink)" : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
                   <o.icon size={12} />
                   {o.label}
                 </button>
@@ -152,18 +153,18 @@ export default function BizProtectionPage() {
 
         <div className="panel p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">辅助助手</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">辅助助手</div>
             <ArrowDownAZ size={14} className="text-ink-soft" />
           </div>
-          <button onClick={() => setSortByRisk((v) => !v)} className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-colors" style={{ background: sortByRisk ? "var(--indigo)" : "var(--canvas-2)", color: sortByRisk ? "#fff" : "var(--ink)" }}>
+          <button onClick={() => setSortByRisk((v) => !v)} className="w-full py-2.5 rounded-xl text-[calc(13px*var(--fz))] font-bold transition-colors" style={{ background: sortByRisk ? "var(--indigo)" : "var(--canvas-2)", color: sortByRisk ? "#fff" : "var(--ink)" }}>
             {sortByRisk ? "✓ 按风险分排序" : "按时间排序"}
           </button>
         </div>
 
         <div className="panel p-5" style={{ background: "linear-gradient(135deg, var(--indigo-soft), var(--mint-soft))" }}>
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold mb-2">企业 API 接入</div>
-          <div className="font-display text-[18px] font-extrabold mb-1">/v1/analyze</div>
-          <div className="text-[12px] text-ink-2 font-medium leading-[1.6]">
+          <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-2">企业 API 接入</div>
+          <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">/v1/analyze</div>
+          <div className="text-[calc(12px*var(--fz))] text-ink-2 font-medium leading-[1.6]">
             POST 来电号码、信令源、通话片段，毫秒级返回 SAFE/WATCH/ALERT/BLOCK 判决。
           </div>
         </div>
@@ -178,13 +179,13 @@ export default function BizProtectionPage() {
             ].map((t) => {
               const active = t.k === tab;
               return (
-                <button key={t.k} onClick={() => setTab(t.k as any)} className="flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? (t.tone === "coral" ? "var(--coral-deep)" : "var(--mint-deep)") : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
+                <button key={t.k} onClick={() => setTab(t.k as any)} className="flex items-center gap-2 px-4 py-2 rounded-full text-[calc(13px*var(--fz))] font-bold transition-colors" style={{ background: active ? "var(--surface)" : "transparent", color: active ? (t.tone === "coral" ? "var(--coral-deep)" : "var(--mint-deep)") : "var(--ink-soft)", boxShadow: active ? "var(--shadow-sm)" : "none" }}>
                   <t.icon size={14} />{t.label}
                 </button>
               );
             })}
           </div>
-          <button onClick={openCreate} disabled={tab === "blacklist" && scanMode === "cloud"} className="btn-indigo py-2 px-3 text-[12px] disabled:opacity-40 disabled:cursor-not-allowed" title={tab === "blacklist" && scanMode === "cloud" ? "云端同步条目由系统管理员维护，不可编辑" : undefined}>
+          <button onClick={openCreate} disabled={tab === "blacklist" && scanMode === "cloud"} className="btn-indigo py-2 px-3 text-[calc(12px*var(--fz))] disabled:opacity-40 disabled:cursor-not-allowed" title={tab === "blacklist" && scanMode === "cloud" ? "云端同步条目由系统管理员维护，不可编辑" : undefined}>
             <Plus size={12} /> 新增{tab === "blacklist" ? "黑" : "白"}名单
           </button>
         </div>
@@ -202,7 +203,7 @@ export default function BizProtectionPage() {
             ]}
             actions={(r) => (
               scanMode === "cloud" ? (
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold text-ink-soft">READ ONLY</span>
+                <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-ink-soft">READ ONLY</span>
               ) : (
                 <div className="flex items-center gap-1 justify-end">
                   <button onClick={() => openEditBlack(r)} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
@@ -211,12 +212,20 @@ export default function BizProtectionPage() {
               )
             )}
           />
+        ) : wlist.loading && wlist.items.length === 0 ? (
+          <ListRowSkeleton count={5} />
+        ) : wlist.items.length === 0 ? (
+          <div className="panel p-12 flex flex-col items-center justify-center text-center">
+            <Inbox size={32} className="text-ink-ghost mb-3" />
+            <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">白名单还没有号码</div>
+            <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">NO TRUSTED NUMBERS YET</div>
+          </div>
         ) : (
           <DataTable<WhiteEntry>
             rows={wlist.items}
-            searchKeys={["phone", "name", "relation"]}
+            searchKeys={["number", "name", "relation"]}
             columns={[
-              { key: "phone", label: "号码", render: (r) => <span className="font-mono font-bold">{r.phone}</span> },
+              { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
               { key: "name", label: "联系人" },
               { key: "relation", label: "关系" },
               { key: "createdAt", label: "时间" },
@@ -237,8 +246,8 @@ export default function BizProtectionPage() {
         title={`${isEditing ? "编辑" : "新增"}${tab === "blacklist" ? "黑名单" : "白名单"}`}
         footer={
           <>
-            <button disabled={saving} onClick={() => setOpen(false)} className="btn-ghost py-2 px-4 text-[13px]">取消</button>
-            <button disabled={saving} onClick={submit} className="btn-indigo py-2 px-4 text-[13px]">
+            <button disabled={saving} onClick={() => setOpen(false)} className="btn-ghost py-2 px-4 text-[calc(13px*var(--fz))]">取消</button>
+            <button disabled={saving} onClick={submit} className="btn-indigo py-2 px-4 text-[calc(13px*var(--fz))]">
               {saving ? "保存中…" : "保存"}
             </button>
           </>
@@ -266,7 +275,7 @@ export default function BizProtectionPage() {
         ) : (
           <form id="biz-wl-form" onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
             <Field label="号码">
-              <input required value={wForm.phone} onChange={(e) => setWForm({ ...wForm, phone: e.target.value })} placeholder="+86 138 0000 0000" className="ipt" />
+              <input required value={wForm.number} onChange={(e) => setWForm({ ...wForm, number: e.target.value })} placeholder="+86 138 0000 0000" className="ipt" />
             </Field>
             <Field label="联系人">
               <input value={wForm.name} onChange={(e) => setWForm({ ...wForm, name: e.target.value })} placeholder="例如：客户成功部" className="ipt" />
@@ -285,7 +294,7 @@ export default function BizProtectionPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
+      <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold block mb-1.5">{label}</label>
       {children}
     </div>
   );

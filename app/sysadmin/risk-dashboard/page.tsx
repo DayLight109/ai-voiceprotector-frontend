@@ -48,7 +48,7 @@ export default function RiskDashboard() {
         title="风险大屏"
         desc="实时告警事件 · 高危地区分布 · 风险仪表盘。"
         actions={
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-canvas-2 border border-border font-mono text-[12px] font-bold">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-canvas-2 border border-border font-mono text-[calc(12px*var(--fz))] font-bold">
             <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--mint)" }} />
             LIVE · {clock}
           </div>
@@ -59,10 +59,10 @@ export default function RiskDashboard() {
         {/* 风险仪表盘 */}
         <section className="col-span-12 lg:col-span-4">
           <div className="panel p-6 mb-5 text-center" style={{ background: "linear-gradient(160deg, var(--coral-soft), var(--amber-soft))" }}>
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">RISK INDEX</div>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">RISK INDEX</div>
             <Gauge value={78} />
-            <div className="numplate text-[40px] leading-none -mt-12" style={{ color: "var(--coral-deep)" }}>78</div>
-            <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] font-bold text-coral-deep">
+            <div className="numplate text-[calc(40px*var(--fz))] leading-none -mt-12" style={{ color: "var(--coral-deep)" }}>78</div>
+            <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] font-bold text-coral-deep">
               DEFCON 2 · ADVISORY
             </div>
           </div>
@@ -78,8 +78,8 @@ export default function RiskDashboard() {
                   <s.Icon size={16} />
                 </div>
                 <div className="flex-1">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{s.k}</div>
-                  <div className="numplate text-[22px]" style={{ color: s.c }}>{s.v}</div>
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{s.k}</div>
+                  <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: s.c }}>{s.v}</div>
                 </div>
               </div>
             ))}
@@ -89,8 +89,8 @@ export default function RiskDashboard() {
         {/* 告警事件 */}
         <section className="col-span-12 lg:col-span-4 panel p-6">
           <div className="mb-5">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">LIVE EVENTS</div>
-            <h2 className="font-display text-[20px] font-extrabold mt-1">告警事件流</h2>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">LIVE EVENTS</div>
+            <h2 className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">告警事件流</h2>
           </div>
           <div className="space-y-2">
             {EVENTS.map((e, i) => (
@@ -100,12 +100,12 @@ export default function RiskDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] font-extrabold" style={{ color: e.level === "danger" ? "var(--coral-deep)" : e.level === "warn" ? "var(--amber-deep)" : "var(--indigo-deep)" }}>{e.verb}</span>
-                    <span className="font-mono text-[11px] font-bold truncate">{e.phone}</span>
+                    <span className="font-mono text-[calc(11px*var(--fz))] font-extrabold" style={{ color: e.level === "danger" ? "var(--coral-deep)" : e.level === "warn" ? "var(--amber-deep)" : "var(--indigo-deep)" }}>{e.verb}</span>
+                    <span className="font-mono text-[calc(11px*var(--fz))] font-bold truncate">{e.phone}</span>
                   </div>
-                  <div className="mt-0.5 text-[12px] text-ink-soft font-medium truncate">{e.reason}</div>
+                  <div className="mt-0.5 text-[calc(12px*var(--fz))] text-ink-soft font-medium truncate">{e.reason}</div>
                 </div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">{e.ts}</span>
+                <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{e.ts}</span>
               </div>
             ))}
           </div>
@@ -114,8 +114,8 @@ export default function RiskDashboard() {
         {/* 高危地区 */}
         <section className="col-span-12 lg:col-span-4 panel p-6">
           <div className="mb-5">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft font-bold">HIGH-RISK REGIONS</div>
-            <h2 className="font-display text-[20px] font-extrabold mt-1">高危地区</h2>
+            <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">HIGH-RISK REGIONS</div>
+            <h2 className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">高危地区</h2>
           </div>
           <div className="space-y-3">
             {REGIONS.map((r) => (
@@ -123,9 +123,9 @@ export default function RiskDashboard() {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <MapPin size={12} className="text-ink-soft" />
-                    <span className="font-display text-[13px] font-extrabold">{r.name}</span>
+                    <span className="font-display text-[calc(13px*var(--fz))] font-extrabold">{r.name}</span>
                   </div>
-                  <span className="font-mono text-[11px] font-bold">{r.count.toLocaleString()}</span>
+                  <span className="font-mono text-[calc(11px*var(--fz))] font-bold">{r.count.toLocaleString()}</span>
                 </div>
                 <div className="h-2 rounded-full bg-canvas-2 overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${r.share * 3}%`, background: r.share >= 20 ? "var(--coral)" : r.share >= 10 ? "var(--amber)" : "var(--indigo)" }} />

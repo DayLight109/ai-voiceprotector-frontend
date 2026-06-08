@@ -36,8 +36,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 <Icon size={15} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-display text-[13px] font-extrabold">{it.title}</div>
-                {it.desc && <div className="mt-0.5 text-[12px] text-ink-soft font-medium">{it.desc}</div>}
+                <div className="font-display text-[calc(13px*var(--fz))] font-extrabold">{it.title}</div>
+                {it.desc && <div className="mt-0.5 text-[calc(12px*var(--fz))] text-ink-soft font-medium">{it.desc}</div>}
               </div>
               <button onClick={() => setItems((p) => p.filter((x) => x.id !== it.id))} className="text-ink-soft hover:text-ink">
                 <X size={14} />

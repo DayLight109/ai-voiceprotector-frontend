@@ -45,8 +45,8 @@ export default function Modal({
       <div className={`relative w-full ${w} bg-surface rounded-3xl shadow-xl border border-border overflow-hidden rise`}>
         <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-border">
           <div className="flex-1">
-            <h3 className="font-display text-[20px] font-extrabold tracking-tight">{title}</h3>
-            {desc && <p className="mt-1 text-[13px] text-ink-soft font-medium">{desc}</p>}
+            <h3 className="font-display text-[calc(20px*var(--fz))] font-extrabold tracking-tight">{title}</h3>
+            {desc && <p className="mt-1 text-[calc(13px*var(--fz))] text-ink-soft font-medium">{desc}</p>}
           </div>
           <button
             onClick={onClose}
