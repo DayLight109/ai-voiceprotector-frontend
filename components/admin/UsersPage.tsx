@@ -29,9 +29,11 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
         });
         toast("success", "已更新", form.name);
       } else {
+        // 角色由控制台类型决定：家庭管理员建 family、企业管理员建 biz
+        // （后端 manageableRoles 只允许这两种，旧 viewer/operator 会被 403）
         await list.create({
-          name: form.name, role: form.role, dept: form.dept,
-          email: form.email, status: "active",
+          name: form.name, role: isFam ? "family" : "biz", dept: form.dept,
+          email: form.email, status: "active", password: form.password,
         });
         toast("success", "已新增成员", form.name);
       }
@@ -98,7 +100,17 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
                 </div>
               )
             },
-            { key: "role", label: "角色", render: (r) => <span className="tag-chip" data-tone={r.role === "admin" ? "indigo" : r.role === "operator" ? "mint" : "amber"}>{r.role === "admin" ? "管理员" : r.role === "operator" ? "操作员" : "查看者"}</span> },
+            { key: "role", label: "角色", render: (r) => {
+              const m: Record<string, { tone: string; label: string }> = {
+                family: { tone: "amber", label: "家庭成员" },
+                biz: { tone: "mint", label: "员工" },
+                family_admin: { tone: "indigo", label: "家庭管理员" },
+                admin: { tone: "indigo", label: "企业管理员" },
+                sysadmin: { tone: "coral", label: "系统管理员" },
+              };
+              const v = m[r.role] ?? { tone: "amber", label: r.role };
+              return <span className="tag-chip" data-tone={v.tone}>{v.label}</span>;
+            } },
             { key: "dept", label: isFam ? "关系" : "部门" },
             {
               key: "status", label: "状态", render: (r) => {
@@ -106,7 +118,7 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
                 return <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] px-2 py-1 rounded-full font-bold" style={{ background: m.bg, color: m.fg }}>{m.l}</span>;
               }
             },
-            { key: "last", label: "活动", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.last}</span> },
+            { key: "lastLoginAt", label: "最近登录", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.lastLoginAt ? r.lastLoginAt.replace("T", " ").slice(0, 16) : "—"}</span> },
           ]}
           actions={(r) => (
             <div className="flex items-center gap-1 justify-end">
@@ -136,13 +148,29 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
 
 function UserForm({ editing, onSubmit, isFam }: { editing: ManagedUser | null; onSubmit: (f: any) => void; isFam: boolean }) {
   const [form, setForm] = useState<any>(
-    editing ?? { name: "", role: "viewer", dept: "", email: "" }
+    editing
+      ? { ...editing, dept: editing.dept ?? "", email: editing.email ?? "" }
+      : { name: "", role: isFam ? "family" : "biz", dept: "", email: "", password: "" }
   );
   return (
     <form id="user-form" onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
       <Field label="姓名"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="ipt" /></Field>
       <Field label={isFam ? "亲属关系" : "部门"}><input value={form.dept} onChange={(e) => setForm({ ...form, dept: e.target.value })} className="ipt" placeholder={isFam ? "父亲 / 母亲 / 兄弟…" : "客服 / 风控 / 审计…"} /></Field>
       <Field label="联系方式"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="ipt" placeholder="手机号 / 邮箱" /></Field>
+      {!editing && (
+        <Field label="初始登录密码">
+          <input
+            required
+            type="password"
+            minLength={8}
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            className="ipt"
+            placeholder="至少 8 位，成员登录后可自行修改"
+            autoComplete="new-password"
+          />
+        </Field>
+      )}
       <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}`}</style>
     </form>
   );

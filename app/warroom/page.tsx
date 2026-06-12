@@ -10,7 +10,6 @@ import {
   Clock3,
   Cpu,
   Gauge,
-  HardDrive,
   Network,
   Radio,
   Server,
@@ -28,6 +27,7 @@ type Metric = {
   min: number;
   max: number;
   delta: number;
+  unit?: "percent" | "mbps" | "count";
 };
 
 type Device = {
@@ -65,10 +65,10 @@ const monoFont =
   '"Cascadia Code","JetBrains Mono","Consolas","SFMono-Regular",monospace';
 
 const baseMetrics: Metric[] = [
-  { id: "cpu", label: "CPU LOAD", value: 68, min: 24, max: 96, delta: 5.4 },
-  { id: "memory", label: "MEMORY GRID", value: 61, min: 28, max: 94, delta: 4.2 },
-  { id: "storage", label: "STORAGE BUS", value: 44, min: 14, max: 82, delta: 2.6 },
-  { id: "network", label: "NETWORK FLOW", value: 76, min: 22, max: 98, delta: 6.8 },
+  { id: "cpu", label: "CPU LOAD", value: 68, min: 24, max: 96, delta: 5.4, unit: "percent" },
+  { id: "memory", label: "MEMORY GRID", value: 61, min: 28, max: 94, delta: 4.2, unit: "percent" },
+  { id: "network", label: "NETWORK FLOW", value: 12.6, min: 0.4, max: 96, delta: 4.4, unit: "mbps" },
+  { id: "goroutines", label: "GOROUTINES", value: 86, min: 30, max: 480, delta: 18, unit: "count" },
 ];
 
 const baseDevices: Device[] = [
@@ -149,8 +149,8 @@ const targetNames = [
 const metricIcons = {
   cpu: Cpu,
   memory: Gauge,
-  storage: HardDrive,
   network: Network,
+  goroutines: Workflow,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -210,11 +210,15 @@ export default function WarroomPage() {
   const seedRef = useRef(0);
 
   // ── 真实后端接入状态 ───────────────────────────────────
-  // defcon: 真实防御等级(/api/v1/defcon);statsSynced: 是否已成功拉到 /stats。
-  // statsSynced 为 true 后,下方随机 drift 动画对这些真实指标停手,改由后端数据驱动。
+  // defcon: 真实防御等级(/api/v1/defcon);statsSynced: 计数器已被后端驱动;
+  // runtimeSynced: 系统指标(CPU/内存/网络/goroutine)已被后端驱动。
+  // 同步成功后,下方随机 drift 动画对这些真实指标停手。
   const [defcon, setDefcon] = useState<number | null>(null);
   const [defconWarn, setDefconWarn] = useState<string | null>(null);
   const [statsSynced, setStatsSynced] = useState(false);
+  const [runtimeSynced, setRuntimeSynced] = useState(false);
+  const [devicesReal, setDevicesReal] = useState(false);
+  const [feedSubs, setFeedSubs] = useState<number | null>(null);
 
   useEffect(() => {
     const updateClock = () => setClock(nowClock());
@@ -232,24 +236,35 @@ export default function WarroomPage() {
     return () => { done = true; };
   }, []);
 
-  // ── 计数器:轮询 /api/v1/stats 真实数据 ─────────────────
-  // 成功后 setStatsSynced(true),threatIndex/blocked/sessions 改由后端驱动;
-  // 失败则保持 false,下方随机 drift 动画继续兜底(暂时的假数据展示)。
+  // ── 轮询 /api/v1/warroom/overview:runtime 指标 + 计数器 + 引擎统计 ──
+  // 成功后四个系统指标卡、Blocked/Sessions/Integrity/Threat 全部由真实数据驱动;
+  // 失败(未登录等)则保持随机动画兜底(演示模式)。
   useEffect(() => {
     let stop = false;
     const pull = async () => {
       try {
-        const s = await api.getStats();
+        const ov = await api.warroom.overview();
         if (stop) return;
-        if (typeof s.blockedCalls === "number") setBlocked(s.blockedCalls);
-        if (typeof s.interceptedCalls === "number") setSessions(s.interceptedCalls);
-        if (typeof s.defcon === "number") setDefcon(s.defcon);
+        const rt = ov.runtime;
+        const mbps = ((rt.netRxBps + rt.netTxBps) * 8) / 1_000_000;
+        setMetrics([
+          { id: "cpu", label: "CPU LOAD", value: Math.round(rt.cpuPct), min: 0, max: 100, delta: 0, unit: "percent" },
+          { id: "memory", label: "MEMORY GRID", value: Math.round(rt.memPct), min: 0, max: 100, delta: 0, unit: "percent" },
+          { id: "network", label: "NETWORK FLOW", value: Number(mbps.toFixed(1)), min: 0, max: 1000, delta: 0, unit: "mbps" },
+          { id: "goroutines", label: "GOROUTINES", value: rt.goroutines, min: 0, max: 10000, delta: 0, unit: "count" },
+        ]);
+        setBlocked(ov.counters.blockedCalls);
+        setSessions(ov.counters.interceptedCalls);
+        setDefcon(ov.defcon);
+        setFeedSubs(ov.hub?.subscribers ?? null);
+        // Integrity = 引擎判决成功率;无判决时视为 100%
+        const tot = ov.engine.analyzed + ov.engine.failed;
+        setIntegrity(tot > 0 ? Number(((ov.engine.analyzed / tot) * 100).toFixed(1)) : 100);
         // threatIndex 用 AI 克隆 + 话术命中的相对热度粗略映射到 0-100 观感
-        if (typeof s.aiCloneDetected === "number") {
-          const heat = Math.min(98, 42 + s.aiCloneDetected * 6 + (s.scriptHits ?? 0) * 2);
-          setThreatIndex(Math.round(heat));
-        }
+        const heat = Math.min(98, 42 + ov.counters.aiCloneDetected * 6 + ov.counters.scriptHits * 2);
+        setThreatIndex(Math.round(heat));
         setStatsSynced(true);
+        setRuntimeSynced(true);
       } catch {
         // 静默:未同步成功时由随机动画兜底
       }
@@ -257,6 +272,28 @@ export default function WarroomPage() {
     void pull();
     const id = window.setInterval(pull, 5000);
     return () => { stop = true; window.clearInterval(id); };
+  }, []);
+
+  // ── 设备列表:真实 /api/v1/devices(有数据时替换演示矩阵)─────────
+  useEffect(() => {
+    let alive = true;
+    api.devices.list({ pageSize: 8 })
+      .then((r) => {
+        if (!alive) return;
+        const rows = r.data ?? [];
+        if (!rows.length) return;
+        setDevices(rows.slice(0, 6).map((d) => ({
+          id: d.id,
+          name: d.name,
+          zone: d.type === "enterprise" ? "ENTERPRISE" : "FAMILY",
+          // health 为真实在线状态的固定映射(online/warn/offline),非实测值
+          health: d.status === "online" ? 98 : d.status === "warn" ? 65 : 30,
+          state: d.status === "online" ? "online" : d.status === "warn" ? "watch" : "risk",
+        })));
+        setDevicesReal(true);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   useEffect(() => {
@@ -274,28 +311,36 @@ export default function WarroomPage() {
     const timer = window.setInterval(() => {
       seedRef.current += 1;
 
-      setMetrics((prev) =>
-        prev.map((metric) => ({
-          ...metric,
-          value: drift(metric.value, metric.delta, metric.min, metric.max),
-        })),
-      );
+      // 系统指标有真实后端数据(/warroom/overview.runtime):同步后停止随机抖动。
+      if (!runtimeSynced) {
+        setMetrics((prev) =>
+          prev.map((metric) => ({
+            ...metric,
+            value: drift(metric.value, metric.delta, metric.min, metric.max),
+          })),
+        );
+      }
 
-      setDevices((prev) =>
-        prev.map((device) => {
-          const health = Math.round(drift(device.health, device.state === "risk" ? 8 : 4.5, 26, 99));
-          const state = health < 48 ? "risk" : health < 76 ? "watch" : "online";
-          return { ...device, health, state };
-        }),
-      );
+      // 设备矩阵接入真实 /devices 后停止抖动。
+      if (!devicesReal) {
+        setDevices((prev) =>
+          prev.map((device) => {
+            const health = Math.round(drift(device.health, device.state === "risk" ? 8 : 4.5, 26, 99));
+            const state = health < 48 ? "risk" : health < 76 ? "watch" : "online";
+            return { ...device, health, state };
+          }),
+        );
+      }
 
-      // 这三项有真实后端数据(/stats):同步成功后停止随机抖动,交给后端驱动。
+      // 这三项有真实后端数据:同步成功后停止随机抖动,交给后端驱动。
       if (!statsSynced) {
         setThreatIndex((prev) => Math.round(drift(prev, 4.8, 42, 98)));
         setSessions((prev) => Math.round(drift(prev, 60, 1220, 3420)));
         setBlocked((prev) => Math.round(drift(prev, 18, 180, 760)));
       }
-      setIntegrity((prev) => Number(drift(prev, 0.5, 88.4, 99.5).toFixed(1)));
+      if (!runtimeSynced) {
+        setIntegrity((prev) => Number(drift(prev, 0.5, 88.4, 99.5).toFixed(1)));
+      }
 
       setSignal((prev) => [...prev.slice(1), Math.round(drift(prev[prev.length - 1] ?? 50, 9, 22, 92))]);
 
@@ -323,39 +368,42 @@ export default function WarroomPage() {
         return shifted;
       });
 
-      setLogs((prev) => [
-        `${nowTime()} ${logTemplates[Math.floor(Math.random() * logTemplates.length)]}`,
-        ...prev,
-      ].slice(0, 7));
-
-      if (Math.random() < 0.5) {
-        const level: AlertItem["level"] =
-          Math.random() > 0.75 ? "critical" : Math.random() > 0.42 ? "warning" : "notice";
-        setAlerts((prev) => [
-          {
-            id: `al-${Date.now()}`,
-            title:
-              level === "critical"
-                ? "高危目标重新锁定"
-                : level === "warning"
-                ? "链路波动上升"
-                : "审计数据已归档",
-            detail:
-              level === "critical"
-                ? "扫描网格捕获二次命中，已推送应急防护。"
-                : level === "warning"
-                ? "边缘节点抖动增强，建议查看路径回放。"
-                : "实时日志与证据镜像已同步完成。",
-            level,
-            time: nowTime(),
-          },
+      // 日志与警报:接通真实事件流(/feed/stream + overview)后停止注入演示内容。
+      if (!statsSynced) {
+        setLogs((prev) => [
+          `${nowTime()} ${logTemplates[Math.floor(Math.random() * logTemplates.length)]}`,
           ...prev,
-        ].slice(0, 5));
+        ].slice(0, 7));
+
+        if (Math.random() < 0.5) {
+          const level: AlertItem["level"] =
+            Math.random() > 0.75 ? "critical" : Math.random() > 0.42 ? "warning" : "notice";
+          setAlerts((prev) => [
+            {
+              id: `al-${Date.now()}`,
+              title:
+                level === "critical"
+                  ? "高危目标重新锁定"
+                  : level === "warning"
+                  ? "链路波动上升"
+                  : "审计数据已归档",
+              detail:
+                level === "critical"
+                  ? "扫描网格捕获二次命中，已推送应急防护。"
+                  : level === "warning"
+                  ? "边缘节点抖动增强，建议查看路径回放。"
+                  : "实时日志与证据镜像已同步完成。",
+              level,
+              time: nowTime(),
+            },
+            ...prev,
+          ].slice(0, 5));
+        }
       }
     }, 1800);
 
     return () => window.clearInterval(timer);
-  }, [statsSynced]);
+  }, [statsSynced, runtimeSynced, devicesReal]);
 
   useEffect(() => {
     const stop = streamFeed({
@@ -562,10 +610,10 @@ export default function WarroomPage() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <SmallStat label="Active Sessions" value={sessions} tone="#7df6ff" />
+                <SmallStat label="Intercepted" value={sessions} tone="#7df6ff" />
                 <SmallStat label="Target Lock" value={targets.length} tone="#b794ff" />
                 <SmallStat label="Critical Alerts" value={criticalAlerts} tone="#ff7b9a" />
-                <SmallStat label="Data Sync" value={99.2} suffix="%" tone="#d8f8ff" />
+                <SmallStat label="Feed Subs" value={feedSubs ?? 0} tone="#d8f8ff" />
               </div>
             </GlassPanel>
 
@@ -591,7 +639,7 @@ export default function WarroomPage() {
           <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_180px] gap-4">
             <GlassPanel
               title="核心扫描区"
-              subtitle="Holographic Threat Sweep"
+              subtitle="Threat Sweep · 视觉演示"
               icon={Radio}
               accent="cyan"
               breathing
@@ -609,7 +657,7 @@ export default function WarroomPage() {
             <div className="grid min-h-0 grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.95fr_0.95fr]">
               <GlassPanel
                 title="信号波形"
-                subtitle="Live Spectrum"
+                subtitle="Spectrum · 视觉演示"
                 icon={Activity}
                 accent="violet"
                 compact
@@ -619,7 +667,7 @@ export default function WarroomPage() {
 
               <GlassPanel
                 title="目标坐标"
-                subtitle="Target Coordinates"
+                subtitle="Coordinates · 视觉演示"
                 icon={TerminalSquare}
                 accent="cyan"
                 compact
@@ -835,11 +883,19 @@ function HeadStat({
 
 function MetricStrip({ metric }: { metric: Metric }) {
   const Icon = metricIcons[metric.id as keyof typeof metricIcons] ?? Cpu;
-  const warn = metric.value > 82;
+  const unit = metric.unit ?? "percent";
+  // 非百分比指标按经验量程折算进度条宽度
+  const barPct =
+    unit === "percent"
+      ? metric.value
+      : unit === "mbps"
+      ? Math.min(100, metric.value * 2)
+      : Math.min(100, metric.value / 5);
+  const warn = barPct > 82;
   const soft =
     metric.id === "network"
       ? "from-cyan-300 via-violet-400 to-fuchsia-400"
-      : metric.id === "storage"
+      : metric.id === "goroutines"
       ? "from-violet-300 via-cyan-300 to-fuchsia-400"
       : "from-cyan-300 via-cyan-200 to-violet-400";
 
@@ -865,9 +921,9 @@ function MetricStrip({ metric }: { metric: Metric }) {
             className="text-[calc(28px*var(--fz))] font-black tracking-[0.12em]"
             style={{ color: warn ? "#ffb347" : "#7df6ff", fontFamily: monoFont }}
           >
-            <AnimatedNumber value={metric.value} />
+            <AnimatedNumber value={metric.value} decimals={unit === "mbps" ? 1 : 0} />
           </div>
-          <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.3em] text-cyan-100/48">percent</div>
+          <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.3em] text-cyan-100/48">{unit}</div>
         </div>
       </div>
 
@@ -875,7 +931,7 @@ function MetricStrip({ metric }: { metric: Metric }) {
         <div
           className={`h-full bg-gradient-to-r ${soft} transition-[width] duration-1000`}
           style={{
-            width: `${metric.value}%`,
+            width: `${barPct}%`,
             boxShadow: warn
               ? "0 0 16px rgba(255,179,71,0.28)"
               : "0 0 18px rgba(125,246,255,0.28)",

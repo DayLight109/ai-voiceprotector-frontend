@@ -1,37 +1,84 @@
 "use client";
-import { useEffect, useState } from "react";
-import { ShieldCheck, Bell, ListChecks, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Plus, Circle, Building2, MessageSquareWarning, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ShieldCheck, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Circle, Building2, MessageSquareWarning, AlertTriangle, Bell } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import CountUp from "@/components/shared/CountUp";
 import { BIZ_NAV } from "@/lib/nav";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import type { Appeal, CallLog } from "@/lib/mock";
 
-const ALERTS = [
-  { t: "2 分钟前", phone: "+855 23 8123 4551", loc: "柬埔寨 · 金边", tone: "block", reason: "AI 合成语音 · 0.94" },
-  { t: "14 分钟前", phone: "+95 9 7712 8830", loc: "缅甸 · 仰光", tone: "warn", reason: "客服话术伪冒" },
-  { t: "38 分钟前", phone: "+86 173 8800 1234", loc: "未知 · 长途", tone: "block", reason: "信令层伪冒" },
-  { t: "1 小时前", phone: "+86 010 5566 7788", loc: "北京 · 移动", tone: "safe", reason: "已通过验证" },
-  { t: "2 小时前", phone: "+84 28 6677 2210", loc: "越南 · 胡志明", tone: "warn", reason: "刷单返利诱导" },
-];
+function relTime(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "刚刚";
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "刚刚";
+  if (m < 60) return `${m} 分钟前`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} 小时前`;
+  return `${Math.floor(h / 24)} 天前`;
+}
+
+function isSameDay(iso: string, now: Date): boolean {
+  const d = new Date(iso);
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function isSameMonth(iso: string, now: Date): boolean {
+  const d = new Date(iso);
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+}
 
 export default function BizHome() {
-  const [loadIn, setLoadIn] = useState(false);
+  const { user } = useAuth();
+  const [calls, setCalls] = useState<CallLog[]>([]);
+  const [callsTotal, setCallsTotal] = useState(0);
+  const [appeals, setAppeals] = useState<Appeal[]>([]);
+  const [engine, setEngine] = useState<{ analyzed: number; failed: number } | null>(null);
+
   useEffect(() => {
-    const t = setTimeout(() => setLoadIn(true), 120);
-    return () => clearTimeout(t);
+    let alive = true;
+    (async () => {
+      const [c, ap, ov] = await Promise.allSettled([
+        api.calls.list({ pageSize: 100 }),
+        api.appeals.list({ pageSize: 100 }),
+        api.warroom.overview(),
+      ]);
+      if (!alive) return;
+      if (c.status === "fulfilled") {
+        setCalls(c.value.data ?? []);
+        setCallsTotal(c.value.meta?.total ?? (c.value.data?.length ?? 0));
+      }
+      if (ap.status === "fulfilled") setAppeals(ap.value.data ?? []);
+      if (ov.status === "fulfilled") setEngine(ov.value.engine ?? null);
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
+
+  const now = new Date();
+  const userName = user?.name ?? "用户";
+  const monthBlocked = useMemo(() => calls.filter((c) => c.verdict === "拦截" && isSameMonth(c.createdAt, now)).length, [calls]);
+  const todayCalls = useMemo(() => calls.filter((c) => isSameDay(c.createdAt, now)).length, [calls]);
+  const todayBlocked = useMemo(() => calls.filter((c) => c.verdict === "拦截" && isSameDay(c.createdAt, now)).length, [calls]);
+  const todayWarned = useMemo(() => calls.filter((c) => c.verdict === "预警" && isSameDay(c.createdAt, now)).length, [calls]);
+  const pendingAppeals = useMemo(() => appeals.filter((a) => a.status === "处理中").length, [appeals]);
+  const alerts = calls.slice(0, 5);
+
   return (
-    <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "首页"]}>
+    <AppShell role="biz" userName={userName} nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "首页"]}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.18em] text-ink-soft font-bold mb-2">
-            BUSINESS PORTAL · 95533 客服中心
+            BUSINESS PORTAL{user?.dept ? ` · ${user.dept}` : ""}
           </div>
           <h1 className="font-display text-[calc(32px*var(--fz))] md:text-[calc(40px*var(--fz))] font-extrabold tracking-tight">
-            欢迎回来，周珩
+            欢迎回来，{userName}
           </h1>
           <p className="mt-2 text-[calc(14px*var(--fz))] text-ink-soft font-medium">
-            本月已拦截冒充话术 <CountUp to={2318} duration={1200} className="font-extrabold text-coral-deep" /> 起，
-            申诉 <CountUp to={12} duration={900} className="font-extrabold text-indigo-deep" /> 起处理中。
+            本月已拦截可疑通话 <CountUp to={monthBlocked} duration={1200} className="font-extrabold text-coral-deep" /> 起，
+            申诉 <CountUp to={pendingAppeals} duration={900} className="font-extrabold text-indigo-deep" /> 起处理中。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -46,10 +93,10 @@ export default function BizHome() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "今日通话", num: 4128, suffix: "", decimals: 0, sub: "条客服 + API 调用", tint: "var(--indigo)", soft: "var(--indigo-soft)", icon: Building2 },
-          { label: "拦截命中", num: 186, suffix: "", decimals: 0, sub: "次诈骗伪冒", tint: "var(--coral)", soft: "var(--coral-soft)", icon: PhoneOff },
-          { label: "申诉处理中", num: 12, suffix: "", decimals: 0, sub: "起待复核", tint: "var(--amber)", soft: "var(--amber-soft)", icon: MessageSquareWarning },
-          { label: "本月误报率", num: 0.28, suffix: "%", decimals: 2, sub: "环比 ↓ 0.06", tint: "var(--mint-deep)", soft: "var(--mint-soft)", icon: ListChecks },
+          { label: "通话记录", num: callsTotal, sub: "条累计判决", tint: "var(--indigo)", soft: "var(--indigo-soft)", icon: Building2 },
+          { label: "今日拦截", num: todayBlocked, sub: `今日通话 ${todayCalls} 条`, tint: "var(--coral)", soft: "var(--coral-soft)", icon: PhoneOff },
+          { label: "申诉处理中", num: pendingAppeals, sub: `累计 ${appeals.length} 起`, tint: "var(--amber)", soft: "var(--amber-soft)", icon: MessageSquareWarning },
+          { label: "今日预警", num: todayWarned, sub: "次风险提示", tint: "var(--mint-deep)", soft: "var(--mint-soft)", icon: Bell },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-60" style={{ background: k.soft }} />
@@ -61,8 +108,6 @@ export default function BizHome() {
             </div>
             <CountUp
               to={k.num}
-              decimals={k.decimals}
-              suffix={k.suffix}
               duration={1100}
               className="relative numplate text-[calc(36px*var(--fz))] leading-none"
             />
@@ -82,32 +127,37 @@ export default function BizHome() {
               全部 <ArrowUpRight size={12} />
             </a>
           </div>
-          <div className="space-y-2">
-            {ALERTS.map((a, i) => {
-              const tone = a.tone === "block" ? "coral" : a.tone === "warn" ? "amber" : "mint";
-              const label = a.tone === "block" ? "拦截" : a.tone === "warn" ? "预警" : "通过";
-              return (
-                <div key={i} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-canvas-2 transition-colors">
-                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: `var(--${tone}-soft)`, color: `var(--${tone}-deep)` }}>
-                    {a.tone === "block" ? <PhoneOff size={18} /> : a.tone === "warn" ? <AlertTriangle size={18} /> : <ShieldCheck size={18} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-display text-[calc(14px*var(--fz))] font-extrabold truncate">{a.phone}</span>
-                      <span className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full font-bold" style={{ background: `var(--${tone}-soft)`, color: `var(--${tone}-deep)` }}>
-                        {label}
-                      </span>
+          {alerts.length === 0 ? (
+            <div className="py-12 text-center text-[calc(13px*var(--fz))] text-ink-soft font-medium">
+              暂无通话判决记录
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {alerts.map((a) => {
+                const tone = a.verdict === "拦截" ? "coral" : a.verdict === "预警" ? "amber" : "mint";
+                return (
+                  <div key={a.id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-canvas-2 transition-colors">
+                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: `var(--${tone}-soft)`, color: `var(--${tone}-deep)` }}>
+                      {a.verdict === "拦截" ? <PhoneOff size={18} /> : a.verdict === "预警" ? <AlertTriangle size={18} /> : <ShieldCheck size={18} />}
                     </div>
-                    <div className="mt-0.5 text-[calc(12px*var(--fz))] text-ink-soft font-medium truncate">{a.loc} · {a.reason}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-display text-[calc(14px*var(--fz))] font-extrabold truncate">{a.phone}</span>
+                        <span className="font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full font-bold" style={{ background: `var(--${tone}-soft)`, color: `var(--${tone}-deep)` }}>
+                          {a.verdict}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 text-[calc(12px*var(--fz))] text-ink-soft font-medium truncate">{a.region || "未知归属地"} · {a.reason || "—"}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{relTime(a.createdAt)}</div>
+                      <a href="/biz/calls" className="font-mono text-[calc(11px*var(--fz))] text-indigo-deep font-bold hover:underline">详情</a>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{a.t}</div>
-                    <a href="/biz/calls" className="font-mono text-[calc(11px*var(--fz))] text-indigo-deep font-bold hover:underline">详情</a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="col-span-12 lg:col-span-4 panel p-6">
@@ -117,34 +167,21 @@ export default function BizHome() {
           </div>
           <div className="space-y-3">
             {[
-              { icon: Radio, name: "L1 来电溯源", lat: 22, load: 68, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-              { icon: Waves, name: "L2 声纹取证", lat: 61, load: 82, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-              { icon: ScanLine, name: "L3 话术语义", lat: 37, load: 54, tint: "var(--coral)", soft: "var(--coral-soft)" },
-            ].map((l, i) => (
+              { icon: Radio, name: "L1 来电溯源", desc: "信令规则 · 实时比对", tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+              { icon: Waves, name: "L2 声纹取证", desc: "ONNX 声纹 · 合成识别", tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+              { icon: ScanLine, name: "L3 话术语义", desc: "千问 LLM · 话术分类", tint: "var(--coral)", soft: "var(--coral-soft)" },
+            ].map((l) => (
               <div key={l.name} className="p-4 rounded-2xl bg-canvas-2">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: l.soft, color: l.tint }}>
                       <l.icon size={13} />
                     </div>
                     <span className="font-display text-[calc(13px*var(--fz))] font-extrabold">{l.name}</span>
                   </div>
-                  <span className="font-mono text-[calc(11px*var(--fz))] font-bold" style={{ color: l.tint }}>
-                    <CountUp to={l.lat} duration={1000} suffix="ms" />
-                  </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-surface overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-700 ease-out"
-                    style={{
-                      width: loadIn ? `${l.load}%` : "0%",
-                      transitionDelay: `${i * 120}ms`,
-                      background: l.tint,
-                    }}
-                  />
-                </div>
-                <div className="mt-1.5 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
-                  负载 <CountUp to={l.load} duration={1000} suffix="%" />
+                <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold">
+                  {l.desc}
                 </div>
               </div>
             ))}
@@ -154,7 +191,11 @@ export default function BizHome() {
               <Circle size={8} className="fill-mint-deep text-mint-deep animate-pulse" />
               <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-mint-deep">系统运转正常</span>
             </div>
-            <div className="mt-1 text-[calc(12px*var(--fz))] text-mint-deep font-semibold">三层引擎已就绪，企业级 SLA 99.9%。</div>
+            <div className="mt-1 text-[calc(12px*var(--fz))] text-mint-deep font-semibold">
+              {engine
+                ? `本次启动以来已分析 ${engine.analyzed} 通来电${engine.failed > 0 ? `，失败 ${engine.failed} 次` : ""}。`
+                : "三层引擎已就绪，企业级接入可用。"}
+            </div>
           </div>
         </section>
       </div>

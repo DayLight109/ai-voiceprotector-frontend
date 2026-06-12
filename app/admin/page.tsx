@@ -1,9 +1,12 @@
 "use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Shield, FileBarChart2, AlertTriangle, ArrowUpRight, TrendingUp, TrendingDown, Users, Mic2, Sliders, Database, ChevronLeft, ChevronRight } from "lucide-react";
+import { Shield, AlertTriangle, ArrowUpRight, Users, Mic2, Sliders, Database, ChevronLeft, ChevronRight, Bot, PhoneCall, PhoneOff, MessageSquareText } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import CountUp from "@/components/shared/CountUp";
 import { ADMIN_NAV } from "@/lib/nav";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import type { CallLog } from "@/lib/mock";
 import Link from "next/link";
 
 type RangeKey = "7" | "30" | "90";
@@ -14,8 +17,6 @@ const RANGES: { key: RangeKey; label: string }[] = [
   { key: "90", label: "90 天" },
 ];
 
-const TRENDS_7_VALUES = [62, 78, 55, 88, 92, 71, 96];
-
 // 标签用真实日期 M/D（从今天往前推 i 天）
 function dateLabel(daysAgo: number): string {
   const d = new Date();
@@ -23,37 +24,82 @@ function dateLabel(daysAgo: number): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-// 基于天数确定性生成（不随渲染抖动），周末略低、近 7 日抬升，最后一根为“今日”。
-// fixed 提供时按位使用其数值（7 天用手挑值）。
-function buildTrend(days: number, fixed?: number[]): { day: string; v: number }[] {
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+// 从真实通话记录聚合：最近 N 天每日"拦截"判决数
+function buildTrend(days: number, calls: CallLog[]): { day: string; v: number }[] {
+  const byDay = new Map<string, number>();
+  for (const c of calls) {
+    if (c.verdict !== "拦截") continue;
+    const d = new Date(c.createdAt);
+    if (Number.isNaN(d.getTime())) continue;
+    const k = dayKey(d);
+    byDay.set(k, (byDay.get(k) ?? 0) + 1);
+  }
   const out: { day: string; v: number }[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    let v: number;
-    if (fixed) {
-      v = fixed[days - 1 - i];
-    } else {
-      const dow = (7 - (i % 7)) % 7; // 0=周日 … 6=周六，仅用于造型
-      const weekend = dow === 0 || dow === 6 ? -10 : 0;
-      const wave = Math.sin(i * 0.45) * 14 + Math.cos(i * 0.21) * 9;
-      const recentLift = i < 7 ? (7 - i) * 2.2 : 0;
-      const base = 64 + weekend + wave + recentLift;
-      v = Math.max(28, Math.min(98, Math.round(base)));
-    }
-    out.push({ day: dateLabel(i), v });
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    out.push({ day: dateLabel(i), v: byDay.get(dayKey(d)) ?? 0 });
   }
   return out;
 }
 
-const TREND_DATA: Record<RangeKey, { day: string; v: number }[]> = {
-  "7": buildTrend(7, TRENDS_7_VALUES),
-  "30": buildTrend(30),
-  "90": buildTrend(90),
-};
+function relTime(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "刚刚";
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "刚刚";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const [chartIn, setChartIn] = useState(false);
   const [range, setRange] = useState<RangeKey>("7");
-  const trends = useMemo(() => TREND_DATA[range], [range]);
+  const [calls, setCalls] = useState<CallLog[]>([]);
+  const [callsTotal, setCallsTotal] = useState(0);
+  const [stats, setStats] = useState<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [c, st] = await Promise.allSettled([
+        api.calls.list({ pageSize: 100 }),
+        api.getStats(),
+      ]);
+      if (!alive) return;
+      if (c.status === "fulfilled") {
+        setCalls(c.value.data ?? []);
+        setCallsTotal(c.value.meta?.total ?? (c.value.data?.length ?? 0));
+      }
+      if (st.status === "fulfilled") setStats(st.value as Record<string, number>);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const trends = useMemo(() => buildTrend(Number(range), calls), [range, calls]);
+  const trendMax = useMemo(() => Math.max(1, ...trends.map((t) => t.v)), [trends]);
+
+  // 判决占比（基于最近加载的真实记录）
+  const verdictShares = useMemo(() => {
+    const total = calls.length || 1;
+    const n = (v: CallLog["verdict"]) => calls.filter((c) => c.verdict === v).length;
+    return [
+      { k: "拦截", v: (n("拦截") / total) * 100, c: "var(--coral)" },
+      { k: "预警", v: (n("预警") / total) * 100, c: "var(--amber)" },
+      { k: "通过", v: (n("通过") / total) * 100, c: "var(--indigo)" },
+    ];
+  }, [calls]);
+
+  const incidents = useMemo(() => calls.filter((c) => c.verdict === "拦截").slice(0, 4), [calls]);
 
   useEffect(() => {
     const t = setTimeout(() => setChartIn(true), 80);
@@ -156,7 +202,7 @@ export default function AdminDashboard() {
   return (
     <AppShell
       role="admin"
-      userName="李梦楠"
+      userName={user?.name ?? "管理员"}
       nav={ADMIN_NAV}
       breadcrumb={["SENTINEL", "管理控制台", "总览"]}
     >
@@ -170,14 +216,11 @@ export default function AdminDashboard() {
             企业控制台 · 总览
           </h1>
           <p className="mt-2 text-[calc(14px*var(--fz))] text-ink-soft font-medium">
-            最近 24 小时累计判决 <CountUp to={1283471} duration={1300} className="font-extrabold text-ink" /> 通话，
-            阻断 <CountUp to={9824} duration={1100} className="font-extrabold text-coral-deep" /> 起 AI 合成诈骗。
+            累计判决 <CountUp to={callsTotal} duration={1300} className="font-extrabold text-ink" /> 通话，
+            拦截 <CountUp to={stats?.blockedCalls ?? 0} duration={1100} className="font-extrabold text-coral-deep" /> 起可疑通话。
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-ghost py-2.5 px-4 text-[calc(13px*var(--fz))]">
-            <FileBarChart2 size={14} /> 导出周报
-          </button>
           <a href="/warroom" className="btn-indigo py-2.5 px-4 text-[calc(13px*var(--fz))]">
             <Shield size={14} /> 进入指挥中心 <ArrowUpRight size={14} />
           </a>
@@ -187,26 +230,25 @@ export default function AdminDashboard() {
       {/* KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "判决通话", num: 1.28, suffix: "M", decimals: 2, delta: "+12.4%", up: true, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-          { label: "拦截诈骗", num: 9824, suffix: "", decimals: 0, delta: "+5.7%", up: true, tint: "var(--coral)", soft: "var(--coral-soft)" },
-          { label: "误报率", num: 0.31, suffix: "%", decimals: 2, delta: "-0.08", up: false, tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-          { label: "P99 延迟", num: 118, suffix: "ms", decimals: 0, delta: "+2ms", up: true, tint: "var(--amber-deep)", soft: "var(--amber-soft)" },
+          { label: "判决通话", num: callsTotal, sub: "条累计记录", tint: "var(--indigo)", soft: "var(--indigo-soft)", icon: PhoneCall },
+          { label: "拦截诈骗", num: stats?.blockedCalls ?? 0, sub: "起累计拦截", tint: "var(--coral)", soft: "var(--coral-soft)", icon: PhoneOff },
+          { label: "AI 合成识别", num: stats?.aiCloneDetected ?? 0, sub: "次声纹判定 SYNTH", tint: "var(--amber-deep)", soft: "var(--amber-soft)", icon: Bot },
+          { label: "话术命中", num: stats?.scriptHits ?? 0, sub: "次话术规则命中", tint: "var(--mint-deep)", soft: "var(--mint-soft)", icon: MessageSquareText },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">
             <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-50" style={{ background: k.soft }} />
-            <div className="relative font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</div>
+            <div className="relative flex items-center justify-between">
+              <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{k.label}</span>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: k.soft, color: k.tint }}>
+                <k.icon size={16} />
+              </div>
+            </div>
             <CountUp
               to={k.num}
-              decimals={k.decimals}
-              suffix={k.suffix}
               duration={1100}
               className="relative mt-2 numplate text-[calc(36px*var(--fz))] leading-none block"
             />
-            <div className="relative mt-3 flex items-center gap-1.5 font-mono text-[calc(11px*var(--fz))] font-bold" style={{ color: k.up ? "var(--mint-deep)" : "var(--coral-deep)" }}>
-              {k.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {k.delta}
-              <span className="text-ink-soft font-medium">vs 上周</span>
-            </div>
+            <div className="relative mt-3 text-[calc(12px*var(--fz))] text-ink-soft font-semibold">{k.sub}</div>
           </div>
         ))}
       </div>
@@ -263,6 +305,7 @@ export default function AdminDashboard() {
                 {trends.map((d, i) => {
                   const isLast = i === trends.length - 1;
                   const showLabel = isLast || (trends.length - 1 - i) % labelEvery === 0;
+                  const heightPct = d.v === 0 ? 0 : Math.max(6, Math.round((d.v / trendMax) * 100));
                   return (
                     <div
                       key={`${range}-${i}`}
@@ -274,14 +317,19 @@ export default function AdminDashboard() {
                           className="w-full rounded-t-xl relative group cursor-pointer transition-[height,opacity] duration-500 ease-out hover:opacity-90"
                           style={{
                             maxWidth: `${barMax}px`,
-                            height: chartIn ? `${d.v}%` : "0%",
+                            height: chartIn ? `${heightPct}%` : "0%",
                             opacity: chartIn ? 1 : 0,
+                            minHeight: d.v > 0 ? 4 : 2,
                             transitionDelay: `${Math.min((trends.length - 1 - i) * 35, 350)}ms`,
-                            background: isLast ? "linear-gradient(to top, var(--coral), var(--amber))" : "linear-gradient(to top, var(--indigo), var(--indigo-deep))",
+                            background: d.v === 0
+                              ? "var(--canvas-3)"
+                              : isLast
+                                ? "linear-gradient(to top, var(--coral), var(--amber))"
+                                : "linear-gradient(to top, var(--indigo), var(--indigo-deep))",
                           }}
                         >
                           <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-md font-mono text-[calc(10px*var(--fz))] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10" style={{ background: "var(--ink)" }}>
-                            {d.day} · {d.v}k
+                            {d.day} · {d.v} 起
                           </div>
                         </div>
                       </div>
@@ -313,11 +361,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="mt-6 grid grid-cols-3 gap-4 pt-5 border-t border-border">
-            {[
-              { k: "AI 合成", v: 62.4, c: "var(--coral)" },
-              { k: "话术诈骗", v: 23.1, c: "var(--amber)" },
-              { k: "号码伪冒", v: 14.5, c: "var(--indigo)" },
-            ].map((s) => (
+            {verdictShares.map((s) => (
               <div key={s.k}>
                 <div className="flex items-center gap-2 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
                   <span className="w-2 h-2 rounded-full" style={{ background: s.c }} />
@@ -342,29 +386,30 @@ export default function AdminDashboard() {
               <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">PRIORITY</div>
               <h2 className="font-display text-[calc(22px*var(--fz))] font-extrabold mt-1">高危事件</h2>
             </div>
-            <span className="tag-chip" data-tone="coral">5 待处置</span>
+            <span className="tag-chip" data-tone="coral">{incidents.length} 条最新</span>
           </div>
-          <div className="space-y-3">
-            {[
-              { t: "刚刚", code: "INC-39281", title: "异常号段批量呼出", region: "缅甸 / 仰光" },
-              { t: "3m", code: "INC-39279", title: "AI 声纹突发尖峰", region: "柬埔寨 / 西港" },
-              { t: "12m", code: "INC-39271", title: "公安话术大规模命中", region: "越南 / 胡志明" },
-              { t: "28m", code: "INC-39264", title: "信令层穿透增多", region: "泰国 / 曼谷" },
-            ].map((a) => (
-              <a key={a.code} href="#" className="flex items-start gap-3 p-3 rounded-2xl hover:bg-canvas-2 transition-colors">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>
-                  <AlertTriangle size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{a.title}</div>
-                  <div className="mt-0.5 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold truncate">
-                    {a.code} · {a.region}
+          {incidents.length === 0 ? (
+            <div className="py-12 text-center text-[calc(13px*var(--fz))] text-ink-soft font-medium">
+              暂无拦截事件
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {incidents.map((a) => (
+                <Link key={a.id} href="/admin/recordings" className="flex items-start gap-3 p-3 rounded-2xl hover:bg-canvas-2 transition-colors">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--coral-soft)", color: "var(--coral-deep)" }}>
+                    <AlertTriangle size={16} />
                   </div>
-                </div>
-                <span className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">{a.t}</span>
-              </a>
-            ))}
-          </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{a.reason || "高风险通话拦截"}</div>
+                    <div className="mt-0.5 font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.12em] text-ink-soft font-bold truncate">
+                      {a.phone} · {a.region || "未知"}
+                    </div>
+                  </div>
+                  <span className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">{relTime(a.createdAt)}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* 快捷管理入口 */}

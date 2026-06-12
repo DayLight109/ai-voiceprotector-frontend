@@ -1,0 +1,18 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B5FDE"/>
+      <stop offset="1" stop-color="#4B4FC7"/>
+    </linearGradient>
+  </defs>
+  <!-- shield -->
+  <path d="M16 2.5l11 4v8.2c0 7.4-4.7 12.9-11 15.3C9.7 27.6 5 22.1 5 14.7V6.5l11-4z" fill="url(#g)"/>
+  <!-- voiceprint / waveform -->
+  <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
+    <line x1="10" y1="16" x2="10" y2="16"/>
+    <line x1="13" y1="13" x2="13" y2="19"/>
+    <line x1="16" y1="9.5" x2="16" y2="22.5"/>
+    <line x1="19" y1="13" x2="19" y2="19"/>
+    <line x1="22" y1="16" x2="22" y2="16"/>
+  </g>
+</svg>

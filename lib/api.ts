@@ -11,7 +11,7 @@
 
 import type {
   BlackEntry, WhiteEntry, KnowledgeArticle, ScamRule, ScamSample,
-  Recording, ManagedUser, Appeal, CallLog, Device, AuditLog, VoiceModel,
+  Recording, ManagedUser, Appeal, CallLog, AuditLog, VoiceModel,
 } from "./mock";
 
 const API_BASE =
@@ -89,6 +89,29 @@ export interface SessionView {
   current: boolean;
 }
 
+// 后端 /devices 真实返回结构（区别于 mock 的 UI 型 Device：tenant/lastSeen）
+export interface ApiDevice {
+  id: string;
+  name: string;
+  tenantId?: string;
+  type: "enterprise" | "family";
+  status: "online" | "offline" | "warn";
+  version: string;
+  lastSeenAt?: string;
+  contact: string;
+}
+
+// 后端 /devices/audit 返回结构（domain.AuditLog）
+export interface ApiAuditLog {
+  id: number;
+  ts: string;
+  actorId?: string;
+  action: string;
+  target: string;
+  result: string;
+  ip?: string;
+}
+
 export interface Envelope<T> {
   data: T;
   meta?: { page?: number; pageSize?: number; total: number };
@@ -125,8 +148,22 @@ async function rawFetch(path: string, opts: FetchOptions = {}): Promise<Response
   return fetch(`${API_BASE}${path}`, { ...opts, headers });
 }
 
-// 401 时尝试一次 refresh，成功则返回 true
-async function tryRefresh(): Promise<boolean> {
+// 401 时尝试一次 refresh，成功则返回 true。
+// 单飞（single-flight）：并发 401 共享同一次刷新请求。后端 refresh 是旋转式
+// （旧 refresh 用过即废），若并发各自刷新，第二个必失败并把第一个刚写入的
+// 新 token 清掉，表现为"access 过期后打开多请求页面随机被登出"。
+let refreshInFlight: Promise<boolean> | null = null;
+
+function tryRefresh(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = doRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+async function doRefresh(): Promise<boolean> {
   const refresh = getRefreshToken();
   if (!refresh) return false;
   try {
@@ -136,7 +173,11 @@ async function tryRefresh(): Promise<boolean> {
       skipAuth: true,
     });
     if (!resp.ok) {
-      clearTokens();
+      // 仅在确定 refresh 已失效（401/403）且本地 token 未被其它流程更新时
+      // 才清空；5xx / 网关抖动不清，避免临时故障把用户踢下线
+      if ((resp.status === 401 || resp.status === 403) && getRefreshToken() === refresh) {
+        clearTokens();
+      }
       return false;
     }
     const body = await resp.json();
@@ -145,10 +186,10 @@ async function tryRefresh(): Promise<boolean> {
       setTokens(d.accessToken, d.refreshToken);
       return true;
     }
-    clearTokens();
+    if (getRefreshToken() === refresh) clearTokens();
     return false;
   } catch {
-    clearTokens();
+    // 网络层失败视为暂时性，不清 token，下次请求再试
     return false;
   }
 }
@@ -561,14 +602,19 @@ export const api = {
   },
 
   // ── Agent 配置（display_words / whisper / qwen 三组 jsonb）
+  // 后端返回 { key, value, updatedAt } 信封；这里统一解出 value，
+  // 页面直接拿到存储的配置本体。
   agents: {
-    getDisplayWords: () => request<any>("/api/v1/agents/display-words"),
+    getDisplayWords: () =>
+      request<{ key: string; value: any }>("/api/v1/agents/display-words").then((r) => r?.value ?? null),
     setDisplayWords: (value: any) =>
       request<any>("/api/v1/agents/display-words", { method: "PUT", body: JSON.stringify({ value }) }),
-    getWhisper: () => request<any>("/api/v1/agents/whisper"),
+    getWhisper: () =>
+      request<{ key: string; value: any }>("/api/v1/agents/whisper").then((r) => r?.value ?? null),
     setWhisper: (value: any) =>
       request<any>("/api/v1/agents/whisper", { method: "PUT", body: JSON.stringify({ value }) }),
-    getQwen: () => request<any>("/api/v1/agents/qwen"),
+    getQwen: () =>
+      request<{ key: string; value: any }>("/api/v1/agents/qwen").then((r) => r?.value ?? null),
     setQwen: (value: any) =>
       request<any>("/api/v1/agents/qwen", { method: "PUT", body: JSON.stringify({ value }) }),
   },
@@ -627,14 +673,14 @@ export const api = {
   // ── 设备
   devices: {
     list: (p?: PageParams & { type?: "enterprise" | "family" }) =>
-      requestList<Device[]>(`/api/v1/devices${qs(p)}`),
-    create: (input: Partial<Device>) =>
-      request<Device>("/api/v1/devices", { method: "POST", body: JSON.stringify(input) }),
-    update: (id: string, input: Partial<Device>) =>
-      request<Device>(`/api/v1/devices/${id}`, { method: "PUT", body: JSON.stringify(input) }),
+      requestList<ApiDevice[]>(`/api/v1/devices${qs(p)}`),
+    create: (input: Partial<ApiDevice>) =>
+      request<ApiDevice>("/api/v1/devices", { method: "POST", body: JSON.stringify(input) }),
+    update: (id: string, input: Partial<ApiDevice>) =>
+      request<ApiDevice>(`/api/v1/devices/${id}`, { method: "PUT", body: JSON.stringify(input) }),
     remove: (id: string) => request<void>(`/api/v1/devices/${id}`, { method: "DELETE" }),
     audit: (p?: PageParams) =>
-      requestList<AuditLog[]>(`/api/v1/devices/audit${qs(p)}`),
+      requestList<ApiAuditLog[]>(`/api/v1/devices/audit${qs(p)}`),
   },
 
   // ── 审计
@@ -644,9 +690,15 @@ export const api = {
 
   // ── 大屏（dashboard 聚合）
   dashboard: {
-    riskIndex: () => request<any>("/api/v1/dashboard/risk-index"),
-    regions: () => request<any[]>("/api/v1/dashboard/regions"),
-    events: (p?: PageParams) => requestList<any[]>(`/api/v1/dashboard/events${qs(p)}`),
+    riskIndex: () => request<{
+      index: number; sampleSize: number; blocked: number;
+      aiClones: number; windowHours: number;
+    }>("/api/v1/dashboard/risk-index"),
+    regions: () => request<{ region: string; count: number }[]>("/api/v1/dashboard/regions"),
+    events: (p?: { limit?: number }) => requestList<{
+      id: string; phone: string; region: string; verdict: string;
+      reason: string; riskScore: number; createdAt: string;
+    }[]>(`/api/v1/dashboard/events${qs(p)}`),
   },
 
   // ── 身份证件

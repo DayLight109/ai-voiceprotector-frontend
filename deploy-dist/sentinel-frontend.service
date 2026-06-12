@@ -1,0 +1,36 @@
+[Unit]
+Description=Sentinel Frontend (Next.js)
+Documentation=https://sentinel.example
+After=network-online.target sentinel-gateway.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sentinel
+Group=sentinel
+
+WorkingDirectory=/opt/sentinel-frontend
+# Next 生产监听端口（next start 默认 3000，这里显式指定）
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# node 在 PATH 里即可；若用 nvm/自定义路径，改成绝对路径 /usr/bin/node
+ExecStart=/usr/bin/npm start
+
+Restart=on-failure
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# 安全加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# Next 运行时需要写 .next/cache，放行工作目录
+ReadWritePaths=/opt/sentinel-frontend
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

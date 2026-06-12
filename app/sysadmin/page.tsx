@@ -3,17 +3,17 @@ import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import CountUp from "@/components/shared/CountUp";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { api } from "@/lib/api";
+import { api, type ApiDevice } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { SkeletonBar } from "@/components/shared/Skeleton";
-import type { ScamRule, ScamSample, Device } from "@/lib/mock";
+import type { ScamRule, ScamSample } from "@/lib/mock";
 import { ScrollText, BookMarked, Database, FlaskConical, Mic2, Bot, AlertOctagon, Server, HardDrive, ArrowUpRight, Activity, Cpu, AudioLines } from "lucide-react";
 import Link from "next/link";
 
 export default function SysAdminHome() {
   const rules = useResource<ScamRule>(() => api.rules.list({ pageSize: 1 }));
   const samples = useResource<ScamSample>(() => api.samples.list({ pageSize: 100, status: "待审核" }));
-  const devices = useResource<Device>(() => api.devices.list({ pageSize: 100 }));
+  const devices = useResource<ApiDevice>(() => api.devices.list({ pageSize: 100 }));
 
   return (
     <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "总览"]}>

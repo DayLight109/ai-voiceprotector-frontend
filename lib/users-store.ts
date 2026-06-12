@@ -1,15 +1,17 @@
 "use client";
 
-// 混合存储：本地缓存为主，写入后异步同步后端。
-// 与 blacklist-store 同样的"乐观写 + 失败留痕 + 挂载重发"模式，
-// 但用户管理没有"global vs tenant"两层概念，只是简单的本租户列表。
+// 成员管理 store：后端为唯一数据源，乐观写只在内存里短暂存在。
+// 与 blacklist-store 相同的"乐观写 + 失败回滚"模式；不写 localStorage ——
+// 一是创建成员必须携带初始密码（绝不可落盘），二是避免切账号时上一账号的
+// 待同步条目被当前账号 token 重发、污染另一个 tenant（blacklist-store 踩过的坑）。
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, APIError } from "./api";
-import { useLocalStorage, uid } from "./storage";
+import { uid } from "./storage";
 import { type ManagedUser } from "./mock";
 
-const LOCAL_KEY = "managed-users.tenant";
+// 旧版本写过的 localStorage key，挂载时清掉（幂等）
+const LEGACY_LOCAL_KEY = "managed-users.tenant";
 
 function isLocalId(id: string) {
   return id.startsWith("local-");
@@ -42,23 +44,39 @@ function dedupeByEmail(rows: ManagedUser[]): ManagedUser[] {
   return result;
 }
 
+export interface CreateManagedUserInput {
+  name: string;
+  role: ManagedUser["role"];
+  status: ManagedUser["status"];
+  password: string; // 后端 createUser 必填，作为成员初始登录密码
+  dept?: string;
+  email?: string;
+  phone?: string;
+}
+
 export interface UseHybridUsers {
   items: ManagedUser[];
   loading: boolean;
   error: string | null;
   refresh: () => void;
-  create: (input: Omit<ManagedUser, "id" | "last">) => Promise<void>;
-  update: (id: string, patch: Partial<Omit<ManagedUser, "id" | "last">>) => Promise<void>;
+  create: (input: CreateManagedUserInput) => Promise<void>;
+  update: (id: string, patch: Partial<Omit<ManagedUser, "id">>) => Promise<void>;
   remove: (id: string) => Promise<void>;
 }
 
 export function useHybridUsers(): UseHybridUsers {
-  const [localRows, setLocalRows] = useLocalStorage<ManagedUser[]>(LOCAL_KEY, []);
+  const [localRows, setLocalRows] = useState<ManagedUser[]>([]);
   const [serverRows, setServerRows] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem(LEGACY_LOCAL_KEY);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     let stop = false;
@@ -82,92 +100,57 @@ export function useHybridUsers(): UseHybridUsers {
     };
   }, [tick]);
 
-  // 挂载后把仍是 local-* 的本地条目重发一次（之前离线/失败的）
-  const retriedRef = useRef(false);
-  useEffect(() => {
-    if (retriedRef.current) return;
-    if (loading) return;
-    retriedRef.current = true;
-    const pending = localRows.filter((r) => isLocalId(r.id));
-    if (pending.length === 0) return;
-    void (async () => {
-      for (const r of pending) {
-        try {
-          const created = (await api.users.create({
-            name: r.name,
-            role: r.role,
-            dept: r.dept,
-            email: r.email,
-            status: r.status,
-          } as any)) as ManagedUser;
-          setLocalRows((prev) => prev.filter((x) => x.id !== r.id));
-          setServerRows((prev) => [created, ...prev]);
-        } catch {
-          // 留在本地，下次再试
-        }
-      }
-    })();
-  }, [loading, localRows, setLocalRows]);
-
   const items = useMemo(
     () => dedupeByEmail([...localRows, ...serverRows]),
     [localRows, serverRows],
   );
 
-  const create: UseHybridUsers["create"] = useCallback(
-    async (input) => {
-      const tempId = uid("local");
-      const optimistic: ManagedUser = {
-        id: tempId,
+  const create: UseHybridUsers["create"] = useCallback(async (input) => {
+    const tempId = uid("local");
+    const optimistic: ManagedUser = {
+      id: tempId,
+      name: input.name,
+      role: input.role,
+      dept: input.dept,
+      email: input.email,
+      status: input.status,
+    };
+    setLocalRows((prev) => [optimistic, ...prev]);
+    try {
+      const created = (await api.users.create({
         name: input.name,
         role: input.role,
         dept: input.dept,
         email: input.email,
         status: input.status,
-        last: "刚刚",
-      };
-      setLocalRows((prev) => [optimistic, ...prev]);
-      try {
-        const created = (await api.users.create({
-          name: input.name,
-          role: input.role,
-          dept: input.dept,
-          email: input.email,
-          status: input.status,
-        } as any)) as ManagedUser;
-        setLocalRows((prev) => prev.filter((x) => x.id !== tempId));
-        setServerRows((prev) => [created, ...prev]);
-      } catch (e) {
-        // 不抛弃本地条目（保留供下次重试），但把错抛给上层提示
-        throw e;
-      }
-    },
-    [setLocalRows],
-  );
+        password: input.password,
+      } as any)) as ManagedUser;
+      setLocalRows((prev) => prev.filter((x) => x.id !== tempId));
+      setServerRows((prev) => [created, ...prev]);
+    } catch (e) {
+      // 回滚乐观行：密码不落盘，不存在"留待下次重试"的可能
+      setLocalRows((prev) => prev.filter((x) => x.id !== tempId));
+      throw e;
+    }
+  }, []);
 
-  const update: UseHybridUsers["update"] = useCallback(
-    async (id, patch) => {
-      if (isLocalId(id)) {
-        setLocalRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-        return;
-      }
-      const updated = (await api.users.update(id, patch)) as ManagedUser;
-      setServerRows((prev) => prev.map((r) => (r.id === id ? updated : r)));
-    },
-    [setLocalRows],
-  );
+  const update: UseHybridUsers["update"] = useCallback(async (id, patch) => {
+    if (isLocalId(id)) {
+      setLocalRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+      return;
+    }
+    const updated = (await api.users.update(id, patch)) as ManagedUser;
+    setServerRows((prev) => prev.map((r) => (r.id === id ? updated : r)));
+  }, []);
 
-  const remove: UseHybridUsers["remove"] = useCallback(
-    async (id) => {
-      if (isLocalId(id)) {
-        setLocalRows((prev) => prev.filter((r) => r.id !== id));
-        return;
-      }
-      await api.users.remove(id);
-      setServerRows((prev) => prev.filter((r) => r.id !== id));
-    },
-    [setLocalRows],
-  );
+  const remove: UseHybridUsers["remove"] = useCallback(async (id) => {
+    if (isLocalId(id)) {
+      setLocalRows((prev) => prev.filter((r) => r.id !== id));
+      return;
+    }
+    await api.users.remove(id);
+    setServerRows((prev) => prev.filter((r) => r.id !== id));
+  }, []);
 
   return { items, loading, error, refresh, create, update, remove };
 }

@@ -9,6 +9,8 @@ import {
   Camera,
   CheckCircle2,
   CreditCard,
+  Eye,
+  EyeOff,
   Fingerprint,
   Home,
   Image as ImageIcon,
@@ -18,6 +20,8 @@ import {
 } from "lucide-react";
 import AuthShell from "@/components/AuthShell";
 import { useToast } from "@/components/shared/Toast";
+import { api, APIError } from "@/lib/api";
+import { useAuth, roleHomePath } from "@/lib/auth";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 type Role = "family" | "enterprise";
@@ -39,33 +43,79 @@ const ID_CARD_SIDES: { key: IdCardSide; label: string }[] = [
 
 export default function RegisterPage() {
   const toast = useToast();
+  const { login } = useAuth();
   const [step, setStep] = useState<Step>(0);
   const [role, setRole] = useState<Role>("family");
   const [name, setName] = useState("");
   const [idNumber, setIdNumber] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
   const [idImages, setIdImages] = useState<Partial<Record<IdCardSide, UploadFile>>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  // 后端角色取值是 family | biz；注册页的"企业用户"对应 biz
+  const apiRole: "family" | "biz" = role === "enterprise" ? "biz" : "family";
+
+  const validateStep1 = (): string | null => {
+    if (!name.trim()) return "请输入姓名";
+    if (!/^\d{17}[\dXx]$/.test(idNumber.replace(/\s/g, ""))) return "身份证号格式不正确（18 位）";
+    if (!/^1\d{10}$/.test(phone.replace(/\s/g, ""))) return "请输入 11 位手机号";
+    if (password.length < 6) return "密码至少 6 位";
+    if (password !== password2) return "两次输入的密码不一致";
+    if (!idImages.front || !idImages.back) return "请从电脑中选择身份证人像面和国徽面图片";
+    return null;
+  };
+
+  // 真实注册：创建账号 → 自动登录 → 提交身份证号与正反面照片
+  const submitRegistration = async (): Promise<boolean> => {
+    const cleanPhone = phone.replace(/\s/g, "");
+    setSubmitting(true);
+    try {
+      await api.register({
+        name: name.trim(),
+        phone: cleanPhone,
+        password,
+        role: apiRole,
+      });
+      await login(cleanPhone, password);
+    } catch (e) {
+      const msg =
+        e instanceof APIError
+          ? e.code === "USER_DUPLICATE"
+            ? "该手机号已注册，可直接登录"
+            : e.message || "注册失败，请稍后再试"
+          : "网络异常，请稍后再试";
+      toast("error", "注册失败", msg);
+      setSubmitting(false);
+      return false;
+    }
+
+    // 证件信息：失败不阻塞注册（可稍后在设置页补交）
+    try {
+      await api.credentials.submit("id_card", idNumber.replace(/\s/g, ""));
+      if (idImages.front) await api.credentials.upload("id_card", "face", idImages.front.file);
+      if (idImages.back) await api.credentials.upload("id_card", "emblem", idImages.back.file);
+      toast("success", "注册成功", "账号已创建并登录，身份证资料已提交");
+    } catch {
+      toast("info", "账号已创建", "身份证资料提交失败，可稍后在「设置 → 身份认证」中补交");
+    }
+    setSubmitting(false);
+    return true;
+  };
 
   const goNext = async () => {
     if (step === 1) {
-      const trimmedName = name.trim();
-      const trimmedId = idNumber.trim();
-      if (!trimmedName) {
-        toast("error", "请输入姓名");
+      const err = validateStep1();
+      if (err) {
+        toast("error", err);
         return;
       }
-      if (!trimmedId) {
-        toast("error", "请输入身份证号");
-        return;
-      }
-      if (!idImages.front || !idImages.back) {
-        toast("error", "请从电脑中选择身份证人像面和国徽面图片");
-        return;
-      }
-      toast("success", "身份证图片已就绪", "正反面图片都可以正常从本地文件夹选择");
     }
 
     if (step === 3) {
-      toast("success", "注册资料已保存", "身份证正反面图片会继续保留在当前流程中");
+      const ok = await submitRegistration();
+      if (!ok) return;
     }
 
     setStep((s) => Math.min(4, s + 1) as Step);
@@ -106,13 +156,13 @@ export default function RegisterPage() {
     <AuthShell
       eyebrow="CREATE ACCOUNT"
       title="开启你的声纹守护"
-      subtitle="按步骤完成实名与生物特征认证，身份证正反面可直接从本地文件夹选择上传。"
+      subtitle="按步骤完成实名认证并设置登录账号，完成后自动登录进入工作台。"
       sideTitle="四步建档，建立可信身份"
       bullets={[
-        "身份证 OCR 与实名核验联动，确保账户身份真实可追溯",
-        "正反面图片支持本地文件夹选择、预览、替换和移除",
-        "活体与指纹流程继续保留，便于后续高风险操作二次校验",
-        "敏感资料仅在当前流程中处理，避免无意义的上传阻塞",
+        "身份证正反面图片支持本地选择、预览、替换和移除",
+        "手机号 + 密码即注册账号，完成后自动登录",
+        "身份证号与证件照片将提交至服务端等待人工核验",
+        "活体与指纹为预留流程，便于后续高风险操作二次校验",
       ]}
     >
       <div className="mb-8">
@@ -157,9 +207,15 @@ export default function RegisterPage() {
           <StepIdCard
             name={name}
             idNumber={idNumber}
+            phone={phone}
+            password={password}
+            password2={password2}
             idImages={idImages}
             onNameChange={setName}
             onIdNumberChange={setIdNumber}
+            onPhoneChange={setPhone}
+            onPasswordChange={setPassword}
+            onPassword2Change={setPassword2}
             onPick={acceptIdImage}
             onClear={clearIdImage}
           />
@@ -179,12 +235,16 @@ export default function RegisterPage() {
           <div />
         )}
         {step < 4 ? (
-          <button onClick={goNext} className="btn-indigo py-3 px-6 text-[calc(14px*var(--fz))]">
-            {step === 0 ? "开始认证" : step === 3 ? "完成录入" : "下一步"}
+          <button
+            onClick={goNext}
+            disabled={submitting}
+            className="btn-indigo py-3 px-6 text-[calc(14px*var(--fz))] disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {submitting ? "提交中…" : step === 0 ? "开始认证" : step === 3 ? "完成注册" : "下一步"}
             <ArrowRight size={14} />
           </button>
         ) : (
-          <Link href="/app" className="btn-indigo py-3 px-6 text-[calc(14px*var(--fz))]">
+          <Link href={roleHomePath(apiRole)} className="btn-indigo py-3 px-6 text-[calc(14px*var(--fz))]">
             进入工作台
             <ArrowRight size={14} />
           </Link>
@@ -263,25 +323,38 @@ function StepRole({ role, setRole }: { role: Role; setRole: (r: Role) => void })
 function StepIdCard({
   name,
   idNumber,
+  phone,
+  password,
+  password2,
   idImages,
   onNameChange,
   onIdNumberChange,
+  onPhoneChange,
+  onPasswordChange,
+  onPassword2Change,
   onPick,
   onClear,
 }: {
   name: string;
   idNumber: string;
+  phone: string;
+  password: string;
+  password2: string;
   idImages: Partial<Record<IdCardSide, UploadFile>>;
   onNameChange: (value: string) => void;
   onIdNumberChange: (value: string) => void;
+  onPhoneChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onPassword2Change: (value: string) => void;
   onPick: (side: IdCardSide, file: File | null | undefined) => void;
   onClear: (side: IdCardSide) => void;
 }) {
+  const [showPw, setShowPw] = useState(false);
   return (
     <div>
-      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">身份证核验</div>
+      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">身份与账号</div>
       <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
-        从电脑文件夹选择身份证人像面和国徽面图片，系统会在当前流程中保留预览与校验状态。
+        上传身份证正反面，填写实名信息，并设置登录账号（手机号 + 密码）。
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
@@ -298,13 +371,50 @@ function StepIdCard({
       </div>
 
       <div className="space-y-3">
-        <Input label="姓名" placeholder="张三" value={name} onChange={onNameChange} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Input label="姓名" placeholder="张三" value={name} onChange={onNameChange} autoComplete="name" />
+          <Input
+            label="手机号（登录账号）"
+            placeholder="138 0013 4921"
+            value={phone}
+            onChange={onPhoneChange}
+            autoComplete="tel"
+          />
+        </div>
         <Input
           label="身份证号"
           placeholder="110101 19900101 1234"
           value={idNumber}
           onChange={onIdNumberChange}
         />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="relative">
+            <Input
+              label="设置密码"
+              placeholder="至少 6 位"
+              value={password}
+              onChange={onPasswordChange}
+              type={showPw ? "text" : "password"}
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute right-3 bottom-3 p-1.5 rounded-lg hover:bg-canvas-2 text-ink-soft"
+              aria-label={showPw ? "隐藏密码" : "显示密码"}
+            >
+              {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+          <Input
+            label="确认密码"
+            placeholder="再次输入密码"
+            value={password2}
+            onChange={onPassword2Change}
+            type={showPw ? "text" : "password"}
+            autoComplete="new-password"
+          />
+        </div>
       </div>
     </div>
   );
@@ -313,9 +423,14 @@ function StepIdCard({
 function StepLiveness() {
   return (
     <div>
-      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">活体检测</div>
+      <div className="flex items-center gap-2 mb-1">
+        <div className="font-display text-[calc(18px*var(--fz))] font-extrabold">活体检测</div>
+        <span className="px-2 py-0.5 rounded-full bg-canvas-2 border border-border font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.1em] font-bold text-ink-soft">
+          预留演示
+        </span>
+      </div>
       <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
-        请正面对准摄像头，按屏幕提示完成眨眼、张嘴、摇头动作。
+        正式版将接入摄像头活体检测；当前为流程演示，点击下一步即可跳过。
       </p>
 
       <div
@@ -356,9 +471,14 @@ function StepLiveness() {
 function StepFingerprint() {
   return (
     <div>
-      <div className="font-display text-[calc(18px*var(--fz))] font-extrabold mb-1">指纹录入</div>
+      <div className="flex items-center gap-2 mb-1">
+        <div className="font-display text-[calc(18px*var(--fz))] font-extrabold">指纹录入</div>
+        <span className="px-2 py-0.5 rounded-full bg-canvas-2 border border-border font-mono text-[calc(9px*var(--fz))] uppercase tracking-[0.1em] font-bold text-ink-soft">
+          预留演示
+        </span>
+      </div>
       <p className="text-[calc(13px*var(--fz))] text-ink-soft font-medium mb-5">
-        把手指放在指纹传感器上，重复按压 5 次以建立本地模板。
+        正式版将接入设备指纹传感器；当前为流程演示。点击「完成注册」将创建账号并提交身份证资料。
       </p>
 
       <div className="flex justify-center">
@@ -400,16 +520,16 @@ function StepDone({ role, name }: { role: Role; name: string }) {
       <div className="mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-5" style={{ background: "var(--mint-soft)" }}>
         <CheckCircle2 size={56} style={{ color: "var(--mint-deep)" }} strokeWidth={2} />
       </div>
-      <h3 className="font-display text-[calc(24px*var(--fz))] font-extrabold mb-2">认证完成</h3>
+      <h3 className="font-display text-[calc(24px*var(--fz))] font-extrabold mb-2">注册完成</h3>
       <p className="text-[calc(14px*var(--fz))] text-ink-soft font-medium max-w-xs mx-auto">
-        {name ? `${name} 的` : ""}账号资料已建档，身份证正反面图片已经完成本地选择与预览流程。
+        {name ? `${name} 的` : ""}账号已创建并自动登录，身份证资料已提交等待核验。
         {role === "enterprise"
           ? " 后续可由企业管理员继续分配角色权限。"
           : " 接下来可以继续为家人绑定设备。"}
       </p>
       <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-canvas-2 border border-border font-mono text-[calc(11px*var(--fz))] font-bold">
         <CheckCircle2 size={12} style={{ color: "var(--mint-deep)" }} />
-        身份证核验、活体、指纹三项流程已通过演示校验
+        账号创建 · 自动登录 · 证件提交 已完成
       </div>
     </div>
   );
@@ -420,17 +540,22 @@ function Input({
   placeholder,
   value,
   onChange,
+  type = "text",
+  autoComplete,
 }: {
   label: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  type?: string;
+  autoComplete?: string;
 }) {
   return (
     <div>
       <label className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{label}</label>
       <input
-        type="text"
+        type={type}
+        autoComplete={autoComplete}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}

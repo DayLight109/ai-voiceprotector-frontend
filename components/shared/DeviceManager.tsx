@@ -7,23 +7,85 @@ import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { SEED, type Device, type AuditLog } from "@/lib/mock";
-import { useLocalStorage, uid } from "@/lib/storage";
+import { api, APIError, type ApiDevice, type ApiAuditLog } from "@/lib/api";
+import { useResource } from "@/lib/use-resource";
 import { Plus, Trash2, Edit3, Activity, FileLock2, Server, HardDrive, Building2 } from "lucide-react";
 
 export type DeviceType = "企业端" | "家庭端";
+
+// UI 行：表格展示用（中文 status 标签 / 友好时间）
+type DeviceRow = {
+  id: string;
+  name: string;
+  tenant: string;
+  status: "online" | "offline" | "warn";
+  version: string;
+  lastSeen: string;
+  contact: string;
+};
+
+// 审计行：DataTable 约束 id 为 string，后端 AuditLog.id 是 number，做一层映射
+type AuditRow = {
+  id: string;
+  ts: string;
+  actor: string;
+  action: string;
+  target: string;
+  result: string;
+};
+
+function fmtLastSeen(iso?: string): string {
+  if (!iso) return "—";
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "—";
+  const diff = Date.now() - t;
+  if (diff < 60_000) return "刚刚";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
+  return new Date(iso).toLocaleDateString("zh-CN");
+}
+
+function toRow(d: ApiDevice): DeviceRow {
+  return {
+    id: d.id,
+    name: d.name,
+    tenant: d.tenantId ?? "—",
+    status: d.status,
+    version: d.version,
+    lastSeen: fmtLastSeen(d.lastSeenAt),
+    contact: d.contact,
+  };
+}
 
 export default function DeviceManager({ deviceType }: { deviceType: DeviceType }) {
   const toast = useToast();
   const confirm = useConfirm();
   const isEnt = deviceType === "企业端";
-  const [all, setAll] = useLocalStorage<Device[]>("sys.devices", SEED.devices);
-  const [audit] = useLocalStorage<AuditLog[]>("sys.audit", SEED.audit);
-  const [editing, setEditing] = useState<Device | null>(null);
+  const apiType: "enterprise" | "family" = isEnt ? "enterprise" : "family";
+
+  const devices = useResource<ApiDevice>(
+    () => api.devices.list({ type: apiType, pageSize: 200 }),
+    [apiType],
+  );
+  const auditRes = useResource<ApiAuditLog>(() => api.devices.audit({ pageSize: 200 }), []);
+
+  const [editing, setEditing] = useState<ApiDevice | null>(null);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"list" | "audit">("list");
 
-  const view = useMemo(() => all.filter((d) => d.type === deviceType), [all, deviceType]);
+  const view = useMemo(() => devices.items.map(toRow), [devices.items]);
+  const audit = useMemo<AuditRow[]>(
+    () =>
+      auditRes.items.map((a) => ({
+        id: String(a.id),
+        ts: new Date(a.ts).toLocaleString("zh-CN"),
+        actor: a.actorId || "系统",
+        action: a.action,
+        target: a.target,
+        result: a.result,
+      })),
+    [auditRes.items],
+  );
 
   // 滑动指示条：设备列表 / 行为日志审计 切换时背景胶囊平滑滑过去
   const tabBarRef = useRef<HTMLDivElement>(null);
@@ -44,38 +106,50 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
     return () => window.removeEventListener("resize", measure);
   }, [tab]);
 
-  const onSubmit = (f: any) => {
-    if (editing) {
-      setAll((p) => p.map((d) => (d.id === editing.id ? { ...editing, ...f } : d)));
-      toast("success", "已更新");
-    } else {
-      const entry: Device = {
-        id: uid("d"),
-        name: f.name,
-        tenant: f.tenant,
-        type: deviceType,
-        status: "online",
-        version: "v2.6.1",
-        lastSeen: "刚刚",
-        contact: f.contact,
-      };
-      setAll((p) => [entry, ...p]);
-      toast("success", `已新增${isEnt ? "企业" : "家庭"}`, f.name);
+  const onSubmit = async (f: any) => {
+    try {
+      if (editing) {
+        await api.devices.update(editing.id, {
+          name: f.name,
+          contact: f.contact,
+          status: editing.status,
+          version: editing.version,
+        } as any);
+        toast("success", "已更新");
+      } else {
+        await api.devices.create({
+          name: f.name,
+          tenantId: f.tenant,
+          type: apiType,
+          status: "offline",
+          version: "v2.6.1",
+          contact: f.contact,
+        } as any);
+        toast("success", `已新增${isEnt ? "企业" : "家庭"}`, f.name);
+      }
+      setOpen(false);
+      setEditing(null);
+      devices.refresh();
+    } catch (e) {
+      toast("error", "保存失败", e instanceof APIError ? e.message : "请稍后重试");
     }
-    setOpen(false);
-    setEditing(null);
   };
 
-  const onDelete = async (r: Device) => {
-    const ok = await confirm({
+  const onDelete = async (r: DeviceRow) => {
+    const okConfirm = await confirm({
       title: `删除${isEnt ? "企业" : "家庭"}设备？`,
       desc: `将移除「${r.name}」，该设备的接入与心跳记录将一并删除。`,
       tone: "danger",
       confirmText: "删除",
     });
-    if (!ok) return;
-    setAll((p) => p.filter((x) => x.id !== r.id));
-    toast("success", "已删除");
+    if (!okConfirm) return;
+    try {
+      await api.devices.remove(r.id);
+      toast("success", "已删除");
+      devices.refresh();
+    } catch (e) {
+      toast("error", "删除失败", e instanceof APIError ? e.message : "请稍后重试");
+    }
   };
 
   const breadcrumb = ["SENTINEL", "系统管理员", "设备管理", isEnt ? "企业端" : "家庭端"];
@@ -138,7 +212,7 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
 
       {tab === "list" ? (
         <div className="panel p-6">
-          <DataTable<Device>
+          <DataTable<DeviceRow>
             rows={view}
             searchKeys={["name", "tenant", "contact"]}
             columns={[
@@ -161,7 +235,7 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
             ]}
             actions={(r) => (
               <div className="flex items-center gap-1 justify-end">
-                <button onClick={() => { setEditing(r); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
+                <button onClick={() => { const orig = devices.items.find((d) => d.id === r.id) ?? null; setEditing(orig); setOpen(true); }} className="w-8 h-8 rounded-lg hover:bg-canvas-2 flex items-center justify-center"><Edit3 size={13} /></button>
                 <button onClick={() => onDelete(r)} className="w-8 h-8 rounded-lg hover:bg-coral-soft text-coral-deep flex items-center justify-center"><Trash2 size={13} /></button>
               </div>
             )}
@@ -169,12 +243,12 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
         </div>
       ) : (
         <div className="panel p-6">
-          <DataTable<AuditLog>
+          <DataTable<AuditRow>
             rows={audit}
             searchKeys={["actor", "action", "target"]}
             columns={[
               { key: "ts", label: "时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] font-bold">{r.ts}</span> },
-              { key: "actor", label: "操作人" },
+              { key: "actor", label: "操作人", render: (r) => <span>{r.actor}</span> },
               { key: "action", label: "动作", render: (r) => <span className="tag-chip" data-tone="indigo">{r.action}</span> },
               { key: "target", label: "目标", render: (r) => <span className="font-mono text-[calc(12px*var(--fz))] text-ink-soft font-bold">{r.target}</span> },
               {
@@ -218,20 +292,24 @@ function KPI({ label, v, c, Icon }: any) {
   );
 }
 
-function DevForm({ editing, onSubmit, isEnt }: { editing: Device | null; onSubmit: (f: any) => void; isEnt: boolean }) {
-  const [f, setF] = useState<any>(editing ?? { name: "", tenant: "", contact: "" });
+function DevForm({ editing, onSubmit, isEnt }: { editing: ApiDevice | null; onSubmit: (f: any) => void; isEnt: boolean }) {
+  const [f, setF] = useState<any>(
+    editing
+      ? { name: editing.name, tenant: editing.tenantId ?? "", contact: editing.contact }
+      : { name: "", tenant: "", contact: "" },
+  );
   return (
     <form id="dev-form" onSubmit={(e) => { e.preventDefault(); onSubmit(f); }} className="space-y-4">
       <Field label={isEnt ? "设备名称" : "户主姓名 + 设备"}>
         <input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="ipt" placeholder={isEnt ? "如：建设银行 95533 · 集群" : "如：王磊家 · 智能盒子"} />
       </Field>
       <Field label={isEnt ? "企业名称" : "家庭名称"}>
-        <input required value={f.tenant} onChange={(e) => setF({ ...f, tenant: e.target.value })} className="ipt" />
+        <input required={!editing} disabled={!!editing} value={f.tenant} onChange={(e) => setF({ ...f, tenant: e.target.value })} className="ipt" placeholder={editing ? "" : "租户标识，如 default-enterprise"} />
       </Field>
       <Field label="联系人">
         <input value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} className="ipt" />
       </Field>
-      <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}`}</style>
+      <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}.ipt:disabled{opacity:.55;cursor:not-allowed}`}</style>
     </form>
   );
 }
