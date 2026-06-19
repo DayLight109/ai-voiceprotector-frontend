@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -65,7 +65,7 @@ export default function BizPermsPage() {
   };
 
   return (
-    <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "权限设置"]}>
+    <AppShell role="biz" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "权限设置"]}>
       <PageHeader
         eyebrow="ENTERPRISE PERMISSIONS"
         title="权限设置"
@@ -149,3 +149,4 @@ function Title({ icon: Icon, label }: any) {
     </div>
   );
 }
+

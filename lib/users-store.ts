@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 成员管理 store：后端为唯一数据源，乐观写只在内存里短暂存在。
 // 与 blacklist-store 相同的"乐观写 + 失败回滚"模式；不写 localStorage ——
@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, APIError } from "./api";
 import { uid } from "./storage";
-import { type ManagedUser } from "./mock";
+import { type ManagedUser } from "./domain-types";
 
 // 旧版本写过的 localStorage key，挂载时清掉（幂等）
 const LEGACY_LOCAL_KEY = "managed-users.tenant";
@@ -154,3 +154,4 @@ export function useHybridUsers(): UseHybridUsers {
 
   return { items, loading, error, refresh, create, update, remove };
 }
+

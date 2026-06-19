@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import CountUp from "@/components/shared/CountUp";
 import { FAMILY_ADMIN_NAV } from "@/lib/nav";
 import { api } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import type { ManagedUser, Recording, BlackEntry } from "@/lib/mock";
+import type { ManagedUser, Recording, BlackEntry } from "@/lib/domain-types";
 import { Users, Mic2, Sliders, Database, ArrowUpRight, Activity, TrendingUp } from "lucide-react";
 import { SkeletonBar } from "@/components/shared/Skeleton";
 import Link from "next/link";
@@ -16,7 +16,7 @@ export default function FamilyAdminHome() {
   const blist = useResource<BlackEntry>(() => api.blacklist.list({ pageSize: 1 }));
 
   return (
-    <AppShell role="family-admin" userName="李梦楠" nav={FAMILY_ADMIN_NAV} breadcrumb={["SENTINEL", "家庭管理员", "总览"]}>
+    <AppShell role="family-admin" nav={FAMILY_ADMIN_NAV} breadcrumb={["SENTINEL", "家庭管理员", "总览"]}>
       <PageHeader
         eyebrow="FAMILY ADMIN"
         title="家庭管理员控制台"
@@ -119,3 +119,5 @@ export default function FamilyAdminHome() {
     </AppShell>
   );
 }
+
+

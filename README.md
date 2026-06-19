@@ -38,7 +38,7 @@ components/
   CrisisStats.tsx    · 36 亿次 · 数据可视化
   PainPoints.tsx     · 四大痛点
   DefenseStack.tsx   · 三层防护机制
-  CallSimulator.tsx  · 12 秒交互式实时演示 ★
+  CallSimulator.tsx  · 12 秒交互式拦截流程 ★
   ComparisonTable.tsx· 与现有产品对比
   Personas.tsx       · 老人 / 学生 / 机构
   Policy.tsx         · 反诈法 + 十五五规划
@@ -55,7 +55,7 @@ components/
 - **字体**：Noto Serif SC（标题）× Noto Sans SC（正文）× JetBrains Mono（数据轨）×
   Instrument Serif Italic（编辑式强调）。
 - **互动核心**：`CallSimulator` 中 `requestAnimationFrame` 驱动 12.5 s 时间线，
-  并发演示「来电溯源 / 声纹检测 / 话术识别 / 风险等级 / 证据留存 / 自动阻断」。
+  串联「来电溯源 / 声纹检测 / 话术识别 / 风险等级 / 证据留存 / 自动阻断」。
 
 ## 数据来源
 

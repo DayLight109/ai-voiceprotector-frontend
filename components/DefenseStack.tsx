@@ -5,22 +5,22 @@ const LAYERS = [
     id: "L1", icon: Radio, title: "来电溯源", en: "Origin Trace",
     tint: "var(--indigo)", soft: "var(--indigo-soft)", deep: "var(--indigo-deep)",
     checks: ["SS7 / SIP 信令层回溯", "号段归属实时校验", "境外跳转链路标记"],
-    latency: "22ms",
-    sample: { shown: "+86 138 0013 xxxx", actual: "+855 23 Phnom Penh", hops: "5 跳" },
+    mode: "在线",
+    runtime: { shown: "来电显示号码", actual: "信令来源", hops: "链路跳数" },
   },
   {
     id: "L2", icon: Waves, title: "声纹取证", en: "Voiceprint Forensics",
     tint: "var(--mint-deep)", soft: "var(--mint-soft)", deep: "var(--mint-deep)",
     checks: ["合成特征 (F0 抖动 / 呼吸)", "端到端 ONNX 推理", "SYNTH / HUMAN 二元判决"],
-    latency: "61ms",
-    sample: { synth: "0.94", f0: "不稳定", breath: "缺失" },
+    mode: "推理",
+    runtime: { synth: "合成概率", f0: "频谱特征", breath: "呼吸特征" },
   },
   {
     id: "L3", icon: ScanLine, title: "话术语义", en: "Script NLU",
     tint: "var(--coral)", soft: "var(--coral-soft)", deep: "var(--coral-deep)",
     checks: ["5 类欺诈词典匹配", "转账 · 权威 · 紧迫语义模型", "实时打断 + 亲属同步"],
-    latency: "37ms",
-    sample: { cat: "转账指令", phrase: "\"打到安全账户\"", weight: "0.92" },
+    mode: "匹配",
+    runtime: { cat: "风险类别", phrase: "命中片段", weight: "策略权重" },
   },
 ];
 
@@ -76,8 +76,8 @@ export default function DefenseStack() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">延迟</div>
-                  <div className="numplate text-[calc(20px*var(--fz))]" style={{ color: l.deep }}>{l.latency}</div>
+                  <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">链路</div>
+                  <div className="numplate text-[calc(20px*var(--fz))]" style={{ color: l.deep }}>{l.mode}</div>
                 </div>
               </div>
 
@@ -101,7 +101,7 @@ export default function DefenseStack() {
               </ul>
 
               <div className="relative p-3.5 rounded-2xl bg-canvas-2 space-y-1.5">
-                {Object.entries(l.sample).map(([k, v]) => (
+                {Object.entries(l.runtime).map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-3 font-mono text-[calc(12px*var(--fz))]">
                     <span className="text-ink-soft uppercase text-[calc(10px*var(--fz))] font-bold">{k}</span>
                     <span className="text-ink font-semibold truncate">{v}</span>

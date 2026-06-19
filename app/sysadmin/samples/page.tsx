@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -6,7 +6,7 @@ import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { type ScamSample } from "@/lib/mock";
+import { type ScamSample } from "@/lib/domain-types";
 import { downloadBlob } from "@/lib/storage";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
@@ -58,7 +58,7 @@ export default function SamplesPage() {
   };
 
   return (
-    <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "样本审核"]}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "样本审核"]}>
       <PageHeader
         eyebrow="SAMPLE REVIEW"
         title="审核诈骗样本"
@@ -161,3 +161,5 @@ function Mini({ label, children }: any) {
     </div>
   );
 }
+
+

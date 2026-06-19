@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { ADMIN_NAV } from "@/lib/nav";
-import { type Appeal } from "@/lib/mock";
+import { type Appeal } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { ListRowSkeleton, SkeletonBar } from "@/components/shared/Skeleton";
@@ -58,7 +58,7 @@ export default function AdminAppealsPage() {
   };
 
   return (
-    <AppShell role="admin" userName="李梦楠" nav={ADMIN_NAV} breadcrumb={["SENTINEL", "企业管理员", "举报审批"]}>
+    <AppShell role="admin" nav={ADMIN_NAV} breadcrumb={["SENTINEL", "企业管理员", "举报审批"]}>
       <PageHeader
         eyebrow="LOCAL APPEAL QUEUE"
         title="本地举报审批"
@@ -203,3 +203,5 @@ function formatTime(s: string): string {
   if (s.includes("T")) return s.replace("T", " ").slice(0, 16);
   return s.slice(0, 16);
 }
+
+

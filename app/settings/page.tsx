@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useRef, useState } from "react";
 import { User, Shield, Bell, Palette, Key, Smartphone, LogOut, Home, Users, Settings as SettingsIcon, ChevronRight, CheckCircle2, Fingerprint, ScanFace, Phone, Trash2, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
@@ -32,7 +32,6 @@ export default function SettingsPage() {
   return (
     <AppShell
       role="family"
-      userName="王磊"
       nav={NAV}
       breadcrumb={["SENTINEL", t("设置"), TABS.find((x) => x.k === tab)!.label]}
     >
@@ -1118,7 +1117,7 @@ function EmergencyContactsModal({
                     maxLength={32}
                     onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
                     className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
-                    placeholder="例如：母亲"
+                    placeholder="请输入联系人称呼"
                   />
                 </div>
                 <div>
@@ -1129,7 +1128,7 @@ function EmergencyContactsModal({
                     inputMode="tel"
                     onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
                     className="w-full px-4 py-2.5 rounded-xl bg-surface border border-border font-medium text-[calc(13px*var(--fz))] focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
-                    placeholder="13800001111"
+                    placeholder="请输入手机号"
                   />
                 </div>
                 <div>
@@ -1392,3 +1391,4 @@ function SessionsModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+

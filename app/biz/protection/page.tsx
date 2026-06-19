@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -6,7 +6,7 @@ import DataTable from "@/components/shared/DataTable";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { BIZ_NAV } from "@/lib/nav";
-import { type BlackEntry, type WhiteEntry } from "@/lib/mock";
+import { type BlackEntry, type WhiteEntry } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { useHybridBlacklist } from "@/lib/blacklist-store";
@@ -122,7 +122,7 @@ export default function BizProtectionPage() {
   const isEditing = !!(editingBlack || editingWhite);
 
   return (
-    <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "实时安全防护"]}>
+    <AppShell role="biz" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "实时安全防护"]}>
       <PageHeader
         eyebrow="ENTERPRISE PROTECTION"
         title="实时安全防护"
@@ -256,7 +256,7 @@ export default function BizProtectionPage() {
         {tab === "blacklist" ? (
           <form id="biz-bl-form" onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
             <Field label="号码">
-              <input required value={bForm.number} onChange={(e) => setBForm({ ...bForm, number: e.target.value })} placeholder="+86 138 0000 0000" className="ipt" />
+              <input required value={bForm.number} onChange={(e) => setBForm({ ...bForm, number: e.target.value })} placeholder="请输入 E.164 号码" className="ipt" />
             </Field>
             <Field label="类别">
               <select value={bForm.category} onChange={(e) => setBForm({ ...bForm, category: e.target.value as BlackEntry["category"] })} className="ipt">
@@ -264,7 +264,7 @@ export default function BizProtectionPage() {
               </select>
             </Field>
             <Field label="原因">
-              <input value={bForm.reason} onChange={(e) => setBForm({ ...bForm, reason: e.target.value })} placeholder="例如：仿冒客服热线骚扰" className="ipt" />
+              <input value={bForm.reason} onChange={(e) => setBForm({ ...bForm, reason: e.target.value })} placeholder="请输入加入原因" className="ipt" />
             </Field>
             <Field label="风险分（0-100）">
               <input type="number" min={0} max={100} value={bForm.risk}
@@ -275,13 +275,13 @@ export default function BizProtectionPage() {
         ) : (
           <form id="biz-wl-form" onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
             <Field label="号码">
-              <input required value={wForm.number} onChange={(e) => setWForm({ ...wForm, number: e.target.value })} placeholder="+86 138 0000 0000" className="ipt" />
+              <input required value={wForm.number} onChange={(e) => setWForm({ ...wForm, number: e.target.value })} placeholder="请输入 E.164 号码" className="ipt" />
             </Field>
             <Field label="联系人">
-              <input value={wForm.name} onChange={(e) => setWForm({ ...wForm, name: e.target.value })} placeholder="例如：客户成功部" className="ipt" />
+              <input value={wForm.name} onChange={(e) => setWForm({ ...wForm, name: e.target.value })} placeholder="请输入联系人或部门" className="ipt" />
             </Field>
             <Field label="关系">
-              <input value={wForm.relation} onChange={(e) => setWForm({ ...wForm, relation: e.target.value })} placeholder="例如：合作方 / 内部分机" className="ipt" />
+              <input value={wForm.relation} onChange={(e) => setWForm({ ...wForm, relation: e.target.value })} placeholder="请输入关系说明" className="ipt" />
             </Field>
           </form>
         )}
@@ -299,3 +299,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+

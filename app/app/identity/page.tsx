@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -15,9 +15,9 @@ import { Smartphone, IdCard, BookOpen, ShieldCheck, Plane, CheckCircle2, ScanFac
 type CredKey = "phone" | "id_card" | "passport" | "military" | "hk_mo";
 
 const CREDS: { k: CredKey; label: string; icon: any; example: string }[] = [
-  { k: "phone", label: "手机号", icon: Smartphone, example: "138 0013 4921" },
-  { k: "id_card", label: "身份证", icon: IdCard, example: "110101 ···· 1234" },
-  { k: "passport", label: "护照", icon: BookOpen, example: "E12345678" },
+  { k: "phone", label: "手机号", icon: Smartphone, example: "请输入 11 位手机号" },
+  { k: "id_card", label: "身份证", icon: IdCard, example: "请输入 18 位身份证号" },
+  { k: "passport", label: "护照", icon: BookOpen, example: "请输入护照号码" },
   { k: "military", label: "军人证", icon: ShieldCheck, example: "军 / 武警证号" },
   { k: "hk_mo", label: "港澳台居民证", icon: Plane, example: "港澳台居民居住证号" },
 ];
@@ -181,8 +181,8 @@ export default function IdentityPage() {
       return;
     }
     try {
-      // verified=false：后端会 hash 存储；后续接 OCR 后服务端置 true
-      await api.credentials.submit(k, valueInput.trim(), false);
+      // 后端会加盐慢哈希存储；后续接 OCR 后仅由服务端置 verified=true
+      await api.credentials.submit(k, valueInput.trim());
       for (const slot of requiredSlots) {
         const pic = pics[slot];
         if (!pic) continue;
@@ -204,7 +204,7 @@ export default function IdentityPage() {
   };
 
   return (
-    <AppShell role="family" userName="王磊" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "身份认证"]}>
+    <AppShell role="family" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "身份认证"]}>
       <PageHeader
         eyebrow="IDENTITY"
         title="身份认证"
@@ -298,7 +298,7 @@ export default function IdentityPage() {
 
                 <div className="space-y-4">
                   <Field label="姓名">
-                    <input className="ipt" placeholder="张三" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
+                    <input className="ipt" placeholder="请输入真实姓名" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
                   </Field>
                   <Field label={cur.label + " 号"}>
                     <input className="ipt" placeholder={cur.example} value={valueInput} onChange={(e) => setValueInput(e.target.value)} />
@@ -568,3 +568,4 @@ function PicSlot({
     </label>
   );
 }
+

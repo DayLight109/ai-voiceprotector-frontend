@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 import { useLayoutEffect, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import { useToast } from "@/components/shared/Toast";
 import { BIZ_NAV } from "@/lib/nav";
-import { type Appeal } from "@/lib/mock";
+import { type Appeal } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { MessageSquareWarning, Flag, Clock, CheckCircle2, XCircle, Send, Cloud, HardDrive, Mic2, Paperclip, X, Inbox } from "lucide-react";
@@ -118,7 +118,7 @@ export default function BizAppealPage() {
   };
 
   return (
-    <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "申诉与举报"]}>
+    <AppShell role="biz" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "申诉与举报"]}>
       <PageHeader
         eyebrow="APPEAL & REPORT"
         title="诈骗反馈与申诉"
@@ -338,3 +338,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+

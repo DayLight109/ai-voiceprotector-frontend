@@ -3,7 +3,7 @@ import { Fingerprint, MessageSquareWarning, PhoneOff, Boxes } from "lucide-react
 const PAINS = [
   {
     id: "01", icon: PhoneOff, title: "显示号码可伪造",
-    desc: "信令层穿透后，+86 的家乡号可能来自金边机房。归属地识别只是纸糊的围墙。",
+    desc: "信令层穿透后，显示为本地的号码也可能来自境外机房。归属地识别只是纸糊的围墙。",
     tag: "Origin", tint: "var(--coral)", soft: "var(--coral-soft)", deep: "var(--coral-deep)",
   },
   {
@@ -13,7 +13,7 @@ const PAINS = [
   },
   {
     id: "03", icon: MessageSquareWarning, title: "话术无法实时识别",
-    desc: "\"公安传票\"、\"安全账户\"、\"验证码\"——关键词早被熟知，但没有工具能在通话中打断。",
+    desc: "冒充权威、诱导转账、套取验证码——这些高风险意图早被熟知，但没有工具能在通话中打断。",
     tag: "Script", tint: "var(--amber)", soft: "var(--amber-soft)", deep: "var(--amber-deep)",
   },
   {

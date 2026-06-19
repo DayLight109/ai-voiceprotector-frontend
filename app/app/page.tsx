@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, Bell, Users, ListChecks, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Plus, Circle, MonitorSmartphone } from "lucide-react";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import CountUp from "@/components/shared/CountUp";
 import { FAMILY_NAV } from "@/lib/nav";
 import { api, ApiDevice } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { CallLog } from "@/lib/mock";
+import type { CallLog } from "@/lib/domain-types";
 
 const WEEKDAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -291,3 +291,4 @@ export default function FamilyDashboard() {
     </AppShell>
   );
 }
+

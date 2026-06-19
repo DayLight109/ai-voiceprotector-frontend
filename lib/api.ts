@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 // lib/api.ts — Gateway 客户端
 //
 // 设计要点：
 //   - 所有 fetch 自动注入 Authorization: Bearer <accessToken>
-//   - 401 自动尝试 /auth/refresh（refresh token 也存在 localStorage）
+//   - 401 自动尝试 /auth/refresh（refresh token 由后端 HttpOnly Cookie 保存）
 //   - SSE 用 fetch + ReadableStream 实现（EventSource 不支持自定义 header）
 //   - 响应统一拆 envelope { data, meta } / { error: { code, message } }
 //   - 错误抛 APIError，调用方按 e.code 区分
@@ -12,20 +12,28 @@
 import type {
   BlackEntry, WhiteEntry, KnowledgeArticle, ScamRule, ScamSample,
   Recording, ManagedUser, Appeal, CallLog, AuditLog, VoiceModel,
-} from "./mock";
+} from "./domain-types";
 
 const API_BASE =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) ||
   "http://localhost:8080";
 
-// ── Token 存储（localStorage） ───────────────────────────────────
+// ── Token 存储 ───────────────────────────────────────────────────
 const TOKEN_KEY = "sentinel.v1.token";
 const REFRESH_KEY = "sentinel.v1.refresh";
+let accessTokenMemory: string | null = null;
 
 export function getAccessToken(): string | null {
+  if (accessTokenMemory) return accessTokenMemory;
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(TOKEN_KEY);
+    const legacy = window.localStorage.getItem(TOKEN_KEY);
+    if (legacy) {
+      accessTokenMemory = legacy;
+      window.localStorage.removeItem(TOKEN_KEY);
+      return legacy;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -34,21 +42,25 @@ export function getAccessToken(): string | null {
 export function getRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
+    // 仅用于从旧版本 localStorage 迁移；新版本不再持久化 refresh token。
     return window.localStorage.getItem(REFRESH_KEY);
   } catch {
     return null;
   }
 }
 
-export function setTokens(access: string, refresh: string) {
+export function setTokens(access: string, refresh?: string) {
+  accessTokenMemory = access;
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(TOKEN_KEY, access);
-    window.localStorage.setItem(REFRESH_KEY, refresh);
+    void refresh;
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(REFRESH_KEY);
   } catch {}
 }
 
 export function clearTokens() {
+  accessTokenMemory = null;
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(TOKEN_KEY);
@@ -89,7 +101,7 @@ export interface SessionView {
   current: boolean;
 }
 
-// 后端 /devices 真实返回结构（区别于 mock 的 UI 型 Device：tenant/lastSeen）
+// 后端 /devices 真实返回结构（区别于前端展示型 Device：tenant/lastSeen）
 export interface ApiDevice {
   id: string;
   name: string;
@@ -145,7 +157,11 @@ async function rawFetch(path: string, opts: FetchOptions = {}): Promise<Response
     const tk = getAccessToken();
     if (tk) headers["Authorization"] = `Bearer ${tk}`;
   }
-  return fetch(`${API_BASE}${path}`, { ...opts, headers });
+  return fetch(`${API_BASE}${path}`, {
+    ...opts,
+    credentials: opts.credentials ?? "include",
+    headers,
+  });
 }
 
 // 401 时尝试一次 refresh，成功则返回 true。
@@ -164,29 +180,27 @@ function tryRefresh(): Promise<boolean> {
 }
 
 async function doRefresh(): Promise<boolean> {
-  const refresh = getRefreshToken();
-  if (!refresh) return false;
+  const legacyRefresh = getRefreshToken();
   try {
+    const refreshBody = legacyRefresh ? JSON.stringify({ refreshToken: legacyRefresh }) : undefined;
     const resp = await rawFetch("/api/v1/auth/refresh", {
       method: "POST",
-      body: JSON.stringify({ refreshToken: refresh }),
+      body: refreshBody,
       skipAuth: true,
     });
     if (!resp.ok) {
-      // 仅在确定 refresh 已失效（401/403）且本地 token 未被其它流程更新时
-      // 才清空；5xx / 网关抖动不清，避免临时故障把用户踢下线
-      if ((resp.status === 401 || resp.status === 403) && getRefreshToken() === refresh) {
-        clearTokens();
-      }
+      // 仅在确定 refresh 已失效（401/403）时清空；5xx / 网关抖动不清，
+      // 避免临时故障把用户踢下线。
+      if (resp.status === 401 || resp.status === 403) clearTokens();
       return false;
     }
     const body = await resp.json();
     const d = body?.data;
-    if (d?.accessToken && d?.refreshToken) {
+    if (d?.accessToken) {
       setTokens(d.accessToken, d.refreshToken);
       return true;
     }
-    if (getRefreshToken() === refresh) clearTokens();
+    clearTokens();
     return false;
   } catch {
     // 网络层失败视为暂时性，不清 token，下次请求再试
@@ -268,6 +282,7 @@ export function streamFeed(handlers: StreamHandlers): () => void {
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/feed/stream`, {
         signal: controller.signal,
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!resp.ok || !resp.body) {
@@ -354,7 +369,7 @@ function crudFor<T>(base: string) {
 export interface LoginResponse {
   user: User;
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   expiresAt: string;
 }
 
@@ -480,6 +495,7 @@ export const api = {
     async exportCSV(): Promise<Blob> {
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/blacklist/export`, {
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!resp.ok) throw new APIError("EXPORT_FAILED", "导出失败", resp.status);
@@ -530,6 +546,7 @@ export const api = {
     async exportDoc(id: string): Promise<Blob> {
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/samples/${id}/export-doc`, {
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!resp.ok) throw new APIError("EXPORT_FAILED", "导出失败", resp.status);
@@ -553,6 +570,7 @@ export const api = {
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/recordings`, {
         method: "POST", body: form,
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const text = await resp.text();
@@ -572,6 +590,7 @@ export const api = {
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/voice-models`, {
         method: "POST", body: form,
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const text = await resp.text();
@@ -592,6 +611,7 @@ export const api = {
       const token = getAccessToken();
       const resp = await fetch(`${API_BASE}/api/v1/voice-samples`, {
         method: "POST", body: form,
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const text = await resp.text();
@@ -704,9 +724,9 @@ export const api = {
   // ── 身份证件
   credentials: {
     list: () => request<any[]>("/api/v1/me/credentials"),
-    submit: (kind: string, value: string, verified = false) =>
+    submit: (kind: string, value: string) =>
       request<any>(`/api/v1/me/credentials/${kind}`, {
-        method: "POST", body: JSON.stringify({ value, verified }),
+        method: "POST", body: JSON.stringify({ value }),
       }),
     remove: (kind: string) =>
       request<void>(`/api/v1/me/credentials/${kind}`, { method: "DELETE" }),
@@ -731,3 +751,4 @@ export const api = {
   analyze: (input: any) =>
     request<any>("/api/v1/analyze", { method: "POST", body: JSON.stringify(input) }),
 };
+

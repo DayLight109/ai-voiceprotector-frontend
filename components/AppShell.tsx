@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bell, Search, ChevronRight } from "lucide-react";
 import { ToastProvider } from "./shared/Toast";
+import { roleHomePath, useAuth } from "@/lib/auth";
 
 type NavItem = { href: string; label: string; icon: any; badge?: string | number };
 export type AppRole = "family" | "admin" | "biz" | "family-admin" | "sysadmin";
@@ -24,14 +25,17 @@ export default function AppShell({
   breadcrumb,
 }: {
   role: AppRole;
-  userName: string;
+  userName?: string;
   nav: NavItem[];
   children: React.ReactNode;
   breadcrumb: string[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, status } = useAuth();
   const roleLabel = ROLE_LABEL[role];
-  const initials = userName.slice(0, 1);
+  const requiredRole = role === "family-admin" ? "family_admin" : role;
+  const enforceRole = pathname !== "/settings";
 
   const navRef = useRef<HTMLElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
@@ -73,6 +77,29 @@ export default function AppShell({
     const t = setTimeout(() => setPrimed(true), 60);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (status === "anonymous") {
+      router.replace("/login");
+      return;
+    }
+    if (enforceRole && status === "authenticated" && user && user.role !== requiredRole) {
+      router.replace(roleHomePath(user.role));
+    }
+  }, [enforceRole, requiredRole, router, status, user]);
+
+  if (status === "loading" || !user || (enforceRole && user.role !== requiredRole)) {
+    return (
+      <div className="min-h-screen bg-canvas text-ink flex items-center justify-center">
+        <div className="font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
+          VERIFYING SESSION
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = user.name?.trim() || userName?.trim() || roleLabel;
+  const initials = displayName.slice(0, 1);
 
   return (
     <ToastProvider>
@@ -150,7 +177,7 @@ export default function AppShell({
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{userName}</div>
+              <div className="font-display text-[calc(13px*var(--fz))] font-extrabold truncate">{displayName}</div>
               <div className="font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold truncate">{roleLabel}</div>
             </div>
             <ChevronRight size={14} className="text-ink-soft" />

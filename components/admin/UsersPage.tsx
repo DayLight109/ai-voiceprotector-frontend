@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -7,7 +7,7 @@ import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
-import { type ManagedUser } from "@/lib/mock";
+import { type ManagedUser } from "@/lib/domain-types";
 import { APIError } from "@/lib/api";
 import { useHybridUsers } from "@/lib/users-store";
 import { Plus, Trash2, Edit3, UserPlus } from "lucide-react";
@@ -63,7 +63,6 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
   return (
     <AppShell
       role={role}
-      userName={isFam ? "李梦楠" : "李梦楠"}
       nav={isFam ? FAMILY_ADMIN_NAV : ADMIN_NAV}
       breadcrumb={["SENTINEL", isFam ? "家庭管理员" : "企业管理员", "多用户管理"]}
     >
@@ -184,3 +183,5 @@ function Field({ label, children }: any) {
     </div>
   );
 }
+
+

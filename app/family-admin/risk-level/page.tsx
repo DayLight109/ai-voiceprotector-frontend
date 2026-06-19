@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import RiskLevelEditor from "@/components/shared/RiskLevelEditor";
@@ -6,7 +6,7 @@ import { FAMILY_ADMIN_NAV } from "@/lib/nav";
 
 export default function FamilyRiskLevelPage() {
   return (
-    <AppShell role="family-admin" userName="李梦楠" nav={FAMILY_ADMIN_NAV} breadcrumb={["SENTINEL", "家庭管理员", "风控等级"]}>
+    <AppShell role="family-admin" nav={FAMILY_ADMIN_NAV} breadcrumb={["SENTINEL", "家庭管理员", "风控等级"]}>
       <PageHeader
         eyebrow="RISK LEVEL"
         title="风控等级 L1–L5"
@@ -16,3 +16,4 @@ export default function FamilyRiskLevelPage() {
     </AppShell>
   );
 }
+

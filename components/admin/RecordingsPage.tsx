@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -8,7 +8,7 @@ import Toggle from "@/components/shared/Toggle";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
-import { type Recording } from "@/lib/mock";
+import { type Recording } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { Mic2, Trash2, Play, Pause, Download, Inbox } from "lucide-react";
@@ -72,7 +72,6 @@ export default function RecordingsPage({ role }: { role: "family-admin" | "admin
   return (
     <AppShell
       role={role}
-      userName="李梦楠"
       nav={isFam ? FAMILY_ADMIN_NAV : ADMIN_NAV}
       breadcrumb={["SENTINEL", isFam ? "家庭管理员" : "企业管理员", "录音管理"]}
     >
@@ -152,3 +151,5 @@ export default function RecordingsPage({ role }: { role: "family-admin" | "admin
     </AppShell>
   );
 }
+
+

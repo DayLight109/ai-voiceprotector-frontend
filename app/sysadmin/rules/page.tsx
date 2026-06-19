@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -8,7 +8,7 @@ import Toggle from "@/components/shared/Toggle";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { type ScamRule } from "@/lib/mock";
+import { type ScamRule } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { Plus, Trash2, Edit3, ScrollText, Inbox } from "lucide-react";
@@ -74,7 +74,7 @@ export default function RulesPage() {
   };
 
   return (
-    <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "诈骗规则库"]}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "诈骗规则库"]}>
       <PageHeader
         eyebrow="SCAM RULES"
         title="构建判定诈骗规则库"
@@ -163,7 +163,7 @@ function RuleForm({ editing, onSubmit }: { editing: ScamRule | null; onSubmit: (
           {CATS.filter((c) => c !== "全部").map((c) => <option key={c}>{c}</option>)}
         </select>
       </Field>
-      <Field label="关键词"><input required value={f.keyword} onChange={(e) => setF({ ...f, keyword: e.target.value })} className="ipt" placeholder="如：安全账户" /></Field>
+      <Field label="关键词"><input required value={f.keyword} onChange={(e) => setF({ ...f, keyword: e.target.value })} className="ipt" placeholder="请输入需要匹配的关键词" /></Field>
       <Field label="权重（0-100）"><input type="number" min={0} max={100} value={f.weight} onChange={(e) => setF({ ...f, weight: e.target.value })} className="ipt" /></Field>
       <style>{`.ipt{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500}.ipt:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent)}`}</style>
     </form>
@@ -178,3 +178,5 @@ function Field({ label, children }: any) {
     </div>
   );
 }
+
+

@@ -3,16 +3,18 @@ import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
-import UploadZone from "@/components/shared/UploadZone";
+import UploadZone, { type UploadedFile } from "@/components/shared/UploadZone";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
-import { type BlackEntry } from "@/lib/mock";
+import { type BlackEntry } from "@/lib/domain-types";
 import { downloadBlob } from "@/lib/storage";
 import { APIError } from "@/lib/api";
 import { useHybridBlacklist } from "@/lib/blacklist-store";
 import { Plus, Trash2, Edit3, Database, FileSpreadsheet, Download, Cloud, Send } from "lucide-react";
+
+type UploadRecord = { name: string; size: number; rows: number };
 
 export default function BlacklistAdminPage({ role }: { role: "family-admin" | "admin" }) {
   const isFam = role === "family-admin";
@@ -21,7 +23,7 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
   const list = useHybridBlacklist();
   const [editing, setEditing] = useState<BlackEntry | null>(null);
   const [open, setOpen] = useState(false);
-  const [uploads, setUploads] = useState<{ name: string; size: number; lines: number }[]>([]);
+  const [uploads, setUploads] = useState<UploadRecord[]>([]);
 
   const onSubmit = async (form: any) => {
     try {
@@ -44,20 +46,33 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
     }
   };
 
-  const onUpload = async (files: { name: string; size: number; lines: number }[]) => {
-    setUploads((p) => [...p, ...files]);
-    const extra: Partial<BlackEntry>[] = files.flatMap((f) =>
-      Array.from({ length: Math.min(4, Math.max(2, Math.floor(f.lines / 10))) }).map(() => ({
-        number: `+86 ${String(Math.floor(Math.random() * 900) + 100)} ${String(Math.floor(Math.random() * 9000) + 1000)} ${String(Math.floor(Math.random() * 9000) + 1000)}`,
-        reason: `从 ${f.name} 导入`,
-        category: "其他" as const,
-        risk: 70 + Math.floor(Math.random() * 25),
-        source: "手动" as const,
-      }))
-    );
+  const onUpload = async (files: UploadedFile[]) => {
+    const parsed: UploadRecord[] = [];
+    const extra: Partial<BlackEntry>[] = [];
+
+    for (const f of files) {
+      if (!/\.(csv|txt)$/i.test(f.name)) {
+        toast("error", "仅支持 CSV/TXT 导入", f.name);
+        continue;
+      }
+      try {
+        const rows = parseBlacklistCSV(await f.file.text());
+        parsed.push({ name: f.name, size: f.size, rows: rows.length });
+        extra.push(...rows);
+      } catch (e) {
+        toast("error", "导入文件解析失败", e instanceof Error ? e.message : f.name);
+      }
+    }
+
+    if (parsed.length > 0) setUploads((p) => [...p, ...parsed]);
+    if (extra.length === 0) {
+      toast("error", "没有可导入的有效黑名单条目");
+      return;
+    }
+
     try {
       const res = await list.importMany(extra);
-      toast("success", `已导入 ${files.length} 个文件`, `合计 ${res.imported} 条`);
+      toast("success", `已导入 ${parsed.length} 个文件`, `合计 ${res.imported} 条，跳过 ${res.skipped} 条`);
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "导入失败");
     }
@@ -110,14 +125,13 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
   return (
     <AppShell
       role={role}
-      userName="李梦楠"
       nav={isFam ? FAMILY_ADMIN_NAV : ADMIN_NAV}
       breadcrumb={["SENTINEL", isFam ? "家庭管理员" : "企业管理员", "私有黑名单库"]}
     >
       <PageHeader
         eyebrow="PRIVATE BLACKLIST"
         title="私有黑名单库"
-        desc="支持手动 CRUD 与 XLS / XLSX / CSV 批量导入，所有数据落入本组织专属命名空间。"
+        desc="支持手动 CRUD 与 CSV 批量导入，所有数据落入本组织专属命名空间。"
         actions={
           <>
             <button onClick={exportCsv} className="btn-ghost py-2.5 px-4 text-[calc(13px*var(--fz))]"><Download size={14} /> 导出 CSV</button>
@@ -198,7 +212,11 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
               </div>
               <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">上传附件</div>
             </div>
-            <UploadZone onFiles={onUpload} />
+            <UploadZone
+              accept=".csv,.txt,text/csv,text/plain"
+              hint="支持 CSV / TXT，表头包含：号码、类别、原因、风险分、来源"
+              onFiles={onUpload}
+            />
             {uploads.length > 0 && (
               <div className="mt-4 space-y-2">
                 {uploads.map((f, i) => (
@@ -207,7 +225,7 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
                       <FileSpreadsheet size={14} className="text-ink-soft shrink-0" />
                       <span className="truncate font-mono font-bold">{f.name}</span>
                     </div>
-                    <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-mint-deep">解析 {f.lines} 行</span>
+                    <span className="font-mono text-[calc(11px*var(--fz))] font-bold text-mint-deep">解析 {f.rows} 行</span>
                   </div>
                 ))}
               </div>
@@ -217,7 +235,7 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
           <div className="panel p-6" style={{ background: "var(--amber-soft)" }}>
             <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] font-bold text-amber-deep mb-1">FORMAT</div>
             <div className="text-[calc(12px*var(--fz))] font-semibold text-amber-deep leading-[1.7]">
-              文件头要求：<code className="font-mono">号码 | 类别 | 原因 | 风险分</code>，单文件 ≤ 5MB。
+              文件头要求：<code className="font-mono">号码 | 类别 | 原因 | 风险分 | 来源</code>，单文件 ≤ 5MB。
             </div>
           </div>
         </aside>
@@ -238,6 +256,120 @@ export default function BlacklistAdminPage({ role }: { role: "family-admin" | "a
       </Modal>
     </AppShell>
   );
+}
+
+const CATEGORY_SET: BlackEntry["category"][] = ["AI合成", "话术诈骗", "号码伪冒", "其他"];
+const SOURCE_SET: BlackEntry["source"][] = ["本地", "云端", "手动", "举报"];
+
+const HEADER_ALIASES: Record<string, string> = {
+  number: "number",
+  phone: "number",
+  tel: "number",
+  mobile: "number",
+  "号码": "number",
+  "手机号": "number",
+  "电话": "number",
+  category: "category",
+  type: "category",
+  "类别": "category",
+  "类型": "category",
+  reason: "reason",
+  "原因": "reason",
+  "说明": "reason",
+  risk: "risk",
+  score: "risk",
+  "风险分": "risk",
+  "风险分数": "risk",
+  source: "source",
+  "来源": "source",
+};
+
+function parseBlacklistCSV(text: string): Partial<BlackEntry>[] {
+  const table = parseCSV(text.replace(/^\uFEFF/, ""));
+  if (table.length < 2) return [];
+
+  const headers = table[0].map((h) => HEADER_ALIASES[h.trim().toLowerCase()] ?? HEADER_ALIASES[h.trim()] ?? h.trim());
+  const numberIdx = headers.indexOf("number");
+  if (numberIdx < 0) throw new Error("缺少「号码」表头");
+  if (headers.indexOf("risk") < 0) throw new Error("缺少「风险分」表头");
+
+  const rows: Partial<BlackEntry>[] = [];
+  for (const cols of table.slice(1)) {
+    if (cols.every((v) => !v.trim())) continue;
+    const get = (key: string) => {
+      const idx = headers.indexOf(key);
+      return idx >= 0 ? (cols[idx] ?? "").trim() : "";
+    };
+
+    const number = get("number").replace(/\s+/g, " ");
+    if (!number) continue;
+
+    const category = normalizeCategory(get("category"));
+    const risk = normalizeRisk(get("risk"));
+    if (risk === null) continue;
+    const source = normalizeSource(get("source"));
+    rows.push({
+      number,
+      category,
+      reason: get("reason") || "CSV导入",
+      risk,
+      source,
+    });
+  }
+  return rows;
+}
+
+function parseCSV(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+    if (quoted) {
+      if (ch === '"' && next === '"') {
+        cell += '"';
+        i++;
+      } else if (ch === '"') {
+        quoted = false;
+      } else {
+        cell += ch;
+      }
+      continue;
+    }
+    if (ch === '"') quoted = true;
+    else if (ch === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (ch === "\n") {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else if (ch !== "\r") {
+      cell += ch;
+    }
+  }
+
+  row.push(cell);
+  if (row.some((v) => v.trim())) rows.push(row);
+  return rows;
+}
+
+function normalizeCategory(value: string): BlackEntry["category"] {
+  return CATEGORY_SET.includes(value as BlackEntry["category"]) ? (value as BlackEntry["category"]) : "其他";
+}
+
+function normalizeSource(value: string): BlackEntry["source"] {
+  return SOURCE_SET.includes(value as BlackEntry["source"]) ? (value as BlackEntry["source"]) : "手动";
+}
+
+function normalizeRisk(value: string): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
 function BLForm({ editing, onSubmit }: { editing: BlackEntry | null; onSubmit: (f: any) => void }) {

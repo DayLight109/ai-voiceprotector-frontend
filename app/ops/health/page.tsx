@@ -21,6 +21,7 @@ import {
   Sun,
   Zap,
 } from "lucide-react";
+import { getAccessToken } from "@/lib/api";
 
 const API =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) ||
@@ -168,10 +169,18 @@ export default function OpsHealthPage() {
 
     setLoading(true);
     try {
+      const token = getAccessToken();
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+      const requestInit: RequestInit = {
+        cache: "no-store" as const,
+        signal: ctrl.signal,
+        credentials: "include" as const,
+        headers,
+      };
       const [hRes, sRes, iRes] = await Promise.all([
-        fetch(`${API}/api/v1/ops/health`, { cache: "no-store", signal: ctrl.signal }),
-        fetch(`${API}/api/v1/ops/series`, { cache: "no-store", signal: ctrl.signal }),
-        fetch(`${API}/api/v1/ops/info`, { cache: "no-store", signal: ctrl.signal }),
+        fetch(`${API}/api/v1/ops/health`, requestInit),
+        fetch(`${API}/api/v1/ops/series`, requestInit),
+        fetch(`${API}/api/v1/ops/info`, requestInit),
       ]);
       if (!hRes.ok) throw new Error(`health HTTP ${hRes.status}`);
       if (!sRes.ok) throw new Error(`series HTTP ${sRes.status}`);
@@ -183,7 +192,7 @@ export default function OpsHealthPage() {
       setUpdatedAt(new Date());
 
       const pStart = performance.now();
-      await fetch(`${API}/api/v1/ops/ping`, { cache: "no-store", signal: ctrl.signal });
+      await fetch(`${API}/api/v1/ops/ping`, requestInit);
       setPingMs(Math.round(performance.now() - pStart));
     } catch (e) {
       if ((e as { name?: string }).name === "AbortError") return;

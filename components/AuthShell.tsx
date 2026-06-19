@@ -99,16 +99,16 @@ export default function AuthShell({
 
           <div className="relative grid grid-cols-3 gap-4 pt-8 border-t border-white/10">
             <div>
-              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>36 亿</div>
-              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>日均拦截</div>
+              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>RBAC</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>权限隔离</div>
             </div>
             <div>
-              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>99.2%</div>
-              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>召回率</div>
+              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>JWT</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>会话保护</div>
             </div>
             <div>
-              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>&lt;120ms</div>
-              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>判决延迟</div>
+              <div className="numplate text-[calc(22px*var(--fz))]" style={{ color: "#fff" }}>AUDIT</div>
+              <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.16em] font-bold mt-1" style={{ color: "rgba(242, 243, 247, 0.55)" }}>操作追踪</div>
             </div>
           </div>
         </div>

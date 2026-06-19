@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import RiskLevelEditor from "@/components/shared/RiskLevelEditor";
@@ -6,7 +6,7 @@ import { ADMIN_NAV } from "@/lib/nav";
 
 export default function AdminRiskLevelPage() {
   return (
-    <AppShell role="admin" userName="李梦楠" nav={ADMIN_NAV} breadcrumb={["SENTINEL", "企业管理员", "风控等级"]}>
+    <AppShell role="admin" nav={ADMIN_NAV} breadcrumb={["SENTINEL", "企业管理员", "风控等级"]}>
       <PageHeader
         eyebrow="ENTERPRISE RISK LEVEL"
         title="企业风控等级 L1–L5"
@@ -16,3 +16,4 @@ export default function AdminRiskLevelPage() {
     </AppShell>
   );
 }
+

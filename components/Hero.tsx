@@ -32,9 +32,9 @@ export default function Hero() {
 
       <div className="max-w-[1400px] mx-auto px-5 md:px-8 pt-14 md:pt-20 pb-20 md:pb-28">
         <div className="flex flex-wrap items-center gap-3 mb-8 rise">
-          <span className="tag-chip" data-live="true">2026.Q2 · 公开测试</span>
+          <span className="tag-chip" data-live="true">生产准备 · 内测环境</span>
           <span className="tag-chip" data-tone="indigo">端侧推理 · 零上云</span>
-          <span className="tag-chip" data-tone="mint">延迟 &lt; 120ms</span>
+          <span className="tag-chip" data-tone="mint">审计留存 · 可追溯</span>
         </div>
 
         <div className="grid grid-cols-12 gap-6 md:gap-10 items-end">
@@ -62,7 +62,7 @@ export default function Hero() {
             <div className="mt-10 flex flex-wrap items-center gap-4 rise" style={{ animationDelay: "0.35s" }}>
               <a href="#simulator" className="btn-indigo">
                 <Play size={14} fill="currentColor" />
-                观看 12.5 秒实战
+                查看拦截流程
                 <ArrowUpRight size={16} />
               </a>
               <a href="#defense" className="btn-ghost">
@@ -72,13 +72,13 @@ export default function Hero() {
 
             <div className="mt-14 grid grid-cols-3 gap-4 md:gap-6 max-w-xl rise" style={{ animationDelay: "0.5s" }}>
               {[
-                { k: "3.6 亿", v: "日均拦截", c: "var(--indigo)" },
-                { k: "<120ms", v: "判决延迟", c: "var(--mint-deep)" },
-                { k: "99.2%", v: "召回率", c: "var(--coral)" },
+                { k: "溯源", v: "信令校验", c: "var(--indigo)" },
+                { k: "声纹", v: "模型推理", c: "var(--mint-deep)" },
+                { k: "话术", v: "语义判决", c: "var(--coral)" },
               ].map((s) => (
                 <div key={s.v} className="relative pl-4">
                   <span className="absolute left-0 top-1 bottom-1 w-1 rounded-full" style={{ background: s.c }} />
-                  <div className="numplate text-[calc(26px*var(--fz))] md:text-[calc(32px*var(--fz))] leading-none">{s.k}</div>
+                  <div className="numplate text-[calc(22px*var(--fz))] md:text-[calc(28px*var(--fz))] leading-none">{s.k}</div>
                   <div className="font-body text-[calc(12px*var(--fz))] font-semibold text-ink-soft mt-1.5">
                     {s.v}
                   </div>
@@ -95,30 +95,30 @@ export default function Hero() {
                   <div className="flex items-center gap-2">
                     <span className="signal-dot text-coral" />
                     <span className="font-mono text-[calc(11px*var(--fz))] font-bold uppercase tracking-[0.14em] text-ink">
-                      LIVE · 实时审计
+                      LIVE · 运行时审计
                     </span>
                   </div>
-                  <span className="pill pill-coral">BLOCK</span>
+                  <span className="pill pill-mint">READY</span>
                 </div>
 
                 <div>
                   <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft">
-                    CALL ID · 0x4F82A1
+                    CALL ID · 来自网关事件
                   </div>
                   <div className="mt-1 font-display text-[calc(26px*var(--fz))] font-extrabold tracking-tight">
-                    +86 138 ···· 4921
+                    通话事件接入后显示
                   </div>
                   <div className="mt-1 text-[calc(13px*var(--fz))] text-ink-soft font-medium">
-                    显示归属：北京 · 联通 → 实际信令：柬埔寨 · 金边
+                    号码、归属、信令来源由运行时数据填充
                   </div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-canvas-2 border border-border">
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft">
-                      声纹频谱 · 合成概率
+                      声纹频谱 · 运行时判定
                     </span>
-                    <span className="pill pill-coral">0.94 SYNTH</span>
+                    <span className="pill pill-mint">WAITING</span>
                   </div>
                   <div className="flex items-end gap-[3px] h-16">
                     {bars.map((h, i) => (
@@ -138,9 +138,9 @@ export default function Hero() {
 
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { icon: Radio, label: "溯源", val: "跳转", tone: "coral-soft", color: "var(--coral-deep)" },
-                    { icon: Waves, label: "声纹", val: "SYNTH", tone: "coral-soft", color: "var(--coral-deep)" },
-                    { icon: ScanLine, label: "话术", val: "转账", tone: "amber-soft", color: "var(--amber-deep)" },
+                    { icon: Radio, label: "溯源", val: "校验", tone: "indigo-soft", color: "var(--indigo-deep)" },
+                    { icon: Waves, label: "声纹", val: "推理", tone: "mint-soft", color: "var(--mint-deep)" },
+                    { icon: ScanLine, label: "话术", val: "匹配", tone: "amber-soft", color: "var(--amber-deep)" },
                   ].map((l) => (
                     <div
                       key={l.label}
@@ -161,7 +161,7 @@ export default function Hero() {
                 <div className="flex items-center gap-3 pt-3 border-t border-border">
                   <Shield size={16} style={{ color: "var(--mint-deep)" }} />
                   <div className="text-[calc(12px*var(--fz))] text-ink-soft font-medium">
-                    已推送通知至紧急联系人 · 证据已本地加密留存
+                    触发风险后推送通知 · 证据按策略本地加密留存
                   </div>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export default function Hero() {
                 className="absolute -bottom-4 -left-4 px-3 py-2 rounded-2xl shadow-lg rotate-[-3deg] font-mono text-[calc(11px*var(--fz))] font-bold uppercase tracking-[0.14em]"
                 style={{ background: "var(--mint)", color: "var(--deep)" }}
               >
-                耗时 · 94ms
+                运行时计量
               </div>
             </div>
           </div>

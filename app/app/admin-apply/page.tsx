@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -66,7 +66,7 @@ export default function AdminApplyPage() {
   };
 
   return (
-    <AppShell role="family" userName="王磊" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "管理员申请"]}>
+    <AppShell role="family" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "管理员申请"]}>
       <PageHeader
         eyebrow="ADMIN APPLY"
         title="管理员申请"
@@ -245,3 +245,4 @@ function StatusBlock({ status }: { status: Status }) {
     </div>
   );
 }
+

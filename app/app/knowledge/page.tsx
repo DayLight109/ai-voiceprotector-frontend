@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 import { useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import { FAMILY_NAV } from "@/lib/nav";
-import { type KnowledgeArticle } from "@/lib/mock";
+import { type KnowledgeArticle } from "@/lib/domain-types";
 import { api } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { ListRowSkeleton } from "@/components/shared/Skeleton";
@@ -26,7 +26,7 @@ export default function KnowledgePage() {
   }, [articles.items, cat, q]);
 
   return (
-    <AppShell role="family" userName="王磊" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "反诈知识库"]}>
+    <AppShell role="family" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "反诈知识库"]}>
       <PageHeader
         eyebrow="KNOWLEDGE BASE"
         title="反诈知识库"
@@ -156,3 +156,5 @@ export default function KnowledgePage() {
     </AppShell>
   );
 }
+
+

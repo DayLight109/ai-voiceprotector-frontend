@@ -6,15 +6,15 @@ type Phase = "IDLE" | "RING" | "ANSWER" | "ANALYZE" | "WARN" | "BLOCK";
 type Event = { t: number; phase: Phase; side: "trace" | "voice" | "script" | "system"; msg: string; risk?: number };
 
 const TIMELINE: Event[] = [
-  { t: 0, phase: "RING", side: "system", msg: "来电 · +86 138 0013 4921" },
-  { t: 0.6, phase: "RING", side: "trace", msg: "查询号段归属：北京 · 联通", risk: 8 },
-  { t: 1.4, phase: "RING", side: "trace", msg: "信令层回溯 → 柬埔寨 · 金边", risk: 62 },
+  { t: 0, phase: "RING", side: "system", msg: "通话事件进入网关" },
+  { t: 0.6, phase: "RING", side: "trace", msg: "读取显示号码与信令来源", risk: 8 },
+  { t: 1.4, phase: "RING", side: "trace", msg: "信令层返回归属不一致", risk: 62 },
   { t: 2.2, phase: "ANSWER", side: "system", msg: "用户接听" },
-  { t: 2.8, phase: "ANALYZE", side: "voice", msg: "采集首段声纹 · 440ms", risk: 55 },
-  { t: 3.6, phase: "ANALYZE", side: "voice", msg: "F0 抖动异常 · 合成特征 +", risk: 74 },
-  { t: 4.4, phase: "ANALYZE", side: "script", msg: "识别关键词：「我是警察」", risk: 80 },
-  { t: 5.3, phase: "ANALYZE", side: "voice", msg: "呼吸特征缺失 · SYNTH 0.94", risk: 89 },
-  { t: 6.1, phase: "WARN", side: "script", msg: "识别：「打到这个安全账户」", risk: 96 },
+  { t: 2.8, phase: "ANALYZE", side: "voice", msg: "采集首段声纹窗口", risk: 55 },
+  { t: 3.6, phase: "ANALYZE", side: "voice", msg: "声学特征进入模型推理", risk: 74 },
+  { t: 4.4, phase: "ANALYZE", side: "script", msg: "语义分类器发现高风险意图", risk: 80 },
+  { t: 5.3, phase: "ANALYZE", side: "voice", msg: "声纹层返回高风险判决", risk: 89 },
+  { t: 6.1, phase: "WARN", side: "script", msg: "话术层命中高风险片段", risk: 96 },
   { t: 7.0, phase: "WARN", side: "system", msg: "屏幕警示 · 家属推送" },
   { t: 8.2, phase: "BLOCK", side: "system", msg: "通话中断 · 证据链加密留存" },
   { t: 9.4, phase: "BLOCK", side: "system", msg: "判决：BLOCK · 三路共识" },
@@ -105,22 +105,22 @@ export default function CallSimulator() {
       <div className="max-w-[1400px] mx-auto px-5 md:px-8">
         <div className="mb-14 grid grid-cols-12 gap-6 items-end">
           <div className="col-span-12 md:col-span-7">
-            <div className="section-idx mb-4"><b>05</b>12.5 秒实战演示</div>
+            <div className="section-idx mb-4"><b>05</b>拦截流程回放</div>
             <h2 className="mega text-[clamp(2.4rem,5.5vw,5rem)]">
               从<span className="mega-italic" style={{ color: "var(--coral)" }}> 响铃 </span>到
               <br />
-              <span className="underline-soft">拦截</span>，只走 9 秒。
+              <span className="underline-soft">拦截</span>，进入联动判决。
             </h2>
           </div>
           <div className="col-span-12 md:col-span-5 text-[calc(14px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
-            按下播放，跟随时间轴看三条引擎如何并行工作。每一条新证据到来时，
-            右侧判决器会立刻重算风险分数——从绿色的 SAFE，跃迁到红色的 BLOCK。
+            时间轴展示三条引擎如何并行工作。每一条新证据到来时，
+            判决器都会重算风险分数，从 SAFE 逐步升级到 WATCH 或 BLOCK。
           </div>
         </div>
 
         <div className="grid grid-cols-12 gap-5">
           <div className="col-span-12 lg:col-span-4">
-            <PhoneMock phase={phase} risk={risk} t={t} />
+            <PhonePreview phase={phase} risk={risk} t={t} />
           </div>
 
           <div className="col-span-12 lg:col-span-8 space-y-5">
@@ -207,7 +207,7 @@ export default function CallSimulator() {
   );
 }
 
-function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }) {
+function PhonePreview({ phase, risk, t }: { phase: Phase; risk: number; t: number }) {
   const meta = PHASE_META[phase];
   const blocked = phase === "BLOCK";
   return (
@@ -250,13 +250,13 @@ function PhoneMock({ phase, risk, t }: { phase: Phase; risk: number; t: number }
             className="font-display text-[calc(22px*var(--fz))] font-extrabold"
             style={{ color: blocked ? "#FFFFFF" : "var(--ink)" }}
           >
-            +86 138 ···· 4921
+            可疑来电
           </div>
           <div
             className="font-mono text-[calc(11px*var(--fz))] font-bold"
             style={{ color: blocked ? "rgba(255,255,255,0.75)" : "var(--ink-soft)" }}
           >
-            显示：北京联通 · 实际：金边
+            显示：本地号段 · 实际：跨境中转
           </div>
           <div
             className="mt-2 px-3 py-1.5 rounded-full font-mono text-[calc(11px*var(--fz))] font-bold uppercase tracking-[0.12em]"

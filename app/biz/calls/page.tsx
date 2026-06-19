@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -7,7 +7,7 @@ import Modal from "@/components/shared/Modal";
 import FormRow from "@/components/shared/FormRow";
 import Toggle from "@/components/shared/Toggle";
 import { BIZ_NAV } from "@/lib/nav";
-import { type CallLog } from "@/lib/mock";
+import { type CallLog } from "@/lib/domain-types";
 import { useLocalStorage } from "@/lib/storage";
 import { api } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
@@ -21,7 +21,7 @@ export default function BizCallsPage() {
   const [active, setActive] = useState<CallLog | null>(null);
 
   return (
-    <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "通话记录"]}>
+    <AppShell role="biz" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "通话记录"]}>
       <PageHeader
         eyebrow="CALL HISTORY"
         title="通话记录"
@@ -140,3 +140,5 @@ function Mini({ label, children }: any) {
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -155,7 +155,7 @@ export default function DeviceManager({ deviceType }: { deviceType: DeviceType }
   const breadcrumb = ["SENTINEL", "系统管理员", "设备管理", isEnt ? "企业端" : "家庭端"];
 
   return (
-    <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={breadcrumb}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={breadcrumb}>
       <PageHeader
         eyebrow={isEnt ? "ENTERPRISE DEVICES" : "FAMILY DEVICES"}
         title={isEnt ? "企业端设备管理" : "家庭端设备管理"}
@@ -301,7 +301,7 @@ function DevForm({ editing, onSubmit, isEnt }: { editing: ApiDevice | null; onSu
   return (
     <form id="dev-form" onSubmit={(e) => { e.preventDefault(); onSubmit(f); }} className="space-y-4">
       <Field label={isEnt ? "设备名称" : "户主姓名 + 设备"}>
-        <input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="ipt" placeholder={isEnt ? "如：建设银行 95533 · 集群" : "如：王磊家 · 智能盒子"} />
+        <input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="ipt" placeholder={isEnt ? "如：建设银行 95533 · 集群" : "如：家庭客厅 · 智能盒子"} />
       </Field>
       <Field label={isEnt ? "企业名称" : "家庭名称"}>
         <input required={!editing} disabled={!!editing} value={f.tenant} onChange={(e) => setF({ ...f, tenant: e.target.value })} className="ipt" placeholder={editing ? "" : "租户标识，如 default-enterprise"} />
@@ -322,3 +322,5 @@ function Field({ label, children }: any) {
     </div>
   );
 }
+
+

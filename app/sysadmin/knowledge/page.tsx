@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -7,7 +7,7 @@ import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { type KnowledgeArticle } from "@/lib/mock";
+import { type KnowledgeArticle } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { ListRowSkeleton } from "@/components/shared/Skeleton";
@@ -59,7 +59,7 @@ export default function SysKnowledgePage() {
   };
 
   return (
-    <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "反诈知识库"]}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "反诈知识库"]}>
       <PageHeader
         eyebrow="KNOWLEDGE BASE"
         title="构建反诈知识库"
@@ -149,3 +149,5 @@ function Field({ label, children }: any) {
     </div>
   );
 }
+
+

@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { type Appeal } from "@/lib/mock";
+import { type Appeal } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { ListRowSkeleton, SkeletonBar } from "@/components/shared/Skeleton";
@@ -57,7 +57,7 @@ export default function SysAppealsPage() {
   };
 
   return (
-    <AppShell role="sysadmin" userName="陈静" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "申诉处理"]}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "申诉处理"]}>
       <PageHeader
         eyebrow="CLOUD APPEAL QUEUE"
         title="云端申诉与举报处理"
@@ -193,3 +193,5 @@ function formatTime(s: string): string {
   if (s.includes("T")) return s.replace("T", " ").slice(0, 16);
   return s.slice(0, 16);
 }
+
+

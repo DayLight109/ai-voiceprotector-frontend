@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -64,86 +64,11 @@ const titleFont =
 const monoFont =
   '"Cascadia Code","JetBrains Mono","Consolas","SFMono-Regular",monospace';
 
-const baseMetrics: Metric[] = [
-  { id: "cpu", label: "CPU LOAD", value: 68, min: 24, max: 96, delta: 5.4, unit: "percent" },
-  { id: "memory", label: "MEMORY GRID", value: 61, min: 28, max: 94, delta: 4.2, unit: "percent" },
-  { id: "network", label: "NETWORK FLOW", value: 12.6, min: 0.4, max: 96, delta: 4.4, unit: "mbps" },
-  { id: "goroutines", label: "GOROUTINES", value: 86, min: 30, max: 480, delta: 18, unit: "count" },
-];
-
-const baseDevices: Device[] = [
-  { id: "d1", name: "Aegis-01", zone: "CORE", health: 98, state: "online" },
-  { id: "d2", name: "Aegis-02", zone: "EDGE", health: 86, state: "online" },
-  { id: "d3", name: "Helix-03", zone: "SECTOR-7", health: 72, state: "watch" },
-  { id: "d4", name: "Helix-08", zone: "SECTOR-2", health: 63, state: "watch" },
-  { id: "d5", name: "Vanta-11", zone: "WEST ARC", health: 39, state: "risk" },
-  { id: "d6", name: "Vanta-14", zone: "NORTH GRID", health: 81, state: "online" },
-];
-
-const baseAlerts: AlertItem[] = [
-  {
-    id: "al-1",
-    title: "异常声纹聚类上升",
-    detail: "核心策略链检测到连续高相似声纹命中。",
-    level: "critical",
-    time: "--:--:--",
-  },
-  {
-    id: "al-2",
-    title: "边缘节点流量抖动",
-    detail: "南向链路出现不稳定脉冲，建议展开追踪。",
-    level: "warning",
-    time: "--:--:--",
-  },
-  {
-    id: "al-3",
-    title: "审计镜像回写完成",
-    detail: "数据留痕与证据镜像已完成固化。",
-    level: "notice",
-    time: "--:--:--",
-  },
-  {
-    id: "al-4",
-    title: "自动阻断已触发",
-    detail: "动态防护策略完成拦截并进入观察队列。",
-    level: "critical",
-    time: "--:--:--",
-  },
-];
-
-const baseTargets: Target[] = [
-  { id: "tg-1", x: 58, y: 33, label: "CN-ALPHA", heading: 122, speed: 12.3, level: "critical", pulseDelay: 0 },
-  { id: "tg-2", x: 28, y: 59, label: "GRID-KILO", heading: 287, speed: 8.7, level: "warning", pulseDelay: 0.45 },
-  { id: "tg-3", x: 67, y: 69, label: "ARC-SIGMA", heading: 36, speed: 6.2, level: "trace", pulseDelay: 0.9 },
-  { id: "tg-4", x: 44, y: 22, label: "VECTOR-09", heading: 198, speed: 14.8, level: "critical", pulseDelay: 1.35 },
-  { id: "tg-5", x: 36, y: 44, label: "TRACE-11", heading: 309, speed: 5.5, level: "warning", pulseDelay: 1.8 },
-];
-
-const initialLogs = [
-  "00:00:01 MISSION BUS ONLINE",
-  "00:00:04 THREAT GRAPH SYNCHRONIZED",
-  "00:00:06 EVIDENCE PIPE READY",
-  "00:00:09 RADAR SWEEP CALIBRATED",
-  "00:00:13 SESSION TRACE ARMED",
-  "00:00:16 TACTICAL GRID SEALED",
-];
-
-const logTemplates = [
-  "EDGE RISK MODEL REFRESHED",
-  "VOICEPRINT STREAM RESEALED",
-  "SUSPECT SESSION MOVED TO QUARANTINE",
-  "TACTICAL INDEX RECOMPUTED",
-  "SIGNAL GATEWAY LATENCY NORMALIZED",
-  "FORENSIC SNAPSHOT SIGNED",
-];
-
-const targetNames = [
-  "DELTA-17",
-  "OMEGA-32",
-  "HEX-04",
-  "RIFT-88",
-  "LENS-26",
-  "SIGMA-03",
+const emptyMetrics: Metric[] = [
+  { id: "cpu", label: "CPU LOAD", value: 0, min: 0, max: 100, delta: 0, unit: "percent" },
+  { id: "memory", label: "MEMORY GRID", value: 0, min: 0, max: 100, delta: 0, unit: "percent" },
+  { id: "network", label: "NETWORK FLOW", value: 0, min: 0, max: 1000, delta: 0, unit: "mbps" },
+  { id: "goroutines", label: "GOROUTINES", value: 0, min: 0, max: 10000, delta: 0, unit: "count" },
 ];
 
 const metricIcons = {
@@ -155,10 +80,6 @@ const metricIcons = {
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
-}
-
-function drift(value: number, delta: number, min: number, max: number) {
-  return clamp(value + (Math.random() - 0.5) * delta * 2, min, max);
 }
 
 function alertTone(level: AlertItem["level"]) {
@@ -179,8 +100,27 @@ function deviceTone(state: Device["state"]) {
   return "#66f5ff";
 }
 
-function nowTime() {
-  return new Date().toLocaleTimeString("zh-CN", { hour12: false });
+function stableHash(input: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function targetFromEvent(ev: FeedEvent, level: Target["level"]): Target {
+  const hash = stableHash(`${ev.id}:${ev.side}:${ev.payload}`);
+  return {
+    id: `feed-${ev.id}`,
+    x: 18 + (hash % 64),
+    y: 16 + (Math.floor(hash / 97) % 68),
+    label: ev.side.slice(0, 9).toUpperCase(),
+    heading: hash % 360,
+    speed: Number((4 + ((hash >>> 8) % 120) / 10).toFixed(1)),
+    level,
+    pulseDelay: ((hash >>> 16) % 6) * 0.16,
+  };
 }
 
 function nowClock() {
@@ -197,27 +137,22 @@ function nowClock() {
 
 export default function WarroomPage() {
   const [clock, setClock] = useState("--:--:--");
-  const [metrics, setMetrics] = useState(baseMetrics);
-  const [devices, setDevices] = useState(baseDevices);
-  const [alerts, setAlerts] = useState(baseAlerts);
-  const [logs, setLogs] = useState(initialLogs);
-  const [targets, setTargets] = useState(baseTargets);
-  const [signal, setSignal] = useState<number[]>([38, 44, 57, 51, 63, 58, 71, 65, 60, 73, 69, 75]);
-  const [threatIndex, setThreatIndex] = useState(78);
-  const [sessions, setSessions] = useState(1684);
-  const [blocked, setBlocked] = useState(296);
-  const [integrity, setIntegrity] = useState(96.8);
-  const seedRef = useRef(0);
+  const [metrics, setMetrics] = useState(emptyMetrics);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [signal, setSignal] = useState<number[]>([]);
+  const [threatIndex, setThreatIndex] = useState(0);
+  const [sessions, setSessions] = useState(0);
+  const [blocked, setBlocked] = useState(0);
+  const [integrity, setIntegrity] = useState(100);
 
   // ── 真实后端接入状态 ───────────────────────────────────
-  // defcon: 真实防御等级(/api/v1/defcon);statsSynced: 计数器已被后端驱动;
-  // runtimeSynced: 系统指标(CPU/内存/网络/goroutine)已被后端驱动。
-  // 同步成功后,下方随机 drift 动画对这些真实指标停手。
+  // defcon: 真实防御等级(/api/v1/defcon); feedSubs: SSE 订阅数。
+  // 未取到后端数据时保持空态或 0 值，不再使用本地假数据兜底。
   const [defcon, setDefcon] = useState<number | null>(null);
   const [defconWarn, setDefconWarn] = useState<string | null>(null);
-  const [statsSynced, setStatsSynced] = useState(false);
-  const [runtimeSynced, setRuntimeSynced] = useState(false);
-  const [devicesReal, setDevicesReal] = useState(false);
   const [feedSubs, setFeedSubs] = useState<number | null>(null);
 
   useEffect(() => {
@@ -237,8 +172,7 @@ export default function WarroomPage() {
   }, []);
 
   // ── 轮询 /api/v1/warroom/overview:runtime 指标 + 计数器 + 引擎统计 ──
-  // 成功后四个系统指标卡、Blocked/Sessions/Integrity/Threat 全部由真实数据驱动;
-  // 失败(未登录等)则保持随机动画兜底(演示模式)。
+  // 成功后四个系统指标卡、Blocked/Sessions/Integrity/Threat 全部由真实数据驱动。
   useEffect(() => {
     let stop = false;
     const pull = async () => {
@@ -263,10 +197,8 @@ export default function WarroomPage() {
         // threatIndex 用 AI 克隆 + 话术命中的相对热度粗略映射到 0-100 观感
         const heat = Math.min(98, 42 + ov.counters.aiCloneDetected * 6 + ov.counters.scriptHits * 2);
         setThreatIndex(Math.round(heat));
-        setStatsSynced(true);
-        setRuntimeSynced(true);
       } catch {
-        // 静默:未同步成功时由随机动画兜底
+        // 静默：未同步成功时保持空态或 0 值。
       }
     };
     void pull();
@@ -274,7 +206,7 @@ export default function WarroomPage() {
     return () => { stop = true; window.clearInterval(id); };
   }, []);
 
-  // ── 设备列表:真实 /api/v1/devices(有数据时替换演示矩阵)─────────
+  // ── 设备列表：真实 /api/v1/devices ─────────
   useEffect(() => {
     let alive = true;
     api.devices.list({ pageSize: 8 })
@@ -290,120 +222,10 @@ export default function WarroomPage() {
           health: d.status === "online" ? 98 : d.status === "warn" ? 65 : 30,
           state: d.status === "online" ? "online" : d.status === "warn" ? "watch" : "risk",
         })));
-        setDevicesReal(true);
       })
       .catch(() => {});
     return () => { alive = false; };
   }, []);
-
-  useEffect(() => {
-    setAlerts((prev) =>
-      prev.map((item, index) => ({
-        ...item,
-        time: new Date(Date.now() - index * 16_000).toLocaleTimeString("zh-CN", {
-          hour12: false,
-        }),
-      })),
-    );
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      seedRef.current += 1;
-
-      // 系统指标有真实后端数据(/warroom/overview.runtime):同步后停止随机抖动。
-      if (!runtimeSynced) {
-        setMetrics((prev) =>
-          prev.map((metric) => ({
-            ...metric,
-            value: drift(metric.value, metric.delta, metric.min, metric.max),
-          })),
-        );
-      }
-
-      // 设备矩阵接入真实 /devices 后停止抖动。
-      if (!devicesReal) {
-        setDevices((prev) =>
-          prev.map((device) => {
-            const health = Math.round(drift(device.health, device.state === "risk" ? 8 : 4.5, 26, 99));
-            const state = health < 48 ? "risk" : health < 76 ? "watch" : "online";
-            return { ...device, health, state };
-          }),
-        );
-      }
-
-      // 这三项有真实后端数据:同步成功后停止随机抖动,交给后端驱动。
-      if (!statsSynced) {
-        setThreatIndex((prev) => Math.round(drift(prev, 4.8, 42, 98)));
-        setSessions((prev) => Math.round(drift(prev, 60, 1220, 3420)));
-        setBlocked((prev) => Math.round(drift(prev, 18, 180, 760)));
-      }
-      if (!runtimeSynced) {
-        setIntegrity((prev) => Number(drift(prev, 0.5, 88.4, 99.5).toFixed(1)));
-      }
-
-      setSignal((prev) => [...prev.slice(1), Math.round(drift(prev[prev.length - 1] ?? 50, 9, 22, 92))]);
-
-      setTargets((prev) => {
-        const shifted = prev.map((target) => ({
-          ...target,
-          x: drift(target.x, target.level === "critical" ? 2.4 : 1.6, 16, 84),
-          y: drift(target.y, target.level === "critical" ? 2.8 : 1.7, 14, 86),
-          heading: Math.round((target.heading + drift(8, 6, 1, 16)) % 360),
-          speed: Number(drift(target.speed, 1.2, 3.6, 18.8).toFixed(1)),
-        }));
-        if (Math.random() < 0.42) {
-          const next: Target = {
-            id: `tg-${Date.now()}`,
-            x: drift(50, 34, 18, 82),
-            y: drift(50, 30, 16, 84),
-            label: targetNames[Math.floor(Math.random() * targetNames.length)],
-            heading: Math.round(drift(180, 170, 0, 359)),
-            speed: Number(drift(9, 5.6, 3.8, 18.1).toFixed(1)),
-            level: Math.random() > 0.72 ? "critical" : Math.random() > 0.4 ? "warning" : "trace",
-            pulseDelay: (seedRef.current % 6) * 0.28,
-          };
-          return [next, ...shifted].slice(0, 7);
-        }
-        return shifted;
-      });
-
-      // 日志与警报:接通真实事件流(/feed/stream + overview)后停止注入演示内容。
-      if (!statsSynced) {
-        setLogs((prev) => [
-          `${nowTime()} ${logTemplates[Math.floor(Math.random() * logTemplates.length)]}`,
-          ...prev,
-        ].slice(0, 7));
-
-        if (Math.random() < 0.5) {
-          const level: AlertItem["level"] =
-            Math.random() > 0.75 ? "critical" : Math.random() > 0.42 ? "warning" : "notice";
-          setAlerts((prev) => [
-            {
-              id: `al-${Date.now()}`,
-              title:
-                level === "critical"
-                  ? "高危目标重新锁定"
-                  : level === "warning"
-                  ? "链路波动上升"
-                  : "审计数据已归档",
-              detail:
-                level === "critical"
-                  ? "扫描网格捕获二次命中，已推送应急防护。"
-                  : level === "warning"
-                  ? "边缘节点抖动增强，建议查看路径回放。"
-                  : "实时日志与证据镜像已同步完成。",
-              level,
-              time: nowTime(),
-            },
-            ...prev,
-          ].slice(0, 5));
-        }
-      }
-    }, 1800);
-
-    return () => window.clearInterval(timer);
-  }, [statsSynced, runtimeSynced, devicesReal]);
 
   useEffect(() => {
     const stop = streamFeed({
@@ -429,16 +251,7 @@ export default function WarroomPage() {
         if (level !== "notice") {
           const targetLevel: Target["level"] = level === "critical" ? "critical" : "warning";
           setTargets((prev) => [
-            {
-              id: `feed-${ev.id}`,
-              x: drift(50, 30, 18, 82),
-              y: drift(50, 28, 16, 84),
-              label: ev.side.slice(0, 9).toUpperCase(),
-              heading: Math.round(drift(180, 180, 0, 359)),
-              speed: Number(drift(10, 6, 4, 18).toFixed(1)),
-              level: targetLevel,
-              pulseDelay: 0.16,
-            },
+            targetFromEvent(ev, targetLevel),
             ...prev,
           ].slice(0, 7));
         }
@@ -448,7 +261,7 @@ export default function WarroomPage() {
     return () => stop();
   }, []);
 
-  const primaryTarget = targets[0];
+  const primaryTarget = targets[0] ?? null;
   const criticalAlerts = alerts.filter((item) => item.level === "critical").length;
   const systemMode = useMemo(() => {
     if (criticalAlerts >= 2 || threatIndex > 82) return "RED VECTOR";
@@ -624,9 +437,13 @@ export default function WarroomPage() {
               accent="violet"
             >
               <div className="space-y-3">
-                {devices.map((device) => (
-                  <DeviceRow key={device.id} device={device} />
-                ))}
+                {devices.length > 0 ? (
+                  devices.map((device) => (
+                    <DeviceRow key={device.id} device={device} />
+                  ))
+                ) : (
+                  <EmptyPanelText text="等待真实设备数据" />
+                )}
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
@@ -639,7 +456,7 @@ export default function WarroomPage() {
           <section className="grid min-h-0 grid-rows-[minmax(0,1fr)_180px] gap-4">
             <GlassPanel
               title="核心扫描区"
-              subtitle="Threat Sweep · 视觉演示"
+              subtitle="Real-time Events"
               icon={Radio}
               accent="cyan"
               breathing
@@ -657,7 +474,7 @@ export default function WarroomPage() {
             <div className="grid min-h-0 grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.95fr_0.95fr]">
               <GlassPanel
                 title="信号波形"
-                subtitle="Spectrum · 视觉演示"
+                subtitle="Signal"
                 icon={Activity}
                 accent="violet"
                 compact
@@ -667,7 +484,7 @@ export default function WarroomPage() {
 
               <GlassPanel
                 title="目标坐标"
-                subtitle="Coordinates · 视觉演示"
+                subtitle="Coordinates"
                 icon={TerminalSquare}
                 accent="cyan"
                 compact
@@ -699,9 +516,13 @@ export default function WarroomPage() {
               accent="violet"
             >
               <div className="space-y-3">
-                {alerts.map((alert, index) => (
-                  <AlertRow key={alert.id} alert={alert} index={index} />
-                ))}
+                {alerts.length > 0 ? (
+                  alerts.map((alert, index) => (
+                    <AlertRow key={alert.id} alert={alert} index={index} />
+                  ))
+                ) : (
+                  <EmptyPanelText text="等待真实告警事件" />
+                )}
               </div>
             </GlassPanel>
 
@@ -712,18 +533,22 @@ export default function WarroomPage() {
               accent="cyan"
             >
               <div className="space-y-2.5">
-                {logs.map((log, index) => (
-                  <div
-                    key={`${log}-${index}`}
-                    className="group bg-black/18 px-3 py-2.5 text-[calc(11px*var(--fz))] uppercase tracking-[0.24em] text-cyan-100/72 transition duration-300 hover:text-white"
-                    style={{
-                      clipPath: cutCorner,
-                      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    {log}
-                  </div>
-                ))}
+                {logs.length > 0 ? (
+                  logs.map((log, index) => (
+                    <div
+                      key={`${log}-${index}`}
+                      className="group bg-black/18 px-3 py-2.5 text-[calc(11px*var(--fz))] uppercase tracking-[0.24em] text-cyan-100/72 transition duration-300 hover:text-white"
+                      style={{
+                        clipPath: cutCorner,
+                        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
+                      }}
+                    >
+                      {log}
+                    </div>
+                  ))
+                ) : (
+                  <EmptyPanelText text="等待真实日志事件" />
+                )}
               </div>
             </GlassPanel>
           </aside>
@@ -856,6 +681,17 @@ function GlassPanel({
         <div className="mt-4 min-h-0 flex-1">{children}</div>
       </div>
     </section>
+  );
+}
+
+function EmptyPanelText({ text }: { text: string }) {
+  return (
+    <div
+      className="flex min-h-[92px] items-center justify-center bg-black/18 px-3 py-4 text-center text-[calc(11px*var(--fz))] uppercase tracking-[0.24em] text-cyan-100/42"
+      style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)", fontFamily: monoFont }}
+    >
+      {text}
+    </div>
   );
 }
 
@@ -1027,7 +863,7 @@ function RadarDisplay({
   targets: Target[];
   sessions: number;
   blocked: number;
-  primaryTarget: Target;
+  primaryTarget: Target | null;
   threatIndex: number;
 }) {
   return (
@@ -1055,6 +891,15 @@ function RadarDisplay({
         <RadarTarget key={target.id} target={target} />
       ))}
 
+      {targets.length === 0 && (
+        <div
+          className="absolute left-1/2 top-1/2 w-[min(360px,70%)] -translate-x-1/2 -translate-y-1/2 bg-black/24 px-4 py-4 text-center text-[calc(11px*var(--fz))] uppercase tracking-[0.26em] text-cyan-100/52"
+          style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)", fontFamily: monoFont }}
+        >
+          等待真实事件进入扫描区
+        </div>
+      )}
+
       <div className="absolute left-4 top-4 grid gap-3 sm:grid-cols-3">
         <RadarBadge label="Threat Index" value={threatIndex} tone="#7df6ff" />
         <RadarBadge label="Sessions" value={sessions} tone="#b794ff" />
@@ -1067,19 +912,21 @@ function RadarDisplay({
       >
         <div>
           <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">Target Lock</div>
-          <div className="mt-2 text-[calc(18px*var(--fz))] font-bold tracking-[0.16em] text-white">{primaryTarget.label}</div>
-          <div className="mt-1 text-[calc(11px*var(--fz))] tracking-[0.18em] text-cyan-100/70">高亮目标已进入动态跟踪与取证链。</div>
+          <div className="mt-2 text-[calc(18px*var(--fz))] font-bold tracking-[0.16em] text-white">{primaryTarget?.label ?? "NO TARGET"}</div>
+          <div className="mt-1 text-[calc(11px*var(--fz))] tracking-[0.18em] text-cyan-100/70">
+            {primaryTarget ? "高亮目标已进入动态跟踪与取证链。" : "等待真实告警或事件流。"}
+          </div>
         </div>
         <div>
           <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">Coordinates</div>
           <div className="mt-2 text-[calc(16px*var(--fz))] font-bold tracking-[0.14em] text-cyan-50" style={{ fontFamily: monoFont }}>
-            X {primaryTarget.x.toFixed(1)} / Y {primaryTarget.y.toFixed(1)}
+            {primaryTarget ? `X ${primaryTarget.x.toFixed(1)} / Y ${primaryTarget.y.toFixed(1)}` : "X -- / Y --"}
           </div>
         </div>
         <div>
           <div className="text-[calc(10px*var(--fz))] uppercase tracking-[0.34em] text-cyan-100/50">Vector</div>
           <div className="mt-2 text-[calc(16px*var(--fz))] font-bold tracking-[0.14em] text-fuchsia-100" style={{ fontFamily: monoFont }}>
-            HDG {primaryTarget.heading} / {primaryTarget.speed.toFixed(1)} km
+            {primaryTarget ? `HDG ${primaryTarget.heading} / ${primaryTarget.speed.toFixed(1)} km` : "HDG -- / -- km"}
           </div>
         </div>
       </div>
@@ -1136,6 +983,23 @@ function RadarTarget({ target }: { target: Target }) {
 }
 
 function SpectrumPanel({ series }: { series: number[] }) {
+  if (series.length < 2) {
+    return (
+      <div className="grid h-full grid-cols-[1fr_auto] gap-3">
+        <div className="relative flex items-center justify-center overflow-hidden bg-black/18" style={{ clipPath: cutCorner, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}>
+          <div className="text-center text-[calc(11px*var(--fz))] uppercase tracking-[0.26em] text-cyan-100/42" style={{ fontFamily: monoFont }}>
+            等待真实信号数据
+          </div>
+        </div>
+        <div className="grid w-[92px] grid-rows-3 gap-3">
+          <TinyValue label="Peak" value={0} tone="#7df6ff" />
+          <TinyValue label="Avg" value={0} tone="#b794ff" />
+          <TinyValue label="Drift" value={0} tone="#f6f8ff" />
+        </div>
+      </div>
+    );
+  }
+
   const path = series
     .map((value, index) => {
       const x = (index / (series.length - 1)) * 100;
@@ -1202,7 +1066,9 @@ function TinyValue({
   );
 }
 
-function TargetInfo({ target }: { target: Target }) {
+function TargetInfo({ target }: { target: Target | null }) {
+  if (!target) return <EmptyPanelText text="等待真实目标坐标" />;
+
   const tone = targetTone(target.level);
   return (
     <div className="grid h-full grid-cols-2 gap-3">

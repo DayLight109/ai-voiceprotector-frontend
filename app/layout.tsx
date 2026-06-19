@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Nunito, JetBrains_Mono, Noto_Sans_SC } from "next/font/google";
+import { Nunito, JetBrains_Mono, Noto_Sans_SC, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider, themeBootScript } from "@/lib/theme";
@@ -30,6 +30,13 @@ const notoSans = Noto_Sans_SC({
   display: "swap",
 });
 
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "SENTINEL · 声纹捕手 — 实时 AI 语音反诈平台",
   description:
@@ -46,7 +53,7 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="zh-CN"
-      className={`${nunito.variable} ${jetbrains.variable} ${notoSans.variable}`}
+      className={`${nunito.variable} ${jetbrains.variable} ${notoSans.variable} ${plusJakarta.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />

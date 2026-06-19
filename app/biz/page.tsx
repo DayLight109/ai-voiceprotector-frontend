@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, PhoneOff, Radio, Waves, ScanLine, ArrowUpRight, Circle, Building2, MessageSquareWarning, AlertTriangle, Bell } from "lucide-react";
 import AppShell from "@/components/AppShell";
@@ -6,7 +6,7 @@ import CountUp from "@/components/shared/CountUp";
 import { BIZ_NAV } from "@/lib/nav";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { Appeal, CallLog } from "@/lib/mock";
+import type { Appeal, CallLog } from "@/lib/domain-types";
 
 function relTime(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -202,3 +202,4 @@ export default function BizHome() {
     </AppShell>
   );
 }
+

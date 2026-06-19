@@ -8,7 +8,7 @@
 // - role 决定页面侧栏与 RBAC 默认入口
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
-import { api, User, APIError, getAccessToken, clearTokens } from "./api";
+import { api, User, APIError, clearTokens } from "./api";
 
 export type AuthStatus = "loading" | "anonymous" | "authenticated";
 
@@ -27,11 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   const refreshMe = useCallback(async () => {
-    if (!getAccessToken()) {
-      setUser(null);
-      setStatus("anonymous");
-      return;
-    }
     try {
       const me = await api.me();
       setUser(me);

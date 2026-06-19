@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import CountUp from "@/components/shared/CountUp";
@@ -6,7 +6,7 @@ import { SYSADMIN_NAV } from "@/lib/nav";
 import { api, type ApiDevice } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { SkeletonBar } from "@/components/shared/Skeleton";
-import type { ScamRule, ScamSample } from "@/lib/mock";
+import type { ScamRule, ScamSample } from "@/lib/domain-types";
 import { ScrollText, BookMarked, Database, FlaskConical, Mic2, Bot, AlertOctagon, Server, HardDrive, ArrowUpRight, Activity, Cpu, AudioLines } from "lucide-react";
 import Link from "next/link";
 
@@ -16,7 +16,7 @@ export default function SysAdminHome() {
   const devices = useResource<ApiDevice>(() => api.devices.list({ pageSize: 100 }));
 
   return (
-    <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "总览"]}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "总览"]}>
       <PageHeader
         eyebrow="SYSTEM ADMIN"
         title="系统总览"
@@ -116,3 +116,5 @@ export default function SysAdminHome() {
     </AppShell>
   );
 }
+
+

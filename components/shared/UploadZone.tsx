@@ -2,6 +2,12 @@
 import { UploadCloud, FileSpreadsheet } from "lucide-react";
 import { DragEvent, useState } from "react";
 
+export type UploadedFile = {
+  file: File;
+  name: string;
+  size: number;
+};
+
 export default function UploadZone({
   accept = ".xls,.xlsx",
   hint = "支持 XLS / XLSX 格式，单次最多 5 MB",
@@ -9,7 +15,7 @@ export default function UploadZone({
 }: {
   accept?: string;
   hint?: string;
-  onFiles: (files: { name: string; size: number; lines: number }[]) => void;
+  onFiles: (files: UploadedFile[]) => void | Promise<void>;
 }) {
   const [drag, setDrag] = useState(false);
   const [pending, setPending] = useState(false);
@@ -17,18 +23,17 @@ export default function UploadZone({
   const handle = async (list: FileList | null) => {
     if (!list || list.length === 0) return;
     setPending(true);
-    const out: { name: string; size: number; lines: number }[] = [];
-    for (const f of Array.from(list)) {
-      // 仅模拟：读出名字 + 大小，假装解析出若干行
-      out.push({
-        name: f.name,
-        size: f.size,
-        lines: Math.floor(f.size / 64) + Math.floor(Math.random() * 18 + 4),
-      });
+    try {
+      await onFiles(
+        Array.from(list).map((file) => ({
+          file,
+          name: file.name,
+          size: file.size,
+        })),
+      );
+    } finally {
+      setPending(false);
     }
-    await new Promise((r) => setTimeout(r, 280));
-    onFiles(out);
-    setPending(false);
   };
 
   return (
@@ -54,7 +59,10 @@ export default function UploadZone({
         accept={accept}
         multiple
         className="hidden"
-        onChange={(e) => handle(e.target.files)}
+        onChange={(e) => {
+          void handle(e.target.files);
+          e.currentTarget.value = "";
+        }}
       />
       <div className="mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "var(--indigo-soft)", color: "var(--indigo-deep)" }}>
         {pending ? <FileSpreadsheet size={20} className="animate-pulse" /> : <UploadCloud size={20} />}

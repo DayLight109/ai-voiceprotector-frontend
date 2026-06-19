@@ -6,7 +6,7 @@ import { Menu, X, ArrowUpRight, Activity } from "lucide-react";
 const NAV = [
   { href: "#crisis", label: "现状" },
   { href: "#defense", label: "三层防御" },
-  { href: "#simulator", label: "实战演示" },
+  { href: "#simulator", label: "拦截流程" },
   { href: "#compare", label: "对比" },
   { href: "#policy", label: "政策" },
 ];

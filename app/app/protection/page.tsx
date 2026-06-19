@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppShell from "@/components/AppShell";
@@ -7,7 +7,7 @@ import DataTable from "@/components/shared/DataTable";
 import Modal from "@/components/shared/Modal";
 import { useToast } from "@/components/shared/Toast";
 import { FAMILY_NAV } from "@/lib/nav";
-import { type BlackEntry, type WhiteEntry } from "@/lib/mock";
+import { type BlackEntry, type WhiteEntry } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { useHybridBlacklist } from "@/lib/blacklist-store";
@@ -117,7 +117,7 @@ function ProtectionInner() {
   };
 
   return (
-    <AppShell role="family" userName="王磊" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "实时安全防护"]}>
+    <AppShell role="family" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "实时安全防护"]}>
       <PageHeader
         eyebrow="REAL-TIME PROTECTION"
         title="实时安全防护"
@@ -356,7 +356,7 @@ function EntryForm({
       className="space-y-4"
     >
       <Field label="号码">
-        <input value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} required className="ipt" placeholder="+86 138 0013 4921" />
+        <input value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} required className="ipt" placeholder="请输入号码" />
       </Field>
 
       {tab === "blacklist" ? (
@@ -376,7 +376,7 @@ function EntryForm({
       ) : (
         <>
           <Field label="联系人">
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="ipt" placeholder="如：父亲 · 王建国" />
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="ipt" placeholder="请输入联系人备注" />
           </Field>
           <Field label="关系">
             <select value={form.relation} onChange={(e) => setForm({ ...form, relation: e.target.value })} className="ipt">
@@ -402,3 +402,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+

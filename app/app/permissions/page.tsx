@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
@@ -66,7 +66,7 @@ export default function PermissionsPage() {
   };
 
   return (
-    <AppShell role="family" userName="王磊" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "用户权限设置"]}>
+    <AppShell role="family" nav={FAMILY_NAV} breadcrumb={["SENTINEL", "家庭用户", "用户权限设置"]}>
       <PageHeader
         eyebrow="PERMISSIONS"
         title="用户权限设置"
@@ -139,3 +139,4 @@ function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
     </div>
   );
 }
+

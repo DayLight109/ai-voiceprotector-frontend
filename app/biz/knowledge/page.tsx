@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 import { useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
 import { BIZ_NAV } from "@/lib/nav";
-import { type KnowledgeArticle } from "@/lib/mock";
+import { type KnowledgeArticle } from "@/lib/domain-types";
 import { api } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
 import { ListRowSkeleton } from "@/components/shared/Skeleton";
@@ -24,7 +24,7 @@ export default function BizKnowledgePage() {
   }), [articles.items, cat, q]);
 
   return (
-    <AppShell role="biz" userName="周珩" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "反诈知识库"]}>
+    <AppShell role="biz" nav={BIZ_NAV} breadcrumb={["SENTINEL", "企业用户", "反诈知识库"]}>
       <PageHeader
         eyebrow="ENTERPRISE KNOWLEDGE"
         title="反诈知识库"
@@ -112,3 +112,5 @@ export default function BizKnowledgePage() {
     </AppShell>
   );
 }
+
+

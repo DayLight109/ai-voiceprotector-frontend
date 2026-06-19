@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Shield, AlertTriangle, ArrowUpRight, Users, Mic2, Sliders, Database, ChevronLeft, ChevronRight, Bot, PhoneCall, PhoneOff, MessageSquareText } from "lucide-react";
 import AppShell from "@/components/AppShell";
@@ -6,7 +6,7 @@ import CountUp from "@/components/shared/CountUp";
 import { ADMIN_NAV } from "@/lib/nav";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { CallLog } from "@/lib/mock";
+import type { CallLog } from "@/lib/domain-types";
 import Link from "next/link";
 
 type RangeKey = "7" | "30" | "90";
@@ -445,3 +445,4 @@ export default function AdminDashboard() {
     </AppShell>
   );
 }
+

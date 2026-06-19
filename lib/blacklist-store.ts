@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 混合存储：后端为唯一数据源，乐观写入只在内存里短暂存在。
 //
@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, APIError } from "./api";
 import { uid } from "./storage";
-import { type BlackEntry } from "./mock";
+import { type BlackEntry } from "./domain-types";
 
 // 后端 list 返回的形状里 isGlobal 不是 BlackEntry 的字段，单独读
 type RawEntry = BlackEntry & { isGlobal?: boolean; tenantId?: string };
@@ -204,3 +204,4 @@ function normalize(r: RawEntry): BlackEntry {
 function byCreatedDesc(a: BlackEntry, b: BlackEntry) {
   return a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
 }
+

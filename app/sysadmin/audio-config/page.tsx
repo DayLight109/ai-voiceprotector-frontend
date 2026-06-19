@@ -1,31 +1,32 @@
 "use client";
+import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/shared/PageHeader";
-import UploadZone from "@/components/shared/UploadZone";
+import UploadZone, { type UploadedFile } from "@/components/shared/UploadZone";
 import { useToast } from "@/components/shared/Toast";
 import { useConfirm } from "@/components/shared/Confirm";
 import { SYSADMIN_NAV } from "@/lib/nav";
-import { type VoiceModel } from "@/lib/mock";
+import { type VoiceModel } from "@/lib/domain-types";
 import { api, APIError } from "@/lib/api";
 import { useResource } from "@/lib/use-resource";
-import { AudioLines, CheckCircle2, Trash2, Mic2, Plus, FileSpreadsheet, Inbox } from "lucide-react";
+import { AudioLines, CheckCircle2, Trash2, Mic2, Inbox } from "lucide-react";
 import { ListRowSkeleton, MiniCardGridSkeleton } from "@/components/shared/Skeleton";
 
 export default function AudioConfigPage() {
   const toast = useToast();
   const confirm = useConfirm();
+  const [sampleTag, setSampleTag] = useState<"synth" | "human">("synth");
   const models = useResource<VoiceModel>(() => api.voiceModels.list({ pageSize: 100 }));
   const samples = useResource<{ id: string; name: string; size: number; tag: "synth" | "human"; createdAt: string }>(
     () => api.voiceSamples.list({ pageSize: 100 }),
   );
 
-  const onModelUpload = async (files: { name: string; size: number; lines: number }[]) => {
+  const onModelUpload = async (files: UploadedFile[]) => {
     let ok = 0;
     for (const f of files) {
       try {
         const fd = new FormData();
-        const blob = new Blob([new Uint8Array(0)], { type: "application/octet-stream" });
-        fd.append("file", blob, f.name);
+        fd.append("file", f.file, f.name);
         fd.append("version", f.name.replace(/\.[^.]+$/, ""));
         await api.voiceModels.upload(fd);
         ok++;
@@ -66,18 +67,22 @@ export default function AudioConfigPage() {
     }
   };
 
-  const addSample = async () => {
-    try {
-      const fd = new FormData();
-      const blob = new Blob([new Uint8Array(0)], { type: "audio/wav" });
-      const filename = `sample_${samples.items.length + 1}.wav`;
-      fd.append("file", blob, filename);
-      fd.append("tag", "synth");
-      await api.voiceSamples.upload(fd);
-      toast("success", "已新增样本");
+  const onSampleUpload = async (files: UploadedFile[]) => {
+    let ok = 0;
+    for (const f of files) {
+      try {
+        const fd = new FormData();
+        fd.append("file", f.file, f.name);
+        fd.append("tag", sampleTag);
+        await api.voiceSamples.upload(fd);
+        ok++;
+      } catch (e) {
+        toast("error", e instanceof APIError ? e.message : "上传失败");
+      }
+    }
+    if (ok > 0) {
+      toast("success", `已上传 ${ok} 个样本`);
       samples.refresh();
-    } catch (e) {
-      toast("error", e instanceof APIError ? e.message : "上传失败");
     }
   };
 
@@ -101,7 +106,7 @@ export default function AudioConfigPage() {
   const overall = (models.items.find((m) => m.active)?.accuracy ?? 99.0).toFixed(2);
 
   return (
-    <AppShell role="sysadmin" userName="陈安怡" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "音频智能分析配置"]}>
+    <AppShell role="sysadmin" nav={SYSADMIN_NAV} breadcrumb={["SENTINEL", "系统管理员", "音频智能分析配置"]}>
       <PageHeader
         eyebrow="VOICE ANALYSIS"
         title="音频智能分析配置"
@@ -163,7 +168,7 @@ export default function AudioConfigPage() {
           <div className="panel p-6 text-center" style={{ background: "linear-gradient(160deg, var(--mint-soft), var(--indigo-soft))" }}>
             <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">CURRENT ACCURACY</div>
             <div className="mt-3 numplate text-[calc(64px*var(--fz))] leading-none" style={{ color: "var(--mint-deep)" }}>{overall}%</div>
-            <div className="mt-3 text-[calc(12px*var(--fz))] text-ink-2 font-medium">基于近 10 万次离线评估</div>
+            <div className="mt-3 text-[calc(12px*var(--fz))] text-ink-2 font-medium">来自当前激活模型元数据</div>
           </div>
           <div className="panel p-6">
             <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">UPLOAD NEW MODEL</div>
@@ -178,12 +183,32 @@ export default function AudioConfigPage() {
             <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">VOICE SAMPLES</div>
             <h2 className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">声纹样本库</h2>
           </div>
-          <button
-            onClick={addSample}
-            className="btn-ghost py-2 px-3 text-[calc(12px*var(--fz))]"
-          >
-            <Plus size={12} /> 上传样本
-          </button>
+          <div className="inline-flex rounded-xl border border-border bg-canvas-2 p-1">
+            {[
+              { key: "synth", label: "AI 合成" },
+              { key: "human", label: "真人" },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setSampleTag(item.key as "synth" | "human")}
+                className="px-3 py-1.5 rounded-lg text-[calc(12px*var(--fz))] font-bold transition-colors"
+                style={{
+                  background: sampleTag === item.key ? "var(--surface)" : "transparent",
+                  color: sampleTag === item.key ? "var(--ink)" : "var(--ink-soft)",
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mb-5">
+          <UploadZone
+            accept="audio/wav,audio/mpeg,audio/mp4,audio/flac,audio/ogg,.wav,.mp3,.m4a,.flac,.ogg"
+            hint="选择真实音频样本，上传前先确认右上角样本标签"
+            onFiles={onSampleUpload}
+          />
         </div>
         {samples.loading && samples.items.length === 0 ? (
           <MiniCardGridSkeleton count={8} cols="grid-cols-1 md:grid-cols-2 lg:grid-cols-4" />
