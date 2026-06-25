@@ -41,7 +41,7 @@ export default function KnowledgePage() {
       )}
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-canvas-2 border border-border w-72">
+        <div className="search-pill flex items-center gap-2 px-3 py-2 rounded-full bg-white border border-border w-72 transition-shadow">
           <Search size={14} className="text-ink-soft" />
           <input
             value={q}
@@ -156,5 +156,4 @@ export default function KnowledgePage() {
     </AppShell>
   );
 }
-
 

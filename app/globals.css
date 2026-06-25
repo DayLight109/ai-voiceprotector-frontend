@@ -700,6 +700,147 @@ button { cursor: pointer; }
   scroll-behavior: auto !important;
 }
 
+/* ============================================================
+   家庭用户门户 · 与登录页 / 首页统一的视觉皮肤
+   AppShell 在家庭页根节点挂 .family-portal，这里把共享设计令牌与
+   组件类（.panel / .btn-* / .tag-chip / 表单 / 标题字体）在该作用域内
+   重映射为登录页的「深海军蓝 + 浅蓝底 + 大圆角 + 柔阴影」风格。
+   仅作用于家庭门户，企业 / 管理员 / 系统管理员等角色完全不受影响。
+   ============================================================ */
+.family-portal {
+  /* 文本与中性色：贴合登录页 #0b1c30 / #5b6475 / #7a8598 */
+  --ink:        #0b1c30;
+  --ink-2:      #3c475a;
+  --ink-soft:   #5b6475;
+  --ink-ghost:  #aab0bd;
+  --ink-faint:  #d3d6df;
+
+  /* 表面与底色 */
+  --surface:    #ffffff;
+  --surface-2:  #fbfcff;
+  --canvas:     #f8f9ff;
+  --canvas-2:   #eff4ff;
+  --canvas-3:   #e3e8f4;
+  --border:     #dde6f4;
+
+  /* 主强调色由靛蓝改为登录页的深海军蓝；按钮 / 高亮 / 焦点环随之统一 */
+  --indigo:       #071426;
+  --indigo-deep:  #0b1c30;
+  --indigo-soft:  #eff4ff;
+
+  /* 柔和投影，对齐首页卡片 0 24px 60px rgba(9,20,38,.08) 系 */
+  --shadow-xs:  0 1px 2px rgba(9, 20, 38, 0.05);
+  --shadow-sm:  0 18px 40px rgba(9, 20, 38, 0.06);
+  --shadow-md:  0 18px 40px rgba(9, 20, 38, 0.07);
+  --shadow-lg:  0 24px 54px rgba(9, 20, 38, 0.10);
+  --shadow-xl:  0 30px 80px rgba(9, 20, 38, 0.12);
+  --shadow-indigo: 0 18px 36px rgba(9, 20, 38, 0.22);
+}
+
+/* 深色模式下的家庭门户：把上面重映射的浅色 token 再覆盖为深色值，
+   令牌取自全局 .dark 调色板，使家庭/家庭管理员/企业门户整页随深色开关变黑。
+   强调色用 .dark 的亮靛/薄荷族（在黑底上可读），避免门户原本的深海军蓝在黑底上隐形。 */
+.dark .family-portal {
+  --ink:        #ECEDF2;
+  --ink-2:      #C8CAD6;
+  --ink-soft:   #8A8FA8;
+  --ink-ghost:  #555A70;
+  --ink-faint:  #26272F;
+
+  --surface:    #14141A;
+  --surface-2:  #1C1C24;
+  --canvas:     #08080B;
+  --canvas-2:   #101015;
+  --canvas-3:   #17171D;
+  --border:     #25252E;
+
+  --indigo:       #818CF8;
+  --indigo-deep:  #A5B4FC;
+  --indigo-soft:  color-mix(in srgb, #818CF8 16%, transparent);
+
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-sm:  0 2px 6px rgba(0, 0, 0, 0.45);
+  --shadow-md:  0 6px 18px -4px rgba(0, 0, 0, 0.55);
+  --shadow-lg:  0 20px 45px -15px rgba(0, 0, 0, 0.75);
+  --shadow-xl:  0 40px 80px -30px rgba(0, 0, 0, 0.85);
+  --shadow-indigo: 0 16px 40px -20px rgba(129, 140, 248, 0.45);
+}
+
+/* 家庭门户内：输入框 / 搜索框聚焦环用登录页的紫靛，而非门户主色的深海军蓝 */
+.family-portal input:focus-visible,
+.family-portal textarea:focus-visible,
+.family-portal select:focus-visible,
+.family-portal [contenteditable]:focus-visible {
+  border-color: #5B5FDE;
+  box-shadow: 0 0 0 4px color-mix(in srgb, #5B5FDE 22%, transparent);
+}
+.family-portal .search-pill:focus-within {
+  border-color: #5B5FDE;
+  box-shadow: 0 0 0 4px color-mix(in srgb, #5B5FDE 22%, transparent);
+}
+/* 搜索胶囊内层 input 不单独发光，避免与外层胶囊形成双层框 */
+.family-portal .search-pill input:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+}
+/* 家庭门户内：个人信息头像渐变避开被改成深海军蓝的 indigo，用薄荷→紫靛清爽渐变 */
+.family-portal .profile-avatar {
+  background: linear-gradient(135deg, #3ED598, #5B5FDE) !important;
+}
+
+/* 标题与展示字体改用登录页同款 Plus Jakarta */
+.family-portal .font-display,
+.family-portal h1,
+.family-portal h2,
+.family-portal h3 {
+  font-family: var(--font-plus-jakarta), var(--font-noto-sans), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* 卡片：更大的圆角 + 登录页柔阴影 */
+.family-portal .panel {
+  border-radius: 28px;
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.family-portal .panel-lift:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* 主按钮 = 登录页「安全登入」深蓝胶囊；次按钮为白底描边胶囊 */
+.family-portal .btn-indigo {
+  background: #071426;
+  box-shadow: 0 18px 36px rgba(9, 20, 38, 0.2);
+}
+.family-portal .btn-indigo:hover {
+  background: #0b1c30;
+  transform: translateY(-1px);
+}
+.family-portal .btn-ghost {
+  border-radius: 999px;
+}
+.family-portal .btn-ghost:hover {
+  background: var(--canvas-2);
+  border-color: #c7d2e8;
+}
+
+/* 标签 chip：indigo 调改为深蓝字 + 浅蓝底，呼应登录页徽标 */
+.family-portal .tag-chip {
+  border-radius: 999px;
+}
+.family-portal .tag-chip[data-tone="indigo"] {
+  background: #eff4ff;
+  color: #0b1c30;
+}
+
+/* 开关控件：家庭门户内统一为紫靛开启态（#5B5FDE，与聚焦环 / 全局 indigo 本色一致），
+   覆盖 family / family-admin / biz 三个门户角色的所有开关。
+   内联 style 优先级高，需 !important 覆盖；仅作用于家庭门户，其他角色仍用各自 accent。 */
+.family-portal .ui-toggle[data-on="true"] {
+  background: #5B5FDE !important;
+}
+
 
 
 

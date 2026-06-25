@@ -62,19 +62,19 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: i18nBootScript }} />
       </head>
       <body className="bg-canvas text-ink antialiased">
-        <ThemeProvider>
-          <FontSizeProvider>
-            <AppearanceProvider>
-              <I18nProvider>
-                <AuthProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <FontSizeProvider>
+              <AppearanceProvider>
+                <I18nProvider>
                   <ToastProvider>
                     <ConfirmProvider>{children}</ConfirmProvider>
                   </ToastProvider>
-                </AuthProvider>
-              </I18nProvider>
-            </AppearanceProvider>
-          </FontSizeProvider>
-        </ThemeProvider>
+                </I18nProvider>
+              </AppearanceProvider>
+            </FontSizeProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
