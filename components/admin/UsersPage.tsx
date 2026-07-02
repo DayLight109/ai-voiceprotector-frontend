@@ -10,7 +10,19 @@ import { FAMILY_ADMIN_NAV, ADMIN_NAV } from "@/lib/nav";
 import { type ManagedUser } from "@/lib/domain-types";
 import { APIError } from "@/lib/api";
 import { useHybridUsers } from "@/lib/users-store";
-import { Plus, Trash2, Edit3, UserPlus } from "lucide-react";
+import { Plus, Trash2, Edit3, UserPlus, User, Users, Briefcase, ShieldCheck, Shield } from "lucide-react";
+
+// 角色 → 标签文案、色调与头像图标；头像按角色显示对应图标与色调，保证视觉上与角色对应。
+const ROLE_META: Record<string, { tone: string; label: string; Icon: any }> = {
+  family: { tone: "amber", label: "家庭成员", Icon: User },
+  biz: { tone: "mint", label: "员工", Icon: Briefcase },
+  family_admin: { tone: "indigo", label: "家庭管理员", Icon: Users },
+  admin: { tone: "indigo", label: "企业管理员", Icon: ShieldCheck },
+  sysadmin: { tone: "coral", label: "系统管理员", Icon: Shield },
+};
+function roleMeta(role: string) {
+  return ROLE_META[role] ?? { tone: "amber", label: role, Icon: User };
+}
 
 export default function UsersPage({ role }: { role: "family-admin" | "admin" }) {
   const toast = useToast();
@@ -90,24 +102,20 @@ export default function UsersPage({ role }: { role: "family-admin" | "admin" }) 
           columns={[
             { key: "id", label: "工号", render: (r) => <span className="font-mono text-[calc(12px*var(--fz))] font-bold text-ink-soft">{r.id}</span> },
             {
-              key: "name", label: "姓名", render: (r) => (
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center font-display text-white text-[calc(11px*var(--fz))] font-extrabold" style={{ background: "linear-gradient(135deg, var(--indigo), var(--coral))" }}>
-                    {r.name.slice(0, 1)}
+              key: "name", label: "姓名", render: (r) => {
+                const v = roleMeta(r.role);
+                return (
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: `var(--${v.tone}-soft)`, color: `var(--${v.tone}-deep)` }} title={v.label}>
+                      <v.Icon size={14} />
+                    </div>
+                    <span className="font-display font-extrabold">{r.name}</span>
                   </div>
-                  <span className="font-display font-extrabold">{r.name}</span>
-                </div>
-              )
+                );
+              }
             },
             { key: "role", label: "角色", render: (r) => {
-              const m: Record<string, { tone: string; label: string }> = {
-                family: { tone: "amber", label: "家庭成员" },
-                biz: { tone: "mint", label: "员工" },
-                family_admin: { tone: "indigo", label: "家庭管理员" },
-                admin: { tone: "indigo", label: "企业管理员" },
-                sysadmin: { tone: "coral", label: "系统管理员" },
-              };
-              const v = m[r.role] ?? { tone: "amber", label: r.role };
+              const v = roleMeta(r.role);
               return <span className="tag-chip" data-tone={v.tone}>{v.label}</span>;
             } },
             { key: "dept", label: isFam ? "关系" : "部门" },
