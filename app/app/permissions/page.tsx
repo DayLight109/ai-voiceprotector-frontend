@@ -89,29 +89,29 @@ export default function PermissionsPage() {
         <div className="col-span-12 lg:col-span-7 space-y-4 stagger">
           <div className="panel p-6">
             <SectionTitle icon={Bell} label="告警与推送" />
-            <FormRow label="App 内推送" desc="即时弹窗 + 通知栏"><Toggle checked={p.pushApp} onChange={(v) => upd("pushApp", v)} /></FormRow>
-            <FormRow label="短信通知" desc="高危事件同步至本机短信"><Toggle checked={p.pushSms} onChange={(v) => upd("pushSms", v)} /></FormRow>
-            <FormRow label="邮件周报" desc="每周一 09:00 接收防护周报"><Toggle checked={p.pushEmail} onChange={(v) => upd("pushEmail", v)} /></FormRow>
+            <FormRow label="App 内推送" desc="即时弹窗 + 通知栏"><Toggle checked={p.pushApp} onChange={(v) => upd("pushApp", v)} accent="var(--mint)" /></FormRow>
+            <FormRow label="短信通知" desc="高危事件同步至本机短信"><Toggle checked={p.pushSms} onChange={(v) => upd("pushSms", v)} accent="var(--mint)" /></FormRow>
+            <FormRow label="邮件周报" desc="每周一 09:00 接收防护周报"><Toggle checked={p.pushEmail} onChange={(v) => upd("pushEmail", v)} accent="var(--mint)" /></FormRow>
           </div>
 
           <div className="panel p-6">
             <SectionTitle icon={PhoneOff} label="自动处置" />
-            <FormRow label="自动拦截 AI 合成"><Toggle checked={p.autoBlock} onChange={(v) => upd("autoBlock", v)} /></FormRow>
-            <FormRow label="话术警示弹屏" desc="命中转账 / 公检法话术时强制弹窗"><Toggle checked={p.warnPopup} onChange={(v) => upd("warnPopup", v)} /></FormRow>
-            <FormRow label="境外信令拦截" desc="发现实际信令在境外即标红"><Toggle checked={p.geoMatch} onChange={(v) => upd("geoMatch", v)} /></FormRow>
+            <FormRow label="自动拦截 AI 合成"><Toggle checked={p.autoBlock} onChange={(v) => upd("autoBlock", v)} accent="var(--mint)" /></FormRow>
+            <FormRow label="话术警示弹屏" desc="命中转账 / 公检法话术时强制弹窗"><Toggle checked={p.warnPopup} onChange={(v) => upd("warnPopup", v)} accent="var(--mint)" /></FormRow>
+            <FormRow label="境外信令拦截" desc="发现实际信令在境外即标红"><Toggle checked={p.geoMatch} onChange={(v) => upd("geoMatch", v)} accent="var(--mint)" /></FormRow>
           </div>
         </div>
 
         <div className="col-span-12 lg:col-span-5 space-y-4 stagger">
           <div className="panel p-6">
             <SectionTitle icon={Mic} label="数据与隐私" />
-            <FormRow label="录音同步至云端" desc="便于跨设备查看，可被管理员审计"><Toggle checked={p.recordSync} onChange={(v) => upd("recordSync", v)} /></FormRow>
-            <FormRow label="历史拦截可查" desc="保留 30 天通话拦截详情"><Toggle checked={p.viewHistory} onChange={(v) => upd("viewHistory", v)} /></FormRow>
+            <FormRow label="录音同步至云端" desc="便于跨设备查看，可被管理员审计"><Toggle checked={p.recordSync} onChange={(v) => upd("recordSync", v)} accent="var(--mint)" /></FormRow>
+            <FormRow label="历史拦截可查" desc="保留 30 天通话拦截详情"><Toggle checked={p.viewHistory} onChange={(v) => upd("viewHistory", v)} accent="var(--mint)" /></FormRow>
           </div>
           <div className="panel p-6">
             <SectionTitle icon={Users} label="家属与共享" />
-            <FormRow label="家属同步" desc="拦截事件同时推送至紧急联系人"><Toggle checked={p.familySync} onChange={(v) => upd("familySync", v)} /></FormRow>
-            <FormRow label="共享白名单" desc="允许家属互访各自白名单"><Toggle checked={p.shareWhite} onChange={(v) => upd("shareWhite", v)} /></FormRow>
+            <FormRow label="家属同步" desc="拦截事件同时推送至紧急联系人"><Toggle checked={p.familySync} onChange={(v) => upd("familySync", v)} accent="var(--mint)" /></FormRow>
+            <FormRow label="共享白名单" desc="允许家属互访各自白名单"><Toggle checked={p.shareWhite} onChange={(v) => upd("shareWhite", v)} accent="var(--mint)" /></FormRow>
           </div>
 
           <div className="panel p-6" style={{ background: "var(--mint-soft)" }}>

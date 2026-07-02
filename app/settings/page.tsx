@@ -1,9 +1,11 @@
 ﻿"use client";
 import { useEffect, useRef, useState } from "react";
-import { User, Shield, Bell, Palette, Key, Smartphone, LogOut, Home, Users, Settings as SettingsIcon, ChevronRight, CheckCircle2, Fingerprint, ScanFace, Phone, Trash2, Pencil } from "lucide-react";
-import AppShell from "@/components/AppShell";
+import { User, Shield, Bell, Palette, Key, Smartphone, LogOut, ChevronRight, CheckCircle2, Fingerprint, ScanFace, Phone, Trash2, Pencil } from "lucide-react";
+import AppShell, { type AppRole } from "@/components/AppShell";
 import { useToast } from "@/components/shared/Toast";
 import { api, APIError, getAccessToken, type EmergencyContact, type SessionView } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { FAMILY_NAV, BIZ_NAV, FAMILY_ADMIN_NAV, ADMIN_NAV, SYSADMIN_NAV } from "@/lib/nav";
 import { useTheme } from "@/lib/theme";
 import { useFontSize } from "@/lib/font-size";
 import { useAppearance, type Density } from "@/lib/appearance";
@@ -12,15 +14,22 @@ import { useLocalStorage } from "@/lib/storage";
 
 type TabKey = "profile" | "security" | "notify" | "appearance";
 
+// 用户真实角色（auth 用下划线）→ AppShell role（用连字符）+ 该角色标准侧边栏
+const ROLE_SHELL: Record<string, { role: AppRole; nav: typeof FAMILY_NAV }> = {
+  family: { role: "family", nav: FAMILY_NAV },
+  biz: { role: "biz", nav: BIZ_NAV },
+  family_admin: { role: "family-admin", nav: FAMILY_ADMIN_NAV },
+  admin: { role: "admin", nav: ADMIN_NAV },
+  sysadmin: { role: "sysadmin", nav: SYSADMIN_NAV },
+};
+
 export default function SettingsPage() {
   const [tab, setTab] = useState<TabKey>("profile");
   const { t } = useLang();
+  const { user } = useAuth();
 
-  const NAV = [
-    { href: "/app", label: t("首页"), icon: Home },
-    { href: "/family-admin/users", label: t("家属同步"), icon: Users },
-    { href: "/settings", label: t("系统设置"), icon: SettingsIcon },
-  ];
+  // 按当前登录用户的真实角色渲染外壳与导航，避免设置页显示成固定的“家庭用户”
+  const shell = ROLE_SHELL[user?.role ?? "family"] ?? ROLE_SHELL.family;
 
   const TABS: { k: TabKey; label: string; icon: any; desc: string }[] = [
     { k: "profile", label: t("个人信息"), icon: User, desc: t("头像、昵称、联系方式") },
@@ -31,8 +40,8 @@ export default function SettingsPage() {
 
   return (
     <AppShell
-      role="family"
-      nav={NAV}
+      role={shell.role}
+      nav={shell.nav}
       breadcrumb={["SENTINEL", t("设置"), TABS.find((x) => x.k === tab)!.label]}
     >
       <div className="mb-8">
@@ -104,7 +113,9 @@ function Toggle({ storageKey, defaultChecked = false, onToggle }: { storageKey: 
       onClick={() => { const next = !on; setOn(next); onToggle?.(next); }}
       role="switch"
       aria-checked={on}
-      className="relative w-11 h-6 rounded-full transition-colors"
+      data-toggle
+      data-on={on ? "true" : "false"}
+      className="ui-toggle relative w-11 h-6 rounded-full transition-colors"
       style={{ background: on ? "var(--indigo)" : "var(--canvas-3)" }}
     >
       <span
@@ -236,7 +247,7 @@ function Profile() {
             />
           ) : (
             <div
-              className="w-20 h-20 rounded-3xl flex items-center justify-center font-display text-white font-extrabold text-[calc(28px*var(--fz))] shadow-md select-none"
+              className="profile-avatar w-20 h-20 rounded-3xl flex items-center justify-center font-display text-white font-extrabold text-[calc(28px*var(--fz))] shadow-md select-none"
               style={{ background: "linear-gradient(135deg, var(--indigo), var(--coral))" }}
               onDoubleClick={() => fileRef.current?.click()}
               title="双击上传头像"
@@ -902,7 +913,9 @@ function Appearance() {
       <Row label={t("关怀模式")} desc={t("为视力不便的用户提供更大字号")}>
         <button
           onClick={() => setCare(!care)}
-          className="relative w-11 h-6 rounded-full transition-colors"
+          data-toggle
+          data-on={care ? "true" : "false"}
+          className="ui-toggle relative w-11 h-6 rounded-full transition-colors"
           style={{ background: care ? "var(--indigo)" : "var(--canvas-3)" }}
           aria-pressed={care}
           aria-label={t("关怀模式开关")}
@@ -932,7 +945,9 @@ function Appearance() {
       <Row label={t("降低动画")} desc={t("减少过渡动效，缓解晕动症")}>
         <button
           onClick={() => setReduceMotion(!reduceMotion)}
-          className="relative w-11 h-6 rounded-full transition-colors"
+          data-toggle
+          data-on={reduceMotion ? "true" : "false"}
+          className="ui-toggle relative w-11 h-6 rounded-full transition-colors"
           style={{ background: reduceMotion ? "var(--indigo)" : "var(--canvas-3)" }}
           aria-pressed={reduceMotion}
           aria-label={t("降低动画开关")}

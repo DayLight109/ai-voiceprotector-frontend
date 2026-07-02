@@ -371,13 +371,13 @@ export default function IdentityPage() {
             ) : (
             <>
             <FormRow label="线下认证" desc="对接公安政务大厅人工核验，72 小时内回执">
-              <Toggle checked={offline} onChange={(v) => updateMode("offline", v)} />
+              <Toggle checked={offline} onChange={(v) => updateMode("offline", v)} accent="var(--mint)" />
             </FormRow>
             <FormRow label="亲属认证" desc="允许已认证亲属为我担保，适用老人 / 儿童">
-              <Toggle checked={relative} onChange={(v) => updateMode("relative", v)} />
+              <Toggle checked={relative} onChange={(v) => updateMode("relative", v)} accent="var(--mint)" />
             </FormRow>
             <FormRow label="关怀模式" desc="放大字体、简化操作、亲属同步重要告警">
-              <Toggle checked={care} onChange={(v) => updateMode("care", v)} />
+              <Toggle checked={care} onChange={(v) => updateMode("care", v)} accent="var(--mint)" />
             </FormRow>
             </>
             )}
@@ -404,7 +404,7 @@ export default function IdentityPage() {
 
       <style>{`
         .ipt { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; font-weight: 500; }
-        .ipt:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent); }
+        .ipt:focus { outline: none; border-color: #5B5FDE; box-shadow: 0 0 0 4px color-mix(in srgb, #5B5FDE 22%, transparent); }
       `}</style>
     </AppShell>
   );

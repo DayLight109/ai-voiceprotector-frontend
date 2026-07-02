@@ -388,7 +388,7 @@ function EntryForm({
 
       <style>{`
         .ipt { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; font-weight: 500; }
-        .ipt:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--indigo) 18%, transparent); }
+        .ipt:focus { outline: none; border-color: #5B5FDE; box-shadow: 0 0 0 4px color-mix(in srgb, #5B5FDE 22%, transparent); }
       `}</style>
     </form>
   );
@@ -402,5 +402,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
-
 

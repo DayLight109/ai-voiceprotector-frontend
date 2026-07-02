@@ -17,6 +17,7 @@ export default function DataTable<T extends { id: string }>({
   pageSize = 8,
   actions,
   empty,
+  fixed = false,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -24,6 +25,7 @@ export default function DataTable<T extends { id: string }>({
   pageSize?: number;
   actions?: (row: T) => ReactNode;
   empty?: ReactNode;
+  fixed?: boolean;
 }) {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(0);
@@ -63,7 +65,7 @@ export default function DataTable<T extends { id: string }>({
       )}
 
       <div className="overflow-x-auto -mx-2">
-        <table className="w-full text-[calc(13px*var(--fz))]">
+        <table className={`w-full text-[calc(13px*var(--fz))] ${fixed ? "table-fixed" : ""}`}>
           <thead>
             <tr className="text-left font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">
               {columns.map((c) => (
@@ -91,7 +93,7 @@ export default function DataTable<T extends { id: string }>({
                 {columns.map((c) => (
                   <td
                     key={c.key}
-                    className="px-3 py-3 align-middle"
+                    className={`px-3 py-3 align-middle ${fixed ? "overflow-hidden text-ellipsis" : ""}`}
                     style={{ textAlign: c.align ?? "left" }}
                   >
                     {c.render ? c.render(row) : (row as any)[c.key]}

@@ -3,15 +3,19 @@
 export default function Toggle({
   checked,
   onChange,
+  accent = "var(--indigo)",
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  accent?: string;
 }) {
   return (
     <button
       onClick={() => onChange(!checked)}
-      className="relative w-11 h-6 rounded-full transition-colors shrink-0"
-      style={{ background: checked ? "var(--indigo)" : "var(--canvas-3)" }}
+      data-toggle
+      data-on={checked ? "true" : "false"}
+      className="ui-toggle relative w-11 h-6 rounded-full transition-colors shrink-0"
+      style={{ background: checked ? accent : "var(--canvas-3)" }}
       aria-pressed={checked}
     >
       <span

@@ -291,21 +291,31 @@ export default function BizAppealPage() {
             <DataTable<Appeal>
               rows={list.items}
               searchKeys={["number", "reason", "type"]}
+              fixed
               columns={[
-                { key: "type", label: "类型", render: (r) => <span className="tag-chip" data-tone={r.type === "误判申诉" ? "indigo" : "coral"}>{r.type}</span> },
-                { key: "number", label: "号码", render: (r) => <span className="font-mono font-bold">{r.number}</span> },
+                { key: "type", label: "类型", width: "104px", render: (r) => <span className="tag-chip whitespace-nowrap" data-tone={r.type === "误判申诉" ? "indigo" : "coral"}>{r.type}</span> },
+                { key: "number", label: "号码", width: "128px", render: (r) => <span className="font-mono font-bold whitespace-nowrap">{r.number}</span> },
                 {
-                  key: "scope", label: "去向",
+                  key: "scope", label: "去向", width: "72px",
                   render: (r) => r.type === "号码举报"
-                    ? <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1" style={{ color: r.scope === "cloud" ? "var(--indigo-deep)" : "var(--ink-soft)" }}>
+                    ? <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.1em] font-bold inline-flex items-center gap-1 whitespace-nowrap" style={{ color: r.scope === "cloud" ? "var(--indigo-deep)" : "var(--ink-soft)" }}>
                         {r.scope === "cloud" ? <Cloud size={10} /> : <HardDrive size={10} />}
                         {r.scope === "cloud" ? "云端" : "本地"}
                       </span>
                     : <span className="text-ink-ghost">—</span>,
                 },
                 { key: "reason", label: "说明", render: (r) => <span className="text-ink-2 line-clamp-1">{r.reason}</span> },
-                { key: "status", label: "状态", render: (r) => <StatusPill status={r.status} /> },
-                { key: "createdAt", label: "时间", render: (r) => <span className="font-mono text-[calc(11px*var(--fz))] text-ink-soft font-bold">{r.createdAt}</span> },
+                { key: "status", label: "状态", width: "96px", render: (r) => <StatusPill status={r.status} /> },
+                { key: "createdAt", label: "时间", width: "104px", align: "right", render: (r) => {
+                    const [date, time] = splitDateTime(r.createdAt);
+                    return (
+                      <span className="inline-flex flex-col items-end leading-tight font-mono text-ink-soft font-bold whitespace-nowrap">
+                        <span className="text-[calc(11px*var(--fz))]">{date}</span>
+                        {time && <span className="text-[calc(10px*var(--fz))] text-ink-ghost">{time}</span>}
+                      </span>
+                    );
+                  },
+                },
               ]}
             />
           )}
@@ -337,6 +347,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+// 把 "YYYY-MM-DD HH:MM[:SS]" 或带 T 的 ISO 串拆成 [日期, 时间点] 两段，分两行展示。
+function splitDateTime(raw: string): [string, string] {
+  if (!raw) return ["—", ""];
+  const norm = raw.replace("T", " ");
+  const [date, ...rest] = norm.split(" ");
+  const time = rest.join(" ").slice(0, 5); // 只取 HH:MM
+  return [date, time];
 }
 
 

@@ -83,7 +83,7 @@ export default function AdminApplyPage() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { k: "family", label: "家庭管理员", desc: "管理家庭成员、共享黑名单、调整告警等级", icon: ShieldCheck, tint: "var(--coral)", soft: "var(--coral-soft)" },
-                  { k: "biz", label: "企业管理员", desc: "管理企业账号、API 接入、风控策略", icon: Building2, tint: "var(--indigo)", soft: "var(--indigo-soft)" },
+                  { k: "biz", label: "企业管理员", desc: "管理企业账号、API 接入、风控策略", icon: Building2, tint: "#5B5FDE", soft: "#E6E7FA" },
                 ].map((s) => {
                   const active = form.scope === s.k;
                   return (
@@ -115,7 +115,7 @@ export default function AdminApplyPage() {
                 value={form.reason}
                 onChange={(e) => setForm({ ...form, reason: e.target.value })}
                 rows={5}
-                className="w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                className="iptp w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium transition duration-200 focus:outline-none"
                 placeholder="请说明你将管理的家庭成员或机构、当前负责的工作以及为何需要管理员权限……"
               />
             </div>
@@ -127,7 +127,7 @@ export default function AdminApplyPage() {
               <input
                 value={form.contact}
                 onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                className="w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium focus:outline-none focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                className="iptp w-full px-4 py-3 rounded-2xl bg-surface border border-border font-body text-[calc(14px*var(--fz))] font-medium transition duration-200 focus:outline-none"
                 placeholder="手机号 / 邮箱 / 单位办公电话"
               />
             </div>
@@ -189,6 +189,9 @@ export default function AdminApplyPage() {
           </div>
         </section>
       </div>
+      <style>{`
+        .iptp:focus { border-color: #5B5FDE !important; box-shadow: 0 0 0 4px color-mix(in srgb, #5B5FDE 22%, transparent) !important; }
+      `}</style>
     </AppShell>
   );
 }
