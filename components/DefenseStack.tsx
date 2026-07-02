@@ -9,17 +9,17 @@ const LAYERS = [
     runtime: { shown: "来电显示号码", actual: "信令来源", hops: "链路跳数" },
   },
   {
-    id: "L2", icon: Waves, title: "声纹取证", en: "Voiceprint Forensics",
+    id: "L2", icon: Waves, title: "语音转写", en: "Whisper ASR",
     tint: "var(--mint-deep)", soft: "var(--mint-soft)", deep: "var(--mint-deep)",
-    checks: ["合成特征 (F0 抖动 / 呼吸)", "端到端 ONNX 推理", "SYNTH / HUMAN 二元判决"],
-    mode: "推理",
-    runtime: { synth: "合成概率", f0: "频谱特征", breath: "呼吸特征" },
+    checks: ["IP 电话音频转 16k 单声道", "Whisper 端到端转写", "文本输出给大模型判定"],
+    mode: "转写",
+    runtime: { codec: "音频格式", lang: "识别语言", text: "转写文本" },
   },
   {
     id: "L3", icon: ScanLine, title: "话术语义", en: "Script NLU",
     tint: "var(--coral)", soft: "var(--coral-soft)", deep: "var(--coral-deep)",
-    checks: ["5 类欺诈词典匹配", "转账 · 权威 · 紧迫语义模型", "实时打断 + 亲属同步"],
-    mode: "匹配",
+    checks: ["DeepSeek / Qwen 风险判定", "转账 · 权威 · 紧迫语义模型", "实时告警 + 亲属同步"],
+    mode: "判定",
     runtime: { cat: "风险类别", phrase: "命中片段", weight: "策略权重" },
   },
 ];
@@ -44,7 +44,7 @@ export default function DefenseStack() {
             </h2>
           </div>
           <div className="col-span-12 md:col-span-4 text-[calc(15px*var(--fz))] leading-[1.75] text-ink-2 font-medium">
-            单层引擎必然存在漏判。SENTINEL 把溯源、声纹、话术并联执行——
+            单层引擎必然存在漏判。SENTINEL 把溯源、Whisper 转写、话术判定并联执行——
             取三路中最差两路加权融合，单路误报不会升级为拦截。
           </div>
         </div>

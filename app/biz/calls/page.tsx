@@ -101,8 +101,8 @@ export default function BizCallsPage() {
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { k: "L1 溯源", v: active.verdict === "拦截" ? "异常 86" : "正常 12" },
-                  { k: "L2 声纹", v: active.verdict === "拦截" ? "SYNTH 92" : "HUMAN 18" },
-                  { k: "L3 话术", v: active.verdict === "拦截" ? "命中 96" : "未命中 8" },
+                  { k: "L2 转写", v: active.verdict === "拦截" ? "完成 92" : "完成 18" },
+                  { k: "L3 判定", v: active.verdict === "拦截" ? "命中 96" : "未命中 8" },
                 ].map((e) => (
                   <div key={e.k} className="p-3 rounded-2xl bg-canvas-2">
                     <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">{e.k}</div>

@@ -232,7 +232,7 @@ export default function AdminDashboard() {
         {[
           { label: "判决通话", num: callsTotal, sub: "条累计记录", tint: "var(--indigo)", soft: "var(--indigo-soft)", icon: PhoneCall },
           { label: "拦截诈骗", num: stats?.blockedCalls ?? 0, sub: "起累计拦截", tint: "var(--coral)", soft: "var(--coral-soft)", icon: PhoneOff },
-          { label: "AI 合成识别", num: stats?.aiCloneDetected ?? 0, sub: "次声纹判定 SYNTH", tint: "var(--amber-deep)", soft: "var(--amber-soft)", icon: Bot },
+          { label: "AI 话术命中", num: stats?.aiJudgedFraud ?? 0, sub: "次模型判定命中", tint: "var(--amber-deep)", soft: "var(--amber-soft)", icon: Bot },
           { label: "话术命中", num: stats?.scriptHits ?? 0, sub: "次话术规则命中", tint: "var(--mint-deep)", soft: "var(--mint-soft)", icon: MessageSquareText },
         ].map((k) => (
           <div key={k.label} className="panel panel-lift p-5 relative overflow-hidden">

@@ -25,8 +25,8 @@ export default function Footer() {
               </div>
             </div>
             <p className="max-w-[44ch] text-[calc(14px*var(--fz))] leading-[1.75] font-medium" style={{ color: "rgba(242, 243, 247, 0.65)" }}>
-              面向 AI 合成语音新威胁的毫秒级反诈平台。
-              来电溯源 × 声纹取证 × 话术语义三重引擎并联，
+              面向 AI 语音诈骗新威胁的毫秒级反诈平台。
+              来电溯源 × Whisper 转写 × 话术语义三重引擎并联，
               在通话接通的第一秒完成判决。
             </p>
           </div>

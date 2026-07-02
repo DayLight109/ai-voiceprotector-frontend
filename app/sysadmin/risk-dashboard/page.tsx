@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { AlertOctagon, MapPin, Activity, ShieldOff, Bot } from "lucide-react";
 
-type RiskIndex = { index: number; sampleSize: number; blocked: number; aiClones: number; windowHours: number };
+type RiskIndex = { index: number; sampleSize: number; blocked: number; aiJudged: number; windowHours: number };
 type Region = { region: string; count: number };
 type Ev = { id: string; phone: string; region: string; verdict: string; reason: string; riskScore: number; createdAt: string };
 
@@ -89,7 +89,7 @@ export default function RiskDashboard() {
   const cards = [
     { k: "已拦截", v: stats?.interceptedCalls, c: "var(--mint-deep)", Icon: Activity },
     { k: "已阻断", v: stats?.blockedCalls, c: "var(--coral)", Icon: ShieldOff },
-    { k: "AI 合成识别", v: stats?.aiCloneDetected, c: "var(--amber-deep)", Icon: Bot },
+    { k: "AI 话术命中", v: stats?.aiJudgedFraud, c: "var(--amber-deep)", Icon: Bot },
   ];
 
   return (
@@ -121,7 +121,7 @@ export default function RiskDashboard() {
               {defconOf(idx)}
             </div>
             <div className="mt-2 font-mono text-[calc(10px*var(--fz))] text-ink-soft font-bold">
-              样本 {risk?.sampleSize ?? 0} · 阻断 {risk?.blocked ?? 0} · AI 合成 {risk?.aiClones ?? 0}
+              样本 {risk?.sampleSize ?? 0} · 阻断 {risk?.blocked ?? 0} · AI 命中 {risk?.aiJudged ?? 0}
             </div>
           </div>
 

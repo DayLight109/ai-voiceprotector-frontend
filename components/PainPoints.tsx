@@ -1,4 +1,4 @@
-import { Fingerprint, MessageSquareWarning, PhoneOff, Boxes } from "lucide-react";
+import { Mic2, MessageSquareWarning, PhoneOff, Boxes } from "lucide-react";
 
 const PAINS = [
   {
@@ -7,9 +7,9 @@ const PAINS = [
     tag: "Origin", tint: "var(--coral)", soft: "var(--coral-soft)", deep: "var(--coral-deep)",
   },
   {
-    id: "02", icon: Fingerprint, title: "AI 声音可克隆",
-    desc: "3 秒抖音片段足以训练出 85% 相似度的声纹。熟人来电不再意味着熟人本人。",
-    tag: "Voiceprint", tint: "var(--indigo)", soft: "var(--indigo-soft)", deep: "var(--indigo-deep)",
+    id: "02", icon: Mic2, title: "AI 声音可伪装",
+    desc: "短音频就能生成高度相似的通话声音。熟人来电不再意味着熟人本人，必须把语音内容实时转成可判定文本。",
+    tag: "ASR", tint: "var(--indigo)", soft: "var(--indigo-soft)", deep: "var(--indigo-deep)",
   },
   {
     id: "03", icon: MessageSquareWarning, title: "话术无法实时识别",

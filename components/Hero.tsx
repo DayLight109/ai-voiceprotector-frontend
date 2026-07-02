@@ -54,8 +54,8 @@ export default function Hero() {
               className="mt-8 max-w-[56ch] text-[calc(17px*var(--fz))] md:text-[calc(18px*var(--fz))] leading-[1.7] text-ink-2 rise font-medium"
               style={{ animationDelay: "0.25s" }}
             >
-              SENTINEL 在通话接通前的毫秒里，完成来电溯源、声纹取证与话术语义三重比对。
-              合成声音被当场识破，诈骗脚本被实时打断——
+              SENTINEL 在通话接通前的毫秒里，完成来电溯源、Whisper 转写与话术语义三重比对。
+              高危话术被实时识别，诈骗脚本被及时打断——
               <span className="font-bold text-ink">让每一通陌生来电，都先经过算法。</span>
             </p>
 
@@ -73,7 +73,7 @@ export default function Hero() {
             <div className="mt-14 grid grid-cols-3 gap-4 md:gap-6 max-w-xl rise" style={{ animationDelay: "0.5s" }}>
               {[
                 { k: "溯源", v: "信令校验", c: "var(--indigo)" },
-                { k: "声纹", v: "模型推理", c: "var(--mint-deep)" },
+                { k: "转写", v: "Whisper", c: "var(--mint-deep)" },
                 { k: "话术", v: "语义判决", c: "var(--coral)" },
               ].map((s) => (
                 <div key={s.v} className="relative pl-4">
@@ -116,7 +116,7 @@ export default function Hero() {
                 <div className="p-4 rounded-2xl bg-canvas-2 border border-border">
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft">
-                      声纹频谱 · 运行时判定
+                      语音波形 · 转写等待
                     </span>
                     <span className="pill pill-mint">WAITING</span>
                   </div>
@@ -139,8 +139,8 @@ export default function Hero() {
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { icon: Radio, label: "溯源", val: "校验", tone: "indigo-soft", color: "var(--indigo-deep)" },
-                    { icon: Waves, label: "声纹", val: "推理", tone: "mint-soft", color: "var(--mint-deep)" },
-                    { icon: ScanLine, label: "话术", val: "匹配", tone: "amber-soft", color: "var(--amber-deep)" },
+                    { icon: Waves, label: "转写", val: "Whisper", tone: "mint-soft", color: "var(--mint-deep)" },
+                    { icon: ScanLine, label: "话术", val: "判定", tone: "amber-soft", color: "var(--amber-deep)" },
                   ].map((l) => (
                     <div
                       key={l.label}

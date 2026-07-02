@@ -172,7 +172,7 @@ export default function AudioConfigPage() {
           </div>
           <div className="panel p-6">
             <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold mb-3">UPLOAD NEW MODEL</div>
-            <UploadZone accept=".onnx,.pt,.bin" hint="ONNX / PyTorch 文件 · ≤ 500 MB" onFiles={onModelUpload} />
+            <UploadZone accept=".bin,.ct2,.pt,.zip" hint="Whisper / CTranslate2 / PyTorch 文件 · ≤ 500 MB" onFiles={onModelUpload} />
           </div>
         </aside>
       </div>
@@ -181,12 +181,12 @@ export default function AudioConfigPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <div className="font-mono text-[calc(10px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">VOICE SAMPLES</div>
-            <h2 className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">声纹样本库</h2>
+            <h2 className="font-display text-[calc(20px*var(--fz))] font-extrabold mt-1">音频样本库</h2>
           </div>
           <div className="inline-flex rounded-xl border border-border bg-canvas-2 p-1">
             {[
-              { key: "synth", label: "AI 合成" },
-              { key: "human", label: "真人" },
+              { key: "synth", label: "高危样本" },
+              { key: "human", label: "普通样本" },
             ].map((item) => (
               <button
                 key={item.key}
@@ -215,13 +215,13 @@ export default function AudioConfigPage() {
         ) : samples.items.length === 0 ? (
           <div className="panel p-12 flex flex-col items-center justify-center text-center">
             <Inbox size={32} className="text-ink-ghost mb-3" />
-            <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">声纹样本库为空</div>
+            <div className="font-display text-[calc(15px*var(--fz))] font-extrabold">音频样本库为空</div>
             <div className="mt-1 font-mono text-[calc(11px*var(--fz))] uppercase tracking-[0.14em] text-ink-soft font-bold">NO VOICE SAMPLES YET</div>
           </div>
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {samples.items.map((s) => {
-            const label = s.tag === "synth" ? "AI 合成" : "真人";
+            const label = s.tag === "synth" ? "高危样本" : "普通样本";
             const isSynth = s.tag === "synth";
             return (
             <div key={s.id} className="p-4 rounded-2xl border border-border">

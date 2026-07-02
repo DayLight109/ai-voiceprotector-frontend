@@ -37,7 +37,7 @@ export default function LoginPage() {
         title: "登录企业控制台",
         subtitle: "输入企业账户凭证，进入 SENTINEL 管理与策略中枢。",
         sideTitle: "企业级反诈中枢，开箱即接入。",
-        body: "SENTINEL 将来电溯源、声纹取证与话术语义判定接入企业防护链路，让客服、风控与管理团队在同一个安全中枢里完成处置。",
+        body: "SENTINEL 将来电溯源、Whisper 转写与话术语义判定接入企业防护链路，让客服、风控与管理团队在同一个安全中枢里完成处置。",
         image: enterpriseLoginImage,
         cards: [
           { icon: Gauge, title: "毫秒级判决", body: "API 对接运营商 / 金融风控，通话接入后快速完成风险判定。" },
@@ -51,11 +51,11 @@ export default function LoginPage() {
         title: "欢迎回家",
         subtitle: "用手机号或身份证登录，开启家人的声纹守护。",
         sideTitle: "让每一位家人都活在算法的保护里。",
-        body: "声纹捕手在陌生来电进入的瞬间并行检查信令来源、声纹特征和高风险话术，尽量把危险挡在家人接听之前。",
+        body: "声纹捕手在陌生来电进入的瞬间并行检查信令来源、语音转写和高风险话术，尽量把危险挡在家人接听之前。",
         image: familyLoginImage,
         cards: [
           { icon: Gauge, title: "毫秒级响应", body: "识别高风险来电后即时提醒、拦截或同步给紧急联系人。" },
-          { icon: Network, title: "三层判决机制", body: "来电溯源、声纹取证、话术语义并行工作，减少单点误判。" },
+          { icon: Network, title: "三层判决机制", body: "来电溯源、语音转写、话术语义并行工作，减少单点误判。" },
           { icon: House, title: "家庭安心防护", body: "老人手机托管、家属同步告警，关键时刻不再错过。" },
         ],
       };

@@ -10,11 +10,25 @@ import { api, APIError } from "@/lib/api";
 import { Bot, Save, Sparkles, MessageSquare, Cpu, Plus, Trash2 } from "lucide-react";
 
 type WhisperCfg = { model: "tiny" | "base" | "small" | "medium" | "large-v3"; language: string; vadFilter: boolean; beamSize: number; temperature: number };
-type QwenCfg = { model: string; endpoint: string; apiKey: string; temperature: number; topP: number; maxTokens: number; systemPrompt: string };
+type LLMProvider = "qwen" | "deepseek" | "openai";
+type LLMCfg = { provider: LLMProvider; model: string; endpoint: string; apiKey: string; temperature: number; topP: number; maxTokens: number; systemPrompt: string };
 
 const DEFAULT_DW: string[] = ["AI 合成可疑", "境外信令", "公检法冒充", "客服伪冒", "刷单返利"];
 const DEFAULT_W: WhisperCfg = { model: "large-v3", language: "zh", vadFilter: true, beamSize: 5, temperature: 0.0 };
-const DEFAULT_Q: QwenCfg = {
+const MODEL_OPTIONS: Record<LLMProvider, string[]> = {
+  qwen: ["qwen-max", "qwen-plus", "qwen-turbo", "qwen2.5-72b-instruct"],
+  deepseek: ["deepseek-chat", "deepseek-reasoner"],
+  openai: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
+};
+
+const ENDPOINTS: Record<LLMProvider, string> = {
+  qwen: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+  deepseek: "https://api.deepseek.com/v1",
+  openai: "https://api.openai.com/v1",
+};
+
+const DEFAULT_LLM: LLMCfg = {
+  provider: "qwen",
   model: "qwen-max",
   endpoint: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
   apiKey: "sk-***********************",
@@ -26,10 +40,11 @@ const DEFAULT_Q: QwenCfg = {
 
 export default function AgentsPage() {
   const toast = useToast();
-  const [tab, setTab] = useState<"display" | "whisper" | "qwen">("display");
+  const [tab, setTab] = useState<"display" | "whisper" | "llm">("display");
   const [displayWords, setDisplayWords] = useState<string[]>(DEFAULT_DW);
   const [w, setW] = useState<WhisperCfg>(DEFAULT_W);
-  const [q, setQ] = useState<QwenCfg>(DEFAULT_Q);
+  const [llm, setLLM] = useState<LLMCfg>(DEFAULT_LLM);
+  const [llmTesting, setLLMTesting] = useState(false);
 
   useEffect(() => {
     api.agents.getDisplayWords()
@@ -42,7 +57,7 @@ export default function AgentsPage() {
       .then((v) => { if (v && typeof v === "object") setW({ ...DEFAULT_W, ...v }); })
       .catch(() => {});
     api.agents.getQwen()
-      .then((v) => { if (v && typeof v === "object") setQ({ ...DEFAULT_Q, ...v }); })
+      .then((v) => { if (v && typeof v === "object") setLLM({ ...DEFAULT_LLM, ...v }); })
       .catch(() => {});
   }, []);
 
@@ -62,12 +77,30 @@ export default function AgentsPage() {
       toast("error", e instanceof APIError ? e.message : "保存失败");
     }
   };
-  const saveQwen = async () => {
+  const saveLLM = async () => {
     try {
-      await api.agents.setQwen(q);
-      toast("success", "已保存千问配置");
+      await api.agents.setQwen(llm);
+      toast("success", "已保存 LLM 配置");
     } catch (e) {
       toast("error", e instanceof APIError ? e.message : "保存失败");
+    }
+  };
+  const testLLM = async () => {
+    setLLMTesting(true);
+    try {
+      await api.agents.setQwen(llm);
+      const result = await api.analyze({
+        callId: "agent-test",
+        shownNumber: "+8613800000000",
+        signalOriginCC: "CN",
+        audioSeconds: 8,
+        transcriptHint: "我是公安局的，你的账户涉嫌洗钱，请马上转账到安全账户。",
+      });
+      toast("success", `测试完成，风险分 ${result?.riskScore ?? 0}`);
+    } catch (e) {
+      toast("error", e instanceof APIError ? e.message : "测试失败");
+    } finally {
+      setLLMTesting(false);
     }
   };
 
@@ -76,14 +109,14 @@ export default function AgentsPage() {
       <PageHeader
         eyebrow="AGENT CONFIG"
         title="智能体管理"
-        desc="配置端侧显示词、Whisper 语音转写参数与千问 LLM 判定参数。"
+        desc="配置端侧显示词、Whisper 语音转写参数与 Qwen / DeepSeek / OpenAI 文本判定参数。"
       />
 
       <div className="flex items-center gap-1 p-1 rounded-full bg-canvas-2 border border-border mb-6 inline-flex">
         {[
           { k: "display", label: "显示词配置", icon: Sparkles },
           { k: "whisper", label: "Whisper 参数", icon: MessageSquare },
-          { k: "qwen", label: "千问参数", icon: Cpu },
+          { k: "llm", label: "LLM 参数", icon: Cpu },
         ].map((t) => {
           const active = t.k === tab;
           return (
@@ -161,37 +194,57 @@ export default function AgentsPage() {
         </div>
       )}
 
-      {tab === "qwen" && (
+      {tab === "llm" && (
         <div className="panel p-6 max-w-3xl">
           <div className="flex items-center gap-2 mb-4">
             <Cpu size={16} style={{ color: "var(--indigo)" }} />
-            <h3 className="font-display text-[calc(16px*var(--fz))] font-extrabold">千问 LLM 参数</h3>
+            <h3 className="font-display text-[calc(16px*var(--fz))] font-extrabold">文本模型参数</h3>
           </div>
+          <Field label="Provider">
+            <select
+              value={llm.provider}
+              onChange={(e) => {
+                const provider = e.target.value as LLMProvider;
+                setLLM({
+                  ...llm,
+                  provider,
+                  model: MODEL_OPTIONS[provider][0],
+                  endpoint: ENDPOINTS[provider],
+                });
+              }}
+              className="ipt"
+            >
+              <option value="qwen">Qwen / DashScope</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="openai">OpenAI Compatible</option>
+            </select>
+          </Field>
           <Field label="模型">
-            <select value={q.model} onChange={(e) => setQ({ ...q, model: e.target.value })} className="ipt">
-              {["qwen-max", "qwen-plus", "qwen-turbo", "qwen2.5-72b-instruct"].map((m) => <option key={m}>{m}</option>)}
+            <select value={llm.model} onChange={(e) => setLLM({ ...llm, model: e.target.value })} className="ipt">
+              {MODEL_OPTIONS[llm.provider].map((m) => <option key={m}>{m}</option>)}
             </select>
           </Field>
           <Field label="Endpoint">
-            <input value={q.endpoint} onChange={(e) => setQ({ ...q, endpoint: e.target.value })} className="ipt font-mono text-[calc(12px*var(--fz))]" />
+            <input value={llm.endpoint} onChange={(e) => setLLM({ ...llm, endpoint: e.target.value })} className="ipt font-mono text-[calc(12px*var(--fz))]" />
           </Field>
           <Field label="API Key">
-            <input value={q.apiKey} onChange={(e) => setQ({ ...q, apiKey: e.target.value })} className="ipt font-mono text-[calc(12px*var(--fz))]" />
+            <input value={llm.apiKey} onChange={(e) => setLLM({ ...llm, apiKey: e.target.value })} className="ipt font-mono text-[calc(12px*var(--fz))]" />
           </Field>
-          <Field label={`Temperature · ${q.temperature.toFixed(2)}`}>
-            <input type="range" min={0} max={1} step={0.05} value={q.temperature} onChange={(e) => setQ({ ...q, temperature: Number(e.target.value) })} className="w-full" />
+          <Field label={`Temperature · ${llm.temperature.toFixed(2)}`}>
+            <input type="range" min={0} max={1} step={0.05} value={llm.temperature} onChange={(e) => setLLM({ ...llm, temperature: Number(e.target.value) })} className="w-full" />
           </Field>
-          <Field label={`Top-P · ${q.topP.toFixed(2)}`}>
-            <input type="range" min={0} max={1} step={0.05} value={q.topP} onChange={(e) => setQ({ ...q, topP: Number(e.target.value) })} className="w-full" />
+          <Field label={`Top-P · ${llm.topP.toFixed(2)}`}>
+            <input type="range" min={0} max={1} step={0.05} value={llm.topP} onChange={(e) => setLLM({ ...llm, topP: Number(e.target.value) })} className="w-full" />
           </Field>
           <Field label="Max Tokens">
-            <input type="number" value={q.maxTokens} onChange={(e) => setQ({ ...q, maxTokens: Number(e.target.value) })} className="ipt" />
+            <input type="number" value={llm.maxTokens} onChange={(e) => setLLM({ ...llm, maxTokens: Number(e.target.value) })} className="ipt" />
           </Field>
           <Field label="System Prompt">
-            <textarea value={q.systemPrompt} onChange={(e) => setQ({ ...q, systemPrompt: e.target.value })} rows={4} className="ipt" />
+            <textarea value={llm.systemPrompt} onChange={(e) => setLLM({ ...llm, systemPrompt: e.target.value })} rows={4} className="ipt" />
           </Field>
-          <div className="mt-5 text-right">
-            <button onClick={saveQwen} className="btn-indigo py-2.5 px-5 text-[calc(13px*var(--fz))]"><Save size={14} /> 保存</button>
+          <div className="mt-5 flex justify-end gap-2">
+            <button onClick={testLLM} disabled={llmTesting} className="btn-ghost py-2.5 px-5 text-[calc(13px*var(--fz))] disabled:opacity-50"><Sparkles size={14} /> {llmTesting ? "测试中" : "测试"}</button>
+            <button onClick={saveLLM} className="btn-indigo py-2.5 px-5 text-[calc(13px*var(--fz))]"><Save size={14} /> 保存</button>
           </div>
           <Style />
         </div>

@@ -7,7 +7,7 @@
   </defs>
   <!-- shield -->
   <path d="M16 2.5l11 4v8.2c0 7.4-4.7 12.9-11 15.3C9.7 27.6 5 22.1 5 14.7V6.5l11-4z" fill="url(#g)"/>
-  <!-- voiceprint / waveform -->
+  <!-- audio waveform -->
   <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round">
     <line x1="10" y1="16" x2="10" y2="16"/>
     <line x1="13" y1="13" x2="13" y2="19"/>

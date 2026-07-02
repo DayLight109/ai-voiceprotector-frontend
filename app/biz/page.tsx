@@ -168,8 +168,8 @@ export default function BizHome() {
           <div className="space-y-3">
             {[
               { icon: Radio, name: "L1 来电溯源", desc: "信令规则 · 实时比对", tint: "var(--indigo)", soft: "var(--indigo-soft)" },
-              { icon: Waves, name: "L2 声纹取证", desc: "ONNX 声纹 · 合成识别", tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
-              { icon: ScanLine, name: "L3 话术语义", desc: "千问 LLM · 话术分类", tint: "var(--coral)", soft: "var(--coral-soft)" },
+              { icon: Waves, name: "L2 语音转写", desc: "Whisper ASR · 文本提取", tint: "var(--mint-deep)", soft: "var(--mint-soft)" },
+              { icon: ScanLine, name: "L3 话术语义", desc: "DeepSeek / Qwen · 风险判定", tint: "var(--coral)", soft: "var(--coral-soft)" },
             ].map((l) => (
               <div key={l.name} className="p-4 rounded-2xl bg-canvas-2">
                 <div className="flex items-center justify-between mb-1">

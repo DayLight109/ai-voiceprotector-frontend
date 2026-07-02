@@ -40,7 +40,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "SENTINEL · 声纹捕手 — 实时 AI 语音反诈平台",
   description:
-    "毫秒级识别与拦截 AI 合成语音 · 来电溯源 × 声纹取证 × 话术语义三重引擎。",
+    "毫秒级识别与拦截 AI 语音诈骗 · 来电溯源 × Whisper 转写 × 话术语义三重引擎。",
   metadataBase: new URL("https://sentinel.example"),
 };
 

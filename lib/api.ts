@@ -464,7 +464,7 @@ export const api = {
     overview: () =>
       request<{
         counters: {
-          interceptedCalls: number; blockedCalls: number; aiCloneDetected: number;
+          interceptedCalls: number; blockedCalls: number; aiJudgedFraud: number;
           scriptHits: number; smsBlocked: number; fundsHeldYuan: number;
         };
         defcon: number; since: string; nowUtc: string;
@@ -475,17 +475,6 @@ export const api = {
           goroutines: number; sampledAt: string;
         };
       }>("/api/v1/warroom/overview"),
-    latestVoiceprint: () =>
-      request<null | {
-        callId: string;
-        ts: string;
-        riskScore: number;
-        riskLevel: string;
-        voiceprint: {
-          synthProbability: number; f0Jitter: number; breathScore: number;
-          regularity: number; risk: number; verdict: string;
-        };
-      }>("/api/v1/warroom/voiceprint/latest"),
   },
 
   // ── 业务资源（CRUD）
@@ -621,7 +610,7 @@ export const api = {
     },
   },
 
-  // ── Agent 配置（display_words / whisper / qwen 三组 jsonb）
+  // ── Agent 配置（display_words / whisper / qwen 三组 jsonb；qwen 存通用 LLM 配置）
   // 后端返回 { key, value, updatedAt } 信封；这里统一解出 value，
   // 页面直接拿到存储的配置本体。
   agents: {
@@ -712,7 +701,7 @@ export const api = {
   dashboard: {
     riskIndex: () => request<{
       index: number; sampleSize: number; blocked: number;
-      aiClones: number; windowHours: number;
+      aiJudged: number; windowHours: number;
     }>("/api/v1/dashboard/risk-index"),
     regions: () => request<{ region: string; count: number }[]>("/api/v1/dashboard/regions"),
     events: (p?: { limit?: number }) => requestList<{

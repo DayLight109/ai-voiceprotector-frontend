@@ -194,8 +194,8 @@ export default function WarroomPage() {
         // Integrity = 引擎判决成功率;无判决时视为 100%
         const tot = ov.engine.analyzed + ov.engine.failed;
         setIntegrity(tot > 0 ? Number(((ov.engine.analyzed / tot) * 100).toFixed(1)) : 100);
-        // threatIndex 用 AI 克隆 + 话术命中的相对热度粗略映射到 0-100 观感
-        const heat = Math.min(98, 42 + ov.counters.aiCloneDetected * 6 + ov.counters.scriptHits * 2);
+        // threatIndex 用 AI 判定命中 + 话术命中的相对热度粗略映射到 0-100 观感
+        const heat = Math.min(98, 42 + ov.counters.aiJudgedFraud * 6 + ov.counters.scriptHits * 2);
         setThreatIndex(Math.round(heat));
       } catch {
         // 静默：未同步成功时保持空态或 0 值。
